@@ -1,25 +1,35 @@
 import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    children: React.ReactNode;
+  loading?: boolean;
+  loadingText?: string;
 }
 
-export default function Button({ children, className = "", ...props }: ButtonProps) {
-    return (
-        <button
-            className={`
-        px-4 py-2
+export default function Button({
+  children,
+  loading = false,
+  loadingText = "Carregando...",
+  disabled,
+  className = "",
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      disabled={loading || disabled}
+      className={`
+        h-11
         rounded-lg
-        bg-blue-600
+        bg-[red]
         text-white
         font-medium
-        hover:bg-blue-700
-        transition-colors
+        transition
+        disabled:opacity-60
+        disabled:cursor-not-allowed
         ${className}
       `}
-            {...props}
-        >
-            {children}
-        </button>
-    );
+      {...props}
+    >
+      {loading ? loadingText : children}
+    </button>
+  );
 }
