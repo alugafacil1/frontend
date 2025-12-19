@@ -25,11 +25,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
 
     try {
-      const data = await auth.login(email, password);
+
+      //Ajustar quando fizer a intregração
+
+
+      /* const data = await auth.login(email, password);
 
       if (!data) {
         throw new Error("Erro ao fazer login");
-      }
+      } */
 
       /* setUser(data.user);
       setIsAuthenticated(true); */
@@ -37,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // salva no localStorage
       /* localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user)); */
-      document.cookie = `token=${data.token}; path=/;`;
+      document.cookie = `token=111; path=/;`;
 
       // redireciona
       window.location.href = "/";
@@ -49,12 +53,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function signup(name : string, email : string, phone : string, cpf : string, type : string, password : string) {
+    setLoading(true);
+
+    try {
+
+      //Ajustar quando fizer a intregração
+
+
+      /* const data = await auth.signup(name, email, phone, cpf, type, password);
+
+      if (!data) {
+        throw new Error("Erro ao cadastrar");
+      } */
+
+      // redireciona
+      window.location.href = "/login";
+    } catch (err: any) {
+      console.error("Erro no login:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function logout() {
-    setUser(null);
+    //Ajustar quando fizer a intregração
+    /* setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/login";
+    document.cookie = `token=111; path=/;`;
+    window.location.href = "/login"; */
   }
 
   return (

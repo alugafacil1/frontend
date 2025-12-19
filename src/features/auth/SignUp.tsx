@@ -5,19 +5,19 @@ import { useAuth } from "@/lib/auth/useAuth";
 import Button from "@/components/button";
 
 export default function SignUp() {
-  const { login, loading } = useAuth();
+  const { signup, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [cpf, setCpf] = useState("");
-  const [documentType, setDocumentType] = useState("");
+  const [type, settype] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await login(email, password);
+    await signup(name, email, phone, cpf, type, password);
   }
 
   function maskPhone(value: string) {
@@ -53,7 +53,7 @@ export default function SignUp() {
 
           <h1 className="signUp-title">Cadastro</h1>
 
-          <form className="signUp-form">
+          <form onSubmit={handleSubmit} className="signUp-form">
             <div className="form-group">
                 <input
                     type="text"
@@ -109,45 +109,18 @@ export default function SignUp() {
               <div className="form-group">
                 <select
                   id="documentType"
-                  value={documentType}
-                  onChange={(e) => setDocumentType(e.target.value)}
+                  value={type}
+                  onChange={(e) => settype(e.target.value)}
                   required
                 >
                   <option value="" disabled>Selecione o tipo</option>
                   <option value="anunciante">Anunciante</option>
                   <option value="locatario">Locatário</option>
                 </select>
-                <label htmlFor="documentType">Tipo de cadastro</label>
+                <label htmlFor="type">Tipo de cadastro</label>
               </div>
             </div>
 
-            <div className="signUp-grid">
-                
-                <div className="form-group">
-                <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder=" "
-                />
-                <label htmlFor="email">Email</label>
-                
-                </div>
-                <div className="form-group">
-                <input
-                    type="text"
-                    id="phone"
-                    value={phone}
-                    onChange={(e) => setPhone(maskPhone(e.target.value))}
-                    required
-                    placeholder=" "
-                />
-                <label htmlFor="phone">Telefone</label>
-                
-                </div>
-            </div>
             <div className="form-group">
               <input
                 type={showPassword ? "text" : "password"}
