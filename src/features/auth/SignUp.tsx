@@ -3,21 +3,38 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/useAuth";
 import Button from "@/components/button";
+import Link from "next/link";
 
 export default function SignUp() {
-  const { signup, loading } = useAuth();
+  const { signUp: signUp, loading } = useAuth();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [cpf, setCpf] = useState("");
-  const [type, settype] = useState("");
+  const [type, setType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await signup(name, email, phone, cpf, type, password);
+
+    if (password !== passwordConfirm) {
+      alert("As senhas não coincidem!");
+      return;
+    }
+    try {
+      await signUp(
+        name, 
+        email, 
+        phone, 
+        cpf, 
+        type,
+        password);
+    } catch (error) {
+        console.error("Erro no cadastro", error);
+    }
   }
 
   function maskPhone(value: string) {
@@ -58,11 +75,12 @@ export default function SignUp() {
                 <input
                     type="text"
                     id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)} 
                     required
                     placeholder=" "
                 />
-                <label htmlFor="name">Nome</label>
-                
+                <label htmlFor="name">Nome Completo</label>
             </div>
             <div className="signUp-grid">
                 
@@ -110,14 +128,15 @@ export default function SignUp() {
                 <select
                   id="documentType"
                   value={type}
-                  onChange={(e) => settype(e.target.value)}
+                  onChange={(e) => setType(e.target.value)}
                   required
                 >
-                  <option value="" disabled>Selecione o tipo</option>
-                  <option value="anunciante">Anunciante</option>
-                  <option value="locatario">Locatário</option>
+                  <option value="" disabled>Selecione o perfil</option>
+                  <option value="TENANT">Quero Alugar (Inquilino)</option> 
+                  <option value="OWNER">Tenho imóvel (Proprietário)</option> 
+                  <option value="REALTOR">Sou Corretor</option>           
                 </select>
-                <label htmlFor="type">Tipo de cadastro</label>
+                <label htmlFor="documentType">Eu sou:</label>
               </div>
             </div>
 
@@ -193,7 +212,7 @@ export default function SignUp() {
             </Button>
 
             <p className="signUp-signup">
-              Já tem uma conta? <a href="#" className="link-color">Entrar</a>
+              Já tem uma conta? <Link href="/login" className="link-color">Entrar</Link>
             </p>
 
             <div className="signUp-divider">

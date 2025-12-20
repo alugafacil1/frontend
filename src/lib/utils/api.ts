@@ -1,8 +1,11 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: "https://jsonplaceholder.typicode.com", //trocar pela baseURL do backend
-    timeout: 10000,
+  baseURL: "http://localhost:8081", 
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 api.interceptors.request.use(
