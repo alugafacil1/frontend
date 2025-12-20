@@ -1,23 +1,32 @@
 "use client";
 
 import { createContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { auth } from "@/services/auth/authService";
+import { User, LoginResponse, AuthContextType } from "@/types/auth";
 
-export const AuthContext = createContext<any>({});
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Carrega usuário/tokens do localStorage ao abrir o app
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
 
     if (token && userData) {
-      setUser(JSON.parse(userData));
-      setIsAuthenticated(true);
+      try {
+        const parsedUser: User = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Erro ao recuperar sessão:", error);
+        logout();
+      }
     }
   }, []);
 
@@ -25,71 +34,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
 
     try {
+      const data = await auth.login(email, password) as LoginResponse; 
 
-      //Ajustar quando fizer a intregração
+      console.log("🔍 RESPOSTA DO LOGIN:", data);
+      
+      if (!data || !data.access_token) {
+        throw new Error("Token não fornecido pela API.");
+      }
 
+      const userRole = (data.roles && data.roles.length > 0 ? data.roles[0] : "TENANT") as "TENANT" | "OWNER" | "REALTOR" | "ADMIN";
 
-      /* const data = await auth.login(email, password);
+      const userData: User = {
+        email: email,
+        name: email.split("@")[0], // Fallback: usa a parte antes do @ como nome provisório
+        role: userRole
+      };
 
-      if (!data) {
-        throw new Error("Erro ao fazer login");
-      } */
+      setUser(userData);
+      setIsAuthenticated(true);
 
-      /* setUser(data.user);
-      setIsAuthenticated(true); */
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
 
-      // salva no localStorage
-      /* localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user)); */
-      document.cookie = `token=111; path=/;`;
-
-      // redireciona
-      window.location.href = "/";
-    } catch (err: any) {
-      console.error("Erro no login:", err);
-      throw err;
+      router.push("/welcome");
+      
+    } catch (error: unknown) { 
+      if (error instanceof Error) {
+        console.error("Erro no login:", error.message);
+      } else {
+        console.error("Erro desconhecido no login:", error);
+      }
+      throw error; 
     } finally {
       setLoading(false);
     }
   }
 
-  async function signup(name : string, email : string, phone : string, cpf : string, type : string, password : string) {
+  async function signUp(name : string, email : string, phone : string, cpf : string, type : string, password : string) {
     setLoading(true);
 
     try {
+      await auth.signUp(name, email, phone, cpf, type, password);
+    
+      router.push("/login");
 
-      //Ajustar quando fizer a intregração
-
-
-      /* const data = await auth.signup(name, email, phone, cpf, type, password);
-
-      if (!data) {
-        throw new Error("Erro ao cadastrar");
-      } */
-
-      // redireciona
-      window.location.href = "/login";
-    } catch (err: any) {
-      console.error("Erro no login:", err);
-      throw err;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Erro no cadastro:", error.message);
+      }
+      throw error;
     } finally {
       setLoading(false);
     }
   }
 
   function logout() {
-    //Ajustar quando fizer a intregração
-    /* setUser(null);
+    setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    document.cookie = `token=111; path=/;`;
-    window.location.href = "/login"; */
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    router.push("/login");
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, loading, login, logout }}
+      value={{ user, isAuthenticated, loading, login, logout, signUp }}
     >
       {children}
     </AuthContext.Provider>

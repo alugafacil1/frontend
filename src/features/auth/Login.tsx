@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/useAuth";
 import Button from "@/components/button";
+import Link from "next/link";
 
 export default function Login() {
   const { login, loading } = useAuth();
@@ -84,7 +85,7 @@ export default function Login() {
             </Button>
 
             <p className="login-signup">
-              Não tem uma conta? <a href="#" className="link-color">Cadastrar</a>
+              Não tem uma conta? <Link href="/signUp" className="link-color">Cadastrar</Link>
             </p>
 
             <div className="login-divider">
