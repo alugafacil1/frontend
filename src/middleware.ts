@@ -4,9 +4,9 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const publicRoutes = ["/login", "/signUp"];
+  const publicRoutes = ["/", "/login", "/signUp"];
 
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))) {
     return NextResponse.next();
   }
 
