@@ -3,6 +3,12 @@
 import Header from "@/components/Header";
 import SearchForm from "@/components/SearchForm";
 import FeaturedListings from "@/components/FeaturedListings";
+import HeroSection from "@/components/HeroSection";
+import FeaturesSection from "@/components/FeaturesSection";
+import LatestUpdates from "@/components/LatestUpdates";
+import FAQ from "@/components/FAQ";
+import CallToAction from "@/components/CallToAction";
+import Footer from "@/components/Footer";
 
 export default function LandingPage() {
   return (
@@ -11,26 +17,28 @@ export default function LandingPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Let's Begin Your Journey
-            <br />
-            With <span className="highlight">Us</span>
-          </h1>
-          <p className="hero-subtitle">
-            Find your desirable accommodation with StudentHub which provides you secure and fast process to
-            start your new journey
-          </p>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Search Form */}
       <SearchForm />
 
       {/* Featured Listings */}
       <FeaturedListings />
+
+      {/* Features Section */}
+      <FeaturesSection />
+
+      {/* Latest Updates */}
+      <LatestUpdates />
+
+      {/* FAQ Section */}
+      <FAQ />
+
+      {/* Call to Action */}
+      <CallToAction />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
