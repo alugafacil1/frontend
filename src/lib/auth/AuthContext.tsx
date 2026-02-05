@@ -11,23 +11,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+  const API_URL = "http://localhost:8081/api"; 
 
-    if (token && userData) {
-      try {
-        const parsedUser: User = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Erro ao recuperar sessão:", error);
-        logout();
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
+
+      if (token && savedUser) {
+        try {
+          const parsedUser: User = JSON.parse(savedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Error recovering session:", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
-    }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   async function login(email: string, password: string) {
@@ -35,29 +45,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const data = await auth.login(email, password) as LoginResponse; 
-
-      console.log("🔍 RESPOSTA DO LOGIN:", data);
       
       if (!data || !data.access_token) {
         throw new Error("Token não fornecido pela API.");
       }
 
-      const userRole = (data.roles && data.roles.length > 0 ? data.roles[0] : "TENANT") as "TENANT" | "OWNER" | "REALTOR" | "ADMIN";
+      const token = data.access_token;
+      const userResponse = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!userResponse.ok) {
+        throw new Error("Falha ao buscar dados do perfil do usuário.");
+      }
+
+      const fullUserData = await userResponse.json();
 
       const userData: User = {
-        email: email,
-        name: email.split("@")[0], // Fallback: usa a parte antes do @ como nome provisório
-        role: userRole
+        id: fullUserData.userId,
+        name: fullUserData.name,
+        email: fullUserData.email,
+        role: fullUserData.userType,
+        photoUrl: fullUserData.photoUrl,
+        phoneNumber: fullUserData.phoneNumber,
+        cpf: fullUserData.cpf
       };
 
       setUser(userData);
       setIsAuthenticated(true);
 
-      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
       
-      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
+      document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`;
 
+      console.log("Login Sucesso. Dados completos:", userData);
       router.push("/welcome");
       
     } catch (error: unknown) { 
@@ -77,9 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await auth.signUp(name, email, phone, cpf, type, password);
-    
       router.push("/login");
-
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Erro no cadastro:", error.message);
@@ -99,9 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }
 
+  const updateUser = (newUserData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...newUserData };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, loading, login, logout, signUp }}
+      value={{ user, isAuthenticated, loading, login, logout, signUp, updateUser }}
     >
       {children}
     </AuthContext.Provider>
