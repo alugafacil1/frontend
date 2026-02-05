@@ -18,10 +18,10 @@ const salesData = [
 
 
 const analyticsData = [
-  { month: 'Jan', line1: 2000, line2: 1500 },
-  { month: 'Feb', line1: 2500, line2: 2000 },
-  { month: 'Mar', line1: 3000, line2: 2800 },
-  { month: 'Apr', line1: 3500, line2: 3200 },
+  { month: 'Jan', line1: 4000, line2: 1500 },
+  { month: 'Feb', line1: 3500, line2: 2500 },
+  { month: 'Mar', line1: 3000, line2: 3000 },
+  { month: 'Apr', line1: 3500, line2: 1500 },
   { month: 'May', line1: 4000, line2: 3800 },
   { month: 'Jun', line1: 4500, line2: 4200 },
 ];
@@ -58,9 +58,12 @@ const listedProperties = [
 
 
 const bookingResources = [
-  { id: 1, name: 'Jerome Camel', role: 'Owner', image: '👨‍💼' },
-  { id: 2, name: 'Jerome Camel', role: 'Owner', image: '👨‍💼' },
-  { id: 3, name: 'Jerome Camel', role: 'Owner', image: '👨‍💼' },
+  { id: 1, name: 'Carla Daniela', role: 'Owner', image: '👩‍🦰'},
+  { id: 2, name: 'Inês', role: 'Owner', image: '👩‍🦰' },
+  { id: 3, name: 'Everton', role: 'Admin', image: '👨‍💼' },
+  { id: 4, name: 'Lucas', role: 'Realtor', image: '👨‍💼' },
+  { id: 5, name: 'Genilson', role: 'Tenant', image: '👨‍💼' },
+  { id: 6, name: 'Luan', role: 'Admin', image: '👨‍💼' },
 ];
 
 interface HeaderProps {
@@ -359,6 +362,7 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           padding: 1.5rem;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
           margin-bottom: 1.5rem;
+          margin-top: 3.5rem;
         }
 
         .workbook-header {
@@ -366,6 +370,15 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 1rem;
+       
+        }
+        
+        .title-dash {
+         display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          margin-top: 4rem;
         }
 
         .workbook-title {
@@ -455,21 +468,10 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           }
       `}</style>
 
-    
-
-<header className={`landing-header ${transparent ? "transparent" : ""}`}>
-      <div className="landing-container">
-        <div className="header-content">
-          <Link href="/" className="logo">
-            <img src="/logo.svg" alt="AlugaFácil" className = "minha-imagem"/>
-          </Link>
-          <h1>Dashboard</h1>
-        </div>
-      </div>
-</header>
-
-     
+      <Header></Header>
+      <div className="title-dash"><h1>Dashboard</h1></div>    
       <div className="workbook-section">
+     
         <div className="workbook-header">
         
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -500,26 +502,21 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
         </div>
         <div className="chart-container">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={salesData}>
-              <defs>
-                <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1E90FF" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#1E90FF" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <AreaChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis dataKey="month" stroke="#666" />
               <YAxis stroke="#666" />
               <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#1E90FF" 
+              <Area
+                type="natural"
+                dataKey="value"
+                stroke="#1E90FF"
                 strokeWidth={3}
-                fill="url(#colorGradient)"
+                fill="#1E90FF"
+                fillOpacity={0.2}
                 dot={{ fill: '#1E90FF', r: 5 }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -617,38 +614,26 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           </div>
           <div className="chart-container" style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData}>
-                <defs>
-                  <linearGradient id="colorGradient1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1E90FF" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#1E90FF" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+              <LineChart data={analyticsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis dataKey="month" stroke="#666" />
                 <YAxis stroke="#666" />
                 <Tooltip />
-                <Area
+                <Line
                   type="natural"
-                  dataKey="value"
+                  dataKey="line1"
                   stroke="#1E90FF"
                   strokeWidth={3}
-                  fill="url(#colorGradient1)"
                   dot={{ fill: '#1E90FF', r: 5 }}
                 />
-                <Area
+                <Line
                   type="natural"
-                  dataKey="value2"
+                  dataKey="line2"
                   stroke="#10b981"
                   strokeWidth={3}
-                  fill="url(#colorGradient2)"
                   dot={{ fill: '#10b981', r: 5 }}
                 />
-              </AreaChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>

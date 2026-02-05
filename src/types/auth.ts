@@ -3,6 +3,9 @@ export interface User {
   name: string;
   email: string;
   role: "TENANT" | "OWNER" | "REALTOR" | "ADMIN"; 
+  photoUrl?: string;      
+  phoneNumber?: string;   
+  cpf?: string;
 }
 
 export interface LoginResponse {
@@ -18,4 +21,5 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, phone: string, cpf: string, type: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
 }
