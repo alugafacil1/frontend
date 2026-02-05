@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 import Link from "next/link";
 import { CircleStackIcon } from '@heroicons/react/16/solid';
-// Dados mockados para o gráfico de vendas
+
 const salesData = [
   { month: 'Jan', value: 4000 },
   { month: 'Feb', value: 3000 },
@@ -16,7 +16,7 @@ const salesData = [
   { month: 'Jul', value: 7000 },
 ];
 
-// Dados mockados para analytics
+
 const analyticsData = [
   { month: 'Jan', line1: 2000, line2: 1500 },
   { month: 'Feb', line1: 2500, line2: 2000 },
@@ -26,7 +26,7 @@ const analyticsData = [
   { month: 'Jun', line1: 4500, line2: 4200 },
 ];
 
-// Dados mockados para o gráfico de pizza (Customers)
+
 const customerData = [
   { name: 'Segment A', value: 34249 },
   { name: 'Segment B', value: 14201 },
@@ -34,7 +34,7 @@ const customerData = [
 
 const COLORS = ['#6366f1', '#e0e7ff'];
 
-// Dados mockados para propriedades listadas
+
 const listedProperties = [
   {
     id: 1,
@@ -56,7 +56,7 @@ const listedProperties = [
   },
 ];
 
-// Dados mockados para reservas
+
 const bookingResources = [
   { id: 1, name: 'Jerome Camel', role: 'Owner', image: '👨‍💼' },
   { id: 2, name: 'Jerome Camel', role: 'Owner', image: '👨‍💼' },
@@ -524,9 +524,9 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
         </div>
       </div>
 
-      {/* Dashboard Grid */}
+     
       <div className="dashboard-grid">
-        {/* Customers Card */}
+       
         <div className="card">
           <div className="card-header">
             <h3 className="card-title">Customers</h3>
@@ -563,7 +563,7 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           </div>
         </div>
 
-        {/* Listed Properties */}
+        
         <div className="card">
           <div className="card-header">
             <h3 className="card-title">Listed Properties</h3>
@@ -588,7 +588,7 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           </div>
         </div>
 
-        {/* Booking Resources */}
+       
         <div className="card">
           <div className="card-header">
             <h3 className="card-title">Booking Resource</h3>
@@ -610,7 +610,7 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           </div>
         </div>
 
-        {/* Sales Analytics */}
+       
         <div className="card card-full-width">
           <div className="card-header">
             <h3 className="card-title">Sales Analytics</h3>
