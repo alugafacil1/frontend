@@ -5,10 +5,61 @@ import SearchForm from "@/components/SearchForm";
 import FeaturedListings from "@/components/FeaturedListings";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
-import LatestUpdates from "@/components/LatestUpdates";
+import LatestUpdates, { CardItem } from "@/components/LatestUpdates";
 import FAQ from "@/components/FAQ";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
+
+const mockAgents: CardItem[] = [
+  {
+    id: 1,
+    name: "Jaydon George",
+    rating: 4.9,
+    title: "Senior Real Estate Advisor",
+    location: "Paris",
+    propertiesSold: 432,
+  },
+  {
+    id: 2,
+    name: "Jane Doe",
+    rating: 4.8,
+    title: "Real Estate Consultant",
+    location: "London",
+    propertiesSold: 356,
+  },
+  {
+    id: 3,
+    name: "Gustavo Bator",
+    rating: 4.7,
+    title: "Property Specialist",
+    location: "Manchester",
+    propertiesSold: 289,
+  },
+  {
+    id: 4,
+    name: "Haylie Philips",
+    rating: 4.9,
+    title: "Senior Real Estate Advisor",
+    location: "Madrid",
+    propertiesSold: 521,
+  },
+  {
+    id: 5,
+    name: "Alex Johnson",
+    rating: 4.6,
+    title: "Real Estate Agent",
+    location: "Berlin",
+    propertiesSold: 234,
+  },
+  {
+    id: 6,
+    name: "Maria Silva",
+    rating: 4.8,
+    title: "Property Consultant",
+    location: "Lisbon",
+    propertiesSold: 398,
+  },
+];
 
 export default function LandingPage() {
   return (
@@ -29,7 +80,11 @@ export default function LandingPage() {
       <FeaturesSection />
 
       {/* Latest Updates */}
-      <LatestUpdates />
+      <LatestUpdates
+        title="Últimas atualizações"
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna."
+        items={mockAgents}
+      />
 
       {/* FAQ Section */}
       <FAQ />
