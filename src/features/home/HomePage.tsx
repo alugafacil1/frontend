@@ -1,11 +1,82 @@
 "use client";
 
+import { useAuth } from "@/lib/auth/useAuth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import SearchForm from "@/components/SearchForm";
-import FeaturedListings from "@/components/FeaturedListings";
+import FeaturedAds, { Property } from "@/components/FeaturedAds";
 import LatestUpdates, { CardItem } from "@/components/LatestUpdates";
 import Footer from "@/components/Footer";
+
+// Mock de dados para FeaturedAds na HomePage (área logada)
+const homeProperties: Property[] = [
+  {
+    id: 1,
+    title: "Apartamento Premium - Centro",
+    location: "Av. Paulista, 1000 - São Paulo, SP",
+    type: "apartment",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+  {
+    id: 2,
+    title: "Casa com Piscina - Alphaville",
+    location: "Rua das Flores, 250 - Barueri, SP",
+    type: "house",
+    bedrooms: 4,
+    bathrooms: 3,
+  },
+  {
+    id: 3,
+    title: "Studio Moderno - Vila Madalena",
+    location: "Rua Harmonia, 500 - São Paulo, SP",
+    type: "kitnet",
+    bedrooms: 1,
+    bathrooms: 1,
+  },
+  {
+    id: 4,
+    title: "Cobertura Duplex - Jardins",
+    location: "Av. Faria Lima, 2000 - São Paulo, SP",
+    type: "apartment",
+    bedrooms: 5,
+    bathrooms: 4,
+  },
+  {
+    id: 5,
+    title: "Casa Térrea - Granja Viana",
+    location: "Estrada da Granja, 1500 - Cotia, SP",
+    type: "house",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+  {
+    id: 6,
+    title: "Kitnet Mobiliada - Pinheiros",
+    location: "Rua dos Pinheiros, 800 - São Paulo, SP",
+    type: "kitnet",
+    bedrooms: 1,
+    bathrooms: 1,
+  },
+  {
+    id: 7,
+    title: "Apartamento Alto Padrão - Moema",
+    location: "Av. Ibirapuera, 3000 - São Paulo, SP",
+    type: "apartment",
+    bedrooms: 2,
+    bathrooms: 2,
+  },
+  {
+    id: 8,
+    title: "Casa com Quintal - Butantã",
+    location: "Rua do Butantã, 1200 - São Paulo, SP",
+    type: "house",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+];
 
 // Mock de dados para "Meus anúncios mais vistos"
 const mostViewedItems: CardItem[] = [
@@ -112,6 +183,23 @@ const latestUpdatesItems: CardItem[] = [
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="landing-page">
       {/* Header */}
@@ -123,8 +211,12 @@ export default function HomePage() {
       {/* Search Form */}
       <SearchForm />
 
-      {/* Featured Listings */}
-      <FeaturedListings />
+      {/* Featured Ads */}
+      <FeaturedAds 
+        properties={homeProperties}
+        title="Meus Anúncios em Destaque"
+        subtitle="Confira os seus melhores anúncios que estão recebendo mais visualizações e interesse dos clientes."
+      />
 
       {/* Meus anúncios mais vistos */}
       <LatestUpdates
