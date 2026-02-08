@@ -2,13 +2,81 @@
 
 import Header from "@/components/Header";
 import SearchForm from "@/components/SearchForm";
-import FeaturedListings from "@/components/FeaturedListings";
+import FeaturedAds, { Property } from "@/components/FeaturedAds";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import LatestUpdates, { CardItem } from "@/components/LatestUpdates";
 import FAQ from "@/components/FAQ";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
+
+// Mock de dados para FeaturedAds na LandingPage (página pública)
+const landingProperties: Property[] = [
+  {
+    id: 1,
+    title: "Melton Road, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "apartment",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+  {
+    id: 2,
+    title: "Hamilton, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "house",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+  {
+    id: 3,
+    title: "Uppingham Road, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "apartment",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+  {
+    id: 4,
+    title: "City Center, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "kitnet",
+    bedrooms: 1,
+    bathrooms: 1,
+  },
+  {
+    id: 5,
+    title: "Oadby, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "house",
+    bedrooms: 4,
+    bathrooms: 3,
+  },
+  {
+    id: 6,
+    title: "City Center, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "apartment",
+    bedrooms: 2,
+    bathrooms: 2,
+  },
+  {
+    id: 7,
+    title: "Hamilton, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "kitnet",
+    bedrooms: 1,
+    bathrooms: 1,
+  },
+  {
+    id: 8,
+    title: "City Center, Leicester",
+    location: "Is simply dummy text of the and typesetting",
+    type: "house",
+    bedrooms: 3,
+    bathrooms: 2,
+  },
+];
 
 const mockAgents: CardItem[] = [
   {
@@ -73,8 +141,12 @@ export default function LandingPage() {
       {/* Search Form */}
       <SearchForm />
 
-      {/* Featured Listings */}
-      <FeaturedListings />
+      {/* Featured Ads */}
+      <FeaturedAds 
+        properties={landingProperties}
+        title="Anúncios com Destaque"
+        subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+      />
 
       {/* Features Section */}
       <FeaturesSection />
