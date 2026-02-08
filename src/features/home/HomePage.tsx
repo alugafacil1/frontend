@@ -1,5 +1,8 @@
 "use client";
 
+import { useAuth } from "@/lib/auth/useAuth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import SearchForm from "@/components/SearchForm";
@@ -112,6 +115,23 @@ const latestUpdatesItems: CardItem[] = [
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="landing-page">
       {/* Header */}

@@ -12,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace("/welcome");
+      router.replace("/home");
     }
   }, [isAuthenticated, loading, router]);
 

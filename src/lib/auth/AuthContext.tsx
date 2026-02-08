@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`;
 
       console.log("Login Sucesso. Dados completos:", userData);
-      router.push("/welcome");
+      router.push("/home");
       
     } catch (error: unknown) { 
       if (error instanceof Error) {
