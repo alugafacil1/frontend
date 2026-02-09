@@ -10,11 +10,15 @@ interface HeaderProps {
   transparent?: boolean;
 }
 
+const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN"];
+
 export default function Header({ transparent = false }: HeaderProps) {
   const { user, logout, isAuthenticated } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const canAccessManagement = user?.role && ROLES_ADMINISTRATIVAS.includes(user.role);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -45,6 +49,13 @@ export default function Header({ transparent = false }: HeaderProps) {
               <nav className="header-nav">
                 <Link href="/" className="nav-link">Home</Link>
                 <Link href="/imoveis" className="nav-link">Imóveis</Link>
+                
+                {canAccessManagement && (
+                  <Link href="/management" className="nav-link">
+                    Gerenciamento
+                  </Link>
+                )}
+                
                 <Link href="/dashboard" className="nav-link">Dashboard</Link>
               </nav>
 
@@ -76,6 +87,9 @@ export default function Header({ transparent = false }: HeaderProps) {
                       <div className="dropdown-header">
                         <strong>{user?.name}</strong>
                         <span>{user?.email}</span>
+                        <small style={{ color: 'var(--primary-blue)', display: 'block', marginTop: '4px' }}>
+                           {user?.role}
+                        </small>
                       </div>
                       <Link 
                         href="/profile" 
