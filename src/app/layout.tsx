@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "@/assets/styles/global.css"
 import Providers from "./providers";
+import QueryProvider from "@/lib/providers/QueryProvider";
+import Header from "@/components/Header";
 
 
 const poppins = Poppins({
@@ -26,7 +28,12 @@ export default function RootLayout({
         className={`${poppins.variable} antialiased`}
       >
       <Providers>
-          {children}
+        <QueryProvider>
+          <Header />
+          <main style={{ minHeight: '100vh' }}>
+              {children}
+            </main>
+        </QueryProvider>
         </Providers>
       </body>
     </html>
