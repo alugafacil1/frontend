@@ -9,11 +9,20 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(
-    (config) => {
-        return config;
-    },
-    (error) => Promise.reject(error)
+  (config) => {
+    
+    const token = localStorage.getItem("token");
+
+    if (token && config.headers) {
+      
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
+
+
 
 api.interceptors.response.use(
     (response) => response,

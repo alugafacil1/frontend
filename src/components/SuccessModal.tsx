@@ -14,17 +14,19 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        {/* Círculo de ícone seguindo o padrão do projeto */}
         <div className="success-icon-circle">
-          <CheckIcon style={{ width: '40px' }} />
+          <CheckIcon className="success-check-icon" />
         </div>
         
-        <h2 className="modal-title">Listing Published!</h2>
+        <h2 className="modal-title">Anúncio Publicado!</h2>
         <p className="modal-desc">
-          Your property has been successfully listed. It is now visible to thousands of potential tenants.
+          Seu imóvel foi listado com sucesso. Agora ele está visível para potenciais inquilinos.
         </p>
 
-        <button onClick={onClose} className="btn-finish">
-          Back to Dashboard
+        {/* Botão formatado como o btn-publish/btn-next */}
+        <button onClick={onClose} className="btn-publish">
+          Ir para o Dashboard
         </button>
       </div>
     </div>

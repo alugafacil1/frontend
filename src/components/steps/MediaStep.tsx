@@ -1,99 +1,107 @@
 "use client";
 
 import React, { useRef } from 'react';
-import { PhotoIcon, XMarkIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, XMarkIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 interface MediaStepProps {
   data: any;
   updateData: (newData: any) => void;
   onNext: () => void;
+  onBack: () => void; 
 }
 
-export const MediaStep = ({ data, updateData, onNext }: MediaStepProps) => {
+export const MediaStep = ({ data, updateData, onNext, onBack }: MediaStepProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const images: File[] = data.images || [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      updateData({ images: [...(data.images || []), ...newImages] });
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      updateData({ images: [...images, ...newFiles] });
     }
   };
 
   const removeImage = (indexToRemove: number) => {
-    const filteredImages = data.images.filter((_: any, index: number) => index !== indexToRemove);
+    const filteredImages = images.filter((_, index) => index !== indexToRemove);
     updateData({ images: filteredImages });
   };
 
   return (
     <div className="step-container">
-      <h2 className="step-inner-title">Property/ Room Details</h2>
+      <h2 className="step-inner-title">Detalhes do Imóvel/Quarto</h2>
+      <p className="step-description">
+        Envie fotos do seu imóvel
+      </p>
       
-      {/* Upload de Fotos */}
-      <div className="media-input-group">
-        <label className="media-label">Photos of the Property</label>
-        <div className="upload-container" onClick={() => fileInputRef.current?.click()}>
-          <PhotoIcon className="upload-icon" style={{ margin: '0 auto' }} />
-          <p className="upload-text">
-            <span>Click to upload</span> or drag and drop images here
+      
+      <div 
+        className="upload-box" 
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <div className="upload-content">
+          <ArrowUpTrayIcon className="upload-icon-blue" />
+          <p className="upload-main-text">Arraste ou Carregue a Imagem</p>
+          <p className="upload-subtext-small">
+            Formatos permitidos: JPG, JPEG, PNG <br />
+            tamanho da imagem deve ser de 10kb a 20mb
           </p>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            multiple 
-            hidden 
-            accept="image/*"
-          />
+          <button type="button" className="btn-browse">Browse</button>
         </div>
+        
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          multiple 
+          hidden 
+          accept="image/*"
+        />
       </div>
 
-      {/* Preview das imagens */}
-      {data.images?.length > 0 && (
-        <div className="image-preview-grid" style={{ marginTop: '20px', marginBottom: '40px' }}>
-          {data.images.map((img: string, index: number) => (
-            <div key={index} style={{ position: 'relative' }}>
-              <img src={img} alt="Preview" className="preview-item" />
+      {/* Grid de Preview das Imagens Carregadas */}
+      {images.length > 0 && (
+        <div className="image-preview-grid">
+          {images.map((file, index) => (
+            <div key={index} className="preview-card">
+              <img 
+                src={URL.createObjectURL(file)} 
+                alt={`Preview ${index}`} 
+                className="preview-img" 
+              />
               <button 
-                className="remove-image-btn"
+                className="remove-btn"
                 onClick={(e) => {
                   e.stopPropagation();
                   removeImage(index);
                 }}
               >
-                <XMarkIcon style={{ width: '14px', color: 'white' }} />
+                <XMarkIcon className="remove-icon" />
               </button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Campo do Link do YouTube - O que faltava */}
-      <div className="media-input-group" style={{ marginTop: '20px' }}>
-        <label className="media-label">Video Link (YouTube)</label>
-        <div style={{ position: 'relative' }}>
-          <input 
-            type="text" 
-            className="media-input"
-            placeholder="Paste your YouTube video link here"
-            style={{ paddingLeft: '45px' }} // Espaço para o ícone
-            value={data.videoLink || ''}
-            onChange={(e) => updateData({ videoLink: e.target.value })}
-          />
-          <VideoCameraIcon 
-            style={{ 
-              position: 'absolute', 
-              left: '15px', 
-              top: '50%', 
-              transform: 'translateY(-50%)',
-              width: '20px',
-              color: '#9ca3af'
-            }} 
-          />
-        </div>
+      {/* Campo do Link do YouTube */}
+      <div className="floating-input-container">
+        <label className="floating-label">Link do YouTube (Opcional)</label>
+        <input 
+          type="text" 
+          className="custom-input"
+          placeholder="Cole o link"
+          value={data.videoLink || ''}
+          onChange={(e) => updateData({ videoLink: e.target.value })}
+        />
       </div>
 
-      <div className="button-wrapper">
-        <button onClick={onNext} className="btn-next">Next</button>
+      {/* Botões de Navegação */}
+      <div className="buttons-container">
+        <button onClick={onBack} className="btn-back">
+          Voltar
+        </button>
+        <button onClick={onNext} className="btn-next">
+          Próximo
+        </button>
       </div>
     </div>
   );

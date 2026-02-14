@@ -1,0 +1,221 @@
+/* Container Principal */
+.my-properties-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: 40px 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+.page-header {
+  max-width: 1200px;
+  margin: 0 auto 40px auto;
+}
+
+.page-title {
+  padding: 30px;
+  font-size: 32px;
+  font-weight: 800;
+  color: #111827;
+}
+
+/* Grid System */
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =========================
+   LOADING STATE
+   ========================= */
+.loading-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid #e5e7eb; /* Cinza claro */
+  border-bottom-color: #3b82f6; /* Azul */
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =========================
+   EMPTY STATE (Sem Imóveis)
+   ========================= */
+.empty-state-container {
+  text-align: center;
+  padding: 80px 0;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-state-text {
+  color: #6b7280;
+  font-size: 18px;
+  margin-bottom: 24px;
+}
+
+.empty-state-link {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 16px;
+  transition: color 0.2s;
+}
+
+.empty-state-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* =========================
+   PROPERTY CARD (Mantido do passo anterior)
+   ========================= */
+.property-card {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.property-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background-color: #f3f4f6;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  color: #374151;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.property-card:hover .carousel-btn {
+  opacity: 1;
+}
+
+.carousel-btn.left { left: 10px; }
+.carousel-btn.right { right: 10px; }
+.carousel-btn:hover { background-color: white; }
+
+.fav-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  color: #9ca3af;
+  transition: color 0.2s;
+}
+
+.fav-btn:hover { color: #ef4444; }
+
+.card-content {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 8px;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.star-icon {
+  width: 16px;
+  height: 16px;
+  color: #fbbf24;
+}
+
+.rating-text {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+.edit-btn {
+  width: 100%;
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #eff0f6;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.edit-btn:hover {
+  background-color: #e5e7eb;
+}
