@@ -11,4 +11,5 @@ export interface UserResponse {
     userType: UserType;
     agency?: any;
     status: 'ACTIVE' | 'BLOCKED' | 'INACTIVE' | 'PENDING_ACTIVATION';
+    propertiesCount: number;
 }

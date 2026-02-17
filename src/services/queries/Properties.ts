@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PropertyResponse } from "@/types/property";
+import type { PropertyResponse, PropertyStatus } from "@/types/property";
 import api from "../api";
 
 interface SpringPageResponse<T> {
@@ -9,9 +9,9 @@ interface SpringPageResponse<T> {
   number: number;
 }
 
-export function useProperties(page: number, size: number, userId?: string, role?: string) {
+export function useProperties(page: number, size: number, userId?: string, role?: string, status?: PropertyStatus | 'ALL') {
   return useQuery({
-    queryKey: ["properties", page, size, userId, role],
+    queryKey: ["properties", page, size, userId, role, status],
     queryFn: async () => {
       if (role === "OWNER" && userId) {
         const { data } = await api.get<PropertyResponse[]>(
@@ -26,15 +26,19 @@ export function useProperties(page: number, size: number, userId?: string, role?
         } as SpringPageResponse<PropertyResponse>;
       }
 
+      const params: Record<string, any> = { 
+        page, 
+        size, 
+        sort: "createdAt,desc" 
+      };
+
+      if (status && status !== 'ALL') {
+          params.status = status;
+      }
+
       const { data } = await api.get<SpringPageResponse<PropertyResponse>>(
         "/api/properties",
-        {
-          params: { 
-            page, 
-            size,
-            sort: "createdAt,desc" 
-          }
-        }
+        { params }
       );
       return data;
     },

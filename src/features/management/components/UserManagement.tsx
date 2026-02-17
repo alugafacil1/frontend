@@ -112,6 +112,18 @@ export function UserManagement() {
       }
     },
     {
+      header: "Imóveis",
+      accessorKey: "propertiesCount",
+      cell: ({ getValue }) => {
+        const count = getValue() as number;
+        return (
+            <span style={{ fontWeight: 600, color: '#4b5563' }}>
+                {count} {count === 1 ? 'imóvel' : 'imóveis'}
+            </span>
+        );
+      }
+    },
+    {
       header: "Ações",
       id: "actions",
       cell: ({ row }) => (
