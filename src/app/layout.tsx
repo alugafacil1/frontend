@@ -29,7 +29,6 @@ export default function RootLayout({
       >
       <Providers>
         <QueryProvider>
-          <Header />
           <main style={{ minHeight: '100vh' }}>
               {children}
             </main>

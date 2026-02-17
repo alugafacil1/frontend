@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { PropertyResponse } from "@/types/property";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PropertyResponse } from "@/types/property";
+import api from "../api";
 
 interface SpringPageResponse<T> {
   content: T[];
@@ -14,8 +14,8 @@ export function useProperties(page: number, size: number, userId?: string, role?
     queryKey: ["properties", page, size, userId, role],
     queryFn: async () => {
       if (role === "OWNER" && userId) {
-        const { data } = await axios.get<PropertyResponse[]>(
-          `http://localhost:8081/api/properties/owner/${userId}`
+        const { data } = await api.get<PropertyResponse[]>(
+          `/api/properties/owner/${userId}`
         );
         
         return {
@@ -26,8 +26,8 @@ export function useProperties(page: number, size: number, userId?: string, role?
         } as SpringPageResponse<PropertyResponse>;
       }
 
-      const { data } = await axios.get<SpringPageResponse<PropertyResponse>>(
-        "http://localhost:8081/api/properties",
+      const { data } = await api.get<SpringPageResponse<PropertyResponse>>(
+        "/api/properties",
         {
           params: { 
             page, 
@@ -40,4 +40,28 @@ export function useProperties(page: number, size: number, userId?: string, role?
     },
     placeholderData: (previousData) => previousData,
   });
+}
+
+interface UpdateStatusParams {
+    id: string;
+    status: string;
+    reason?: string;
+}
+
+export function useUpdatePropertyStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, status, reason }: UpdateStatusParams) => {
+            const { data } = await api.patch(`/api/properties/${id}/status`, { 
+                status, 
+                reason 
+            });
+            return data;
+        },
+        onSuccess: () => {
+            // Atualiza a tabela na mesma hora em que o status mudar
+            queryClient.invalidateQueries({ queryKey: ["properties"] });
+        }
+    });
 }
