@@ -89,3 +89,64 @@ export const StatusBadge = styled.span<{ $status?: string }>`
         }
     }};
 `;
+
+// Adicione ao seu arquivo de estilos (ex: styles.ts)
+export const TabsHeader = styled.div`
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+    padding: 0 2rem;
+`;
+
+export const TabButtonModal = styled.button<{ $active?: boolean }>`
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: ${({ $active }) => ($active ? '#2563eb' : '#6b7280')};
+    border-bottom: 2px solid ${({ $active }) => ($active ? '#2563eb' : 'transparent')};
+    transition: all 0.2s;
+
+    &:hover {
+        color: #2563eb;
+    }
+`;
+
+export const FeatureGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+`;
+
+export const FeatureItem = styled.div`
+    display: flex;
+    flex-direction: column;
+    
+    span.label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    span.value {
+        font-size: 1rem;
+        color: #111827;
+        font-weight: 500;
+    }
+`;
+
+export const DescriptionBox = styled.div`
+    margin-top: 1.5rem;
+    p {
+        color: #4b5563;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+`;
