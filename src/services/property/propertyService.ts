@@ -71,7 +71,7 @@ export const propertyService = {
         console.error("Tentativa de buscar imóveis com ID inválido");
         return [];
     }
-    const response = await api.get(`/properties/owner/${userId}`);
+    const response = await api.get(`/api/properties/owner/${userId}`);
     return response.data;
 },
 
