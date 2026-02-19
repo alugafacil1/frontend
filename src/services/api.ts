@@ -7,6 +7,14 @@ const api = axios.create({
     },
 });
 
+// Instância para endpoints públicos (sem autenticação)
+export const publicApi = axios.create({
+    baseURL: "http://localhost:8081", 
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
+
 api.interceptors.request.use((config) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
 
