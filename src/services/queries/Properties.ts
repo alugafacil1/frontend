@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PropertyResponse, PropertyStatus } from "@/types/property";
-import api from "../api";
+import api, { publicApi } from "../api";
 
 interface SpringPageResponse<T> {
   content: T[];
@@ -50,6 +50,19 @@ interface UpdateStatusParams {
     id: string;
     status: string;
     reason?: string;
+}
+
+export function useRecentProperties() {
+  return useQuery({
+    queryKey: ["properties", "recent"],
+    queryFn: async () => {
+      const { data } = await publicApi.get<PropertyResponse[]>(
+        "/api/properties/recent"
+      );
+      return data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
 }
 
 export function useUpdatePropertyStatus() {

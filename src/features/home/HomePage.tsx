@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth/useAuth";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -9,76 +9,13 @@ import SearchForm from "@/components/SearchForm";
 import FeaturedAds, { Property } from "@/components/FeaturedAds";
 import LatestUpdates, { CardItem } from "@/components/LatestUpdates";
 import Footer from "@/components/Footer";
+import { useRecentProperties } from "@/services/queries/Properties";
+import { 
+  transformPropertyResponsesToProperties,
+  transformPropertyResponsesToCardItems 
+} from "@/utils/propertyTransformers";
 
-// Mock de dados para FeaturedAds na HomePage (área logada)
-const homeProperties: Property[] = [
-  {
-    id: 1,
-    title: "Apartamento Premium - Centro",
-    location: "Av. Paulista, 1000 - São Paulo, SP",
-    type: "apartment",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 2,
-    title: "Casa com Piscina - Alphaville",
-    location: "Rua das Flores, 250 - Barueri, SP",
-    type: "house",
-    bedrooms: 4,
-    bathrooms: 3,
-  },
-  {
-    id: 3,
-    title: "Studio Moderno - Vila Madalena",
-    location: "Rua Harmonia, 500 - São Paulo, SP",
-    type: "kitnet",
-    bedrooms: 1,
-    bathrooms: 1,
-  },
-  {
-    id: 4,
-    title: "Cobertura Duplex - Jardins",
-    location: "Av. Faria Lima, 2000 - São Paulo, SP",
-    type: "apartment",
-    bedrooms: 5,
-    bathrooms: 4,
-  },
-  {
-    id: 5,
-    title: "Casa Térrea - Granja Viana",
-    location: "Estrada da Granja, 1500 - Cotia, SP",
-    type: "house",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 6,
-    title: "Kitnet Mobiliada - Pinheiros",
-    location: "Rua dos Pinheiros, 800 - São Paulo, SP",
-    type: "kitnet",
-    bedrooms: 1,
-    bathrooms: 1,
-  },
-  {
-    id: 7,
-    title: "Apartamento Alto Padrão - Moema",
-    location: "Av. Ibirapuera, 3000 - São Paulo, SP",
-    type: "apartment",
-    bedrooms: 2,
-    bathrooms: 2,
-  },
-  {
-    id: 8,
-    title: "Casa com Quintal - Butantã",
-    location: "Rua do Butantã, 1200 - São Paulo, SP",
-    type: "house",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-];
-
-// Mock de dados para "Meus anúncios mais vistos"
+// Mock de dados para "Meus anúncios mais vistos" - será integrado com endpoint de visualizações
 const mostViewedItems: CardItem[] = [
   {
     id: 1,
@@ -130,67 +67,28 @@ const mostViewedItems: CardItem[] = [
   },
 ];
 
-// Mock de dados para "Minhas últimas atualizações"
-const latestUpdatesItems: CardItem[] = [
-  {
-    id: 1,
-    name: "João Silva",
-    rating: 4.9,
-    title: "Corretor Senior",
-    location: "São Paulo, SP",
-    propertiesSold: 432,
-  },
-  {
-    id: 2,
-    name: "Maria Santos",
-    rating: 4.8,
-    title: "Consultora Imobiliária",
-    location: "Rio de Janeiro, RJ",
-    propertiesSold: 356,
-  },
-  {
-    id: 3,
-    name: "Pedro Costa",
-    rating: 4.7,
-    title: "Especialista em Propriedades",
-    location: "Belo Horizonte, MG",
-    propertiesSold: 289,
-  },
-  {
-    id: 4,
-    name: "Ana Oliveira",
-    rating: 4.9,
-    title: "Corretora Senior",
-    location: "Brasília, DF",
-    propertiesSold: 521,
-  },
-  {
-    id: 5,
-    name: "Carlos Mendes",
-    rating: 4.6,
-    title: "Agente Imobiliário",
-    location: "Curitiba, PR",
-    propertiesSold: 234,
-  },
-  {
-    id: 6,
-    name: "Julia Ferreira",
-    rating: 4.8,
-    title: "Consultora de Propriedades",
-    location: "Porto Alegre, RS",
-    propertiesSold: 398,
-  },
-];
-
 export default function HomePage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const { data: recentProperties, isLoading: isLoadingProperties } = useRecentProperties();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, loading, router]);
+
+  // Transforma os dados da API para o formato esperado pelo componente FeaturedAds
+  const properties: Property[] = useMemo(() => {
+    if (!recentProperties) return [];
+    return transformPropertyResponsesToProperties(recentProperties);
+  }, [recentProperties]);
+
+  // Transforma os dados da API para o formato esperado pelo componente LatestUpdates
+  const latestUpdatesItems: CardItem[] = useMemo(() => {
+    if (!recentProperties) return [];
+    return transformPropertyResponsesToCardItems(recentProperties);
+  }, [recentProperties]);
 
   if (loading || !isAuthenticated) {
     return (
@@ -213,9 +111,9 @@ export default function HomePage() {
 
       {/* Featured Ads */}
       <FeaturedAds 
-        properties={homeProperties}
-        title="Meus Anúncios em Destaque"
-        subtitle="Confira os seus melhores anúncios que estão recebendo mais visualizações e interesse dos clientes."
+        properties={properties}
+        title="Anúncios Recentes"
+        subtitle="Confira os anúncios mais recentes disponíveis para locação"
       />
 
       {/* Meus anúncios mais vistos */}
@@ -225,10 +123,10 @@ export default function HomePage() {
         items={mostViewedItems}
       />
 
-      {/* Minhas últimas atualizações */}
+      {/* Últimas atualizações */}
       <LatestUpdates
-        title="Minhas últimas atualizações"
-        description="Veja as atualizações mais recentes do nosso sistema e novos anúncios adicionados."
+        title="Últimas atualizações"
+        description="Confira os anúncios mais recentes adicionados à nossa plataforma."
         items={latestUpdatesItems}
       />
 

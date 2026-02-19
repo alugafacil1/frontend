@@ -33,7 +33,6 @@ export default function Header({ transparent = false }: HeaderProps) {
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
-    router.push("/login");
   };
 
   return (
