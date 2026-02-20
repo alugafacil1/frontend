@@ -11,17 +11,14 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    // Só redireciona para /home se estiver autenticado
+    // Não bloqueia a exibição da landing page
     if (!loading && isAuthenticated) {
       router.replace("/home");
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading || isAuthenticated) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-      </div>
-    );
-  }
-
+  // Sempre mostra a landing page (pública)
+  // Se estiver autenticado, o useEffect acima vai redirecionar
   return <LandingPage />;
 }

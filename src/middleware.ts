@@ -6,7 +6,11 @@ export function middleware(request: NextRequest) {
 
   const publicRoutes = ["/", "/login", "/signUp"];
 
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))) {
+  // Verifica se é rota pública - para "/" verifica exatamente, para outras verifica se começa com
+  const isPublicRoute = pathname === "/" || 
+    publicRoutes.some(route => route !== "/" && (pathname === route || pathname.startsWith(route + "/")));
+
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 
