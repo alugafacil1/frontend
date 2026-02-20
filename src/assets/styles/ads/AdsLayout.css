@@ -1,0 +1,24 @@
+/* Container principal que ocupa toda a altura da tela */
+.ads-layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9fafb; /* Cinza bem claro para o fundo */
+  font-family: 'Inter', sans-serif;
+}
+
+/* Área do conteúdo principal */
+.ads-main-content {
+  flex: 1; /* Faz o conteúdo ocupar o espaço restante */
+  width: 100%;
+  max-width: 1280px; /* Largura máxima para não esticar em monitores 4k */
+  margin: 0 auto; /* Centraliza o container na tela */
+  padding: 40px 24px; /* Espaçamento interno */
+}
+
+/* Responsividade para celulares */
+@media (max-width: 768px) {
+  .ads-main-content {
+    padding: 24px 16px;
+  }
+}

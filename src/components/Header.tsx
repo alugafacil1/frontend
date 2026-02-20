@@ -62,7 +62,7 @@ export default function Header({ transparent = false }: HeaderProps) {
               <div className="header-actions">
                 
                 <Link href="/ads/create" className="btn-post-ad">
-                  Post an AD
+                  Publicar Anúncio
                 </Link>
                 
                 <button className="icon-btn">

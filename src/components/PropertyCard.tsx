@@ -1,93 +1,147 @@
 "use client";
 
 import React, { useState } from 'react';
-import { HeartIcon, ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@heroicons/react/24/outline";
-import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
-
-interface Property {
-  id: string;
-  title: string;
-  priceInCents: number;
-  photoUrls: string[];
-  type: string;
- 
-}
+import Link from 'next/link';
+import { HeartIcon as HeartOutline, PhotoIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
+import { propertyService } from "@/services/property/propertyService";
 
 interface PropertyCardProps {
-  property: Property;
+  property: any;
+  onDeleteSuccess?: (id: string) => void;
 }
 
-export const PropertyCard = ({ property }: PropertyCardProps) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Imagens: Se não tiver fotos, usa placeholder
-  const images = property.photoUrls && property.photoUrls.length > 0 
-    ? property.photoUrls 
-    : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070"]; // Placeholder
+export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) => {
+  const [imgError, setImgError] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(property.isFavorited || false);
+  const [loadingFav, setLoadingFav] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Formata preço
-  const formattedPrice = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(property.priceInCents / 100);
+  const propertyId = property.id || property.propertyId;
 
-  // Lógica do Carrossel
-  const nextImage = (e: React.MouseEvent) => {
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault(); 
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    
+    if (loadingFav) return;
+
+    setLoadingFav(true);
+    const newState = !isFavorited;
+    setIsFavorited(newState);
+
+    try {
+      console.log(`Imóvel favoritado: ${newState}`);
+    } catch (error) {
+      console.error("Erro ao favoritar", error);
+      setIsFavorited(!newState); 
+    } finally {
+      setLoadingFav(false);
+    }
   };
 
-  const prevImage = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+
+    if (!window.confirm("Tem certeza que deseja excluir este anúncio permanentemente?")) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await propertyService.delete(propertyId);
+      if (onDeleteSuccess) {
+        onDeleteSuccess(propertyId);
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error(" Erro ao excluir imóvel:", error);
+      alert("Não foi possível excluir o anúncio. Tente novamente.");
+      setIsDeleting(false);
+    }
+  };
+
+  const formattedPrice = Number(property.priceInCents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
+
+  const hasImage = property.photoUrls && property.photoUrls.length > 0;
+  const mainImage = hasImage ? property.photoUrls[0] : null;
+
+  const translateType = (type: string) => {
+    const types: Record<string, string> = { APARTMENT: 'Apartamento', HOUSE: 'Casa', ROOM: 'Quarto' };
+    return types[type] || type || 'Imóvel';
   };
 
   return (
-    <div className="property-card">
+    <div className={`property-card ${isDeleting ? 'is-deleting' : ''}`}>
       
-      {/* Imagem + Slider */}
       <div className="card-image-container">
-        <img 
-          src={images[currentImageIndex]} 
-          alt={property.title} 
-          className="card-img" 
-        />
-        
-        {/* Setas só aparecem se tiver mais de 1 imagem */}
-        {images.length > 1 && (
-          <>
-            <button className="carousel-btn left" onClick={prevImage}>
-              <ChevronLeftIcon className="w-4 h-4" />
-            </button>
-            <button className="carousel-btn right" onClick={nextImage}>
-              <ChevronRightIcon className="w-4 h-4" />
-            </button>
-          </>
+        {!imgError && mainImage ? (
+          <img 
+            src={mainImage} 
+            alt="Imagem do imóvel" 
+            className="card-img"
+            onError={() => setImgError(true)} 
+          />
+        ) : (
+          <div className="no-image-placeholder">
+            <PhotoIcon style={{ width: '48px', height: '48px', marginBottom: '8px', opacity: 0.5 }} />
+            <span>Sem foto</span>
+          </div>
         )}
 
-        {/* Botão Favorito */}
-        <button className="fav-btn">
-          <HeartIcon className="w-5 h-5" />
+        <button onClick={toggleFavorite} className="fav-btn" disabled={loadingFav}>
+          {isFavorited ? (
+            <HeartSolid style={{ width: '20px', height: '20px', color: '#ef4444' }} />
+          ) : (
+            <HeartOutline style={{ width: '20px', height: '20px' }} />
+          )}
         </button>
       </div>
 
-      {/* Conteúdo */}
       <div className="card-content">
-        <h3 className="card-title">{property.title}</h3>
-        <p className="card-price">{formattedPrice}</p>
-
-        {/* Avaliação (Mockada visualmente conforme imagem) */}
-        <div className="rating-container">
-          {[1,2,3,4,5].map((star) => (
-             <StarIconSolid key={star} className="star-icon" />
-          ))}
-          <span className="rating-text">(Novo)</span>
+        
+        <div className="card-header-info">
+          <span className="property-type-badge">
+            {translateType(property.type)}
+          </span>
+          <div className="card-price">
+            {formattedPrice} <span className="price-period">/mês</span>
+          </div>
         </div>
 
-        {/* Botão Editar */}
-        <button className="edit-btn">
-          Editar Anúncio
-        </button>
+        <p className="card-location" title={`${property.address?.city}, ${property.address?.neighborhood}`}>
+          <MapPinIcon style={{ width: '16px', height: '16px', marginRight: '4px', flexShrink: 0 }} />
+          {property.address?.city || "Cidade não informada"}, {property.address?.neighborhood || "Centro"}
+        </p>
+
+        <div className="card-features">
+          <div className="feature-item">
+            {property.numberOfBedrooms || 0} <span className="feature-label">qtos</span>
+          </div>
+          <div className="feature-item">
+            {property.numberOfBathrooms || 0} <span className="feature-label">banh</span>
+          </div>
+          {property.garage && (
+            <div className="feature-item">
+              1+ <span className="feature-label">vaga</span>
+            </div>
+          )}
+        </div>
+
+        <div className="card-actions-grid">
+          <Link href={`/ads/edit/${propertyId}`} className="btn-action edit"> 
+            Editar
+          </Link>
+          <button onClick={handleDelete} className="btn-action delete">
+            {isDeleting ? 'Excluindo...' : 'Excluir'}
+          </button>
+        </div>
+
       </div>
     </div>
   );

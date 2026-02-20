@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from 'react';
-import { PhotoIcon, XMarkIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 interface MediaStepProps {
   data: any;
@@ -12,7 +12,9 @@ interface MediaStepProps {
 
 export const MediaStep = ({ data, updateData, onNext, onBack }: MediaStepProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const images: File[] = data.images || [];
+  
+  
+  const images: (File | string)[] = data.images || [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -26,13 +28,20 @@ export const MediaStep = ({ data, updateData, onNext, onBack }: MediaStepProps) 
     updateData({ images: filteredImages });
   };
 
+
+  const getImageUrl = (image: File | string) => {
+    if (image instanceof File) {
+      return URL.createObjectURL(image);
+    }
+    return image; 
+  };
+
   return (
     <div className="step-container">
       <h2 className="step-inner-title">Detalhes do Imóvel/Quarto</h2>
       <p className="step-description">
         Envie fotos do seu imóvel
       </p>
-      
       
       <div 
         className="upload-box" 
@@ -58,17 +67,18 @@ export const MediaStep = ({ data, updateData, onNext, onBack }: MediaStepProps) 
         />
       </div>
 
-      {/* Grid de Preview das Imagens Carregadas */}
+      
       {images.length > 0 && (
         <div className="image-preview-grid">
-          {images.map((file, index) => (
+          {images.map((img, index) => (
             <div key={index} className="preview-card">
               <img 
-                src={URL.createObjectURL(file)} 
+                src={getImageUrl(img)} 
                 alt={`Preview ${index}`} 
                 className="preview-img" 
               />
               <button 
+                type="button"
                 className="remove-btn"
                 onClick={(e) => {
                   e.stopPropagation();

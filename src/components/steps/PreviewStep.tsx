@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
+import { useMasks } from "../../../hooks/useMasks";
 
 interface PreviewStepProps {
   data: any;
@@ -10,8 +11,16 @@ interface PreviewStepProps {
 }
 
 export const PreviewStep = ({ data, onNext, onBack, isLoading }: PreviewStepProps) => {
-  const images = data.images || [];
+  // 1. Usando o Hook centralizado para todas as formatações
+  const { 
+    formatCurrency, 
+    formatDate, 
+    formatBool, 
+    translateType 
+  } = useMasks();
 
+  // 2. Lógica de Imagens (Arquivos vs URLs)
+  const images = data.images || [];
   const previewImages = useMemo(() => {
     return images.map((img: any) => {
       if (img instanceof File) {
@@ -21,21 +30,19 @@ export const PreviewStep = ({ data, onNext, onBack, isLoading }: PreviewStepProp
     });
   }, [images]);
 
-  const placeholderImg = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070";
-
-  // Função auxiliar para formatar booleanos da API
-  const formatBool = (val: any) => val ? "Sim" : "Não";
+  // 3. Helper para verificar arrays (Amenities/Regras)
+  const hasItem = (list: string[] | undefined, item: string) => list?.includes(item);
 
   return (
     <div className="step-container">
       <h2 className="step-inner-title">Pré-visualizar Anúncio</h2>
       <p className="step-description">
-        Pré-visualize os detalhes do seu anúncio antes de finalizar.
+        Confira todos os detalhes abaixo antes de publicar o seu imóvel.
       </p>
 
-      {/* Seção de Imagens Estilo Grid Horizontal */}
+      {/* --- SEÇÃO 1: IMAGENS --- */}
       <div className="preview-section">
-        <h4 className="section-title">Imagens</h4>
+        <h4 className="preview-title">Imagens ({previewImages.length})</h4>
         <div className="image-preview-grid">
           {previewImages.length > 0 ? (
             previewImages.map((src: string, i: number) => (
@@ -44,56 +51,163 @@ export const PreviewStep = ({ data, onNext, onBack, isLoading }: PreviewStepProp
               </div>
             ))
           ) : (
-            <img src={placeholderImg} className="preview-img" style={{ borderRadius: '8px', width: '200px' }} />
+            <div className="upload-box" style={{ cursor: 'default' }}>
+              <span className="upload-text">Nenhuma imagem selecionada</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Tabela de Detalhes Estilo Listagem */}
+      {/* --- SEÇÃO 2: DETALHES GERAIS --- */}
       <div className="preview-section">
-        <h4 className="section-title">Detalhes do Imóvel</h4>
+        <div className="preview-header">
+           <h4 className="preview-title">Dados do Imóvel</h4>
+        </div>
+        
         <div className="preview-list-table">
-          <div className="preview-table-row"><span>País</span><strong>Brasil</strong></div>
-          <div className="preview-table-row"><span>Cidade</span><strong>{data.city || '-'}</strong></div>
-          <div className="preview-table-row"><span>CEP</span><strong>{data.postalCode || '-'}</strong></div>
-          <div className="preview-table-row"><span>Tipo de Imóvel</span><strong>{data.propertyType || '-'}</strong></div>
-          <div className="preview-table-row"><span>Nº do Apto/Casa</span><strong>{data.number || '-'}</strong></div>
-          <div className="preview-table-row"><span>Endereço</span><strong>{data.address || '-'}</strong></div>
-          <div className="preview-table-row"><span>Nº de Quartos</span><strong>{data.rooms || '0'}</strong></div>
-          <div className="preview-table-row"><span>Nº de Banheiros</span><strong>{data.bathrooms || '0'}</strong></div>
-          
-          <div className="preview-table-row"><span>Aluguel Mensal</span><strong>R${data.monthlyRent || '0'}</strong></div>
-          <div className="preview-table-row"><span>Tempo Mínimo de Contrato</span><strong>{data.minTenancy || '-'} Meses</strong></div>
-          <div className="preview-table-row"><span>Aluguel Semanal</span><strong>R${data.weeklyRent || '0'}</strong></div>
-          <div className="preview-table-row"><span>Valor da Caução</span><strong>R${data.deposit || '0'}</strong></div>
-          <div className="preview-table-row"><span>Disponível a partir de</span><strong>{data.moveInDate || '-'}</strong></div>
-          <div className="preview-table-row"><span>Nº Máximo de Ocupantes</span><strong>{data.maxAttendants || '0'}</strong></div>
-
-          {/* Seção de Contas Inclusas/Amenities */}
-          <div className="preview-table-row highlight">
-            <span>Contas Inclusas</span>
-            <strong>{data.amenities?.join(", ") || "Nenhuma marcada"}</strong>
+          {/* Localização */}
+          <div className="preview-table-row">
+            <span>País</span>
+            <strong>{data.country || "Brasil"}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Cidade</span>
+            <strong>{data.city || '-'}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Endereço</span>
+            <strong>{data.address ? `${data.address}, ${data.number || 'S/N'}` : '-'}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>CEP</span>
+            <strong>{data.postalCode || '-'}</strong>
           </div>
 
-          <div className="preview-table-row"><span>Mobiliado</span><strong>{formatBool(data.amenities?.includes("Mobiliado"))}</strong></div>
-          <div className="preview-table-row"><span>Vaga de Garagem</span><strong>{formatBool(data.houseRules?.includes("Vaga de Garagem"))}</strong></div>
-          <div className="preview-table-row"><span>Aceita Animais</span><strong>{formatBool(data.houseRules?.includes("Aceita Animais"))}</strong></div>
-          
-          <div className="preview-table-row highlight">
-            <span>Descrição da Disponibilidade</span>
-            <strong style={{ fontWeight: 'normal', fontSize: '13px' }}>{data.description || '-'}</strong>
+          {/* Características */}
+          <div className="preview-table-row">
+            <span>Tipo de Imóvel</span>
+            <strong>{translateType(data.propertyType)}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Quartos</span>
+            <strong>{data.rooms || '0'}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Banheiros</span>
+            <strong>{data.bathrooms || '0'}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Máx. Ocupantes</span>
+            <strong>{data.maxAttendants || '0'} Pessoas</strong>
           </div>
         </div>
       </div>
 
-      {/* Botões de Ação */}
+      {/* --- SEÇÃO 3: FINANCEIRO E CONTRATO --- */}
+      <div className="preview-section">
+        <div className="preview-header">
+           <h4 className="preview-title">Valores e Condições</h4>
+        </div>
+
+        <div className="preview-list-table">
+          <div className="preview-table-row highlight">
+            <span>Aluguel Mensal</span>
+            <strong>{formatCurrency(data.monthlyRent)}</strong>
+          </div>
+          
+          {data.weeklyRent && (
+            <div className="preview-table-row">
+              <span>Aluguel Semanal</span>
+              <strong>{formatCurrency(data.weeklyRent)}</strong>
+            </div>
+          )}
+
+          <div className="preview-table-row">
+            <span>Valor da Caução</span>
+            <strong>{formatCurrency(data.deposit)}</strong>
+          </div>
+
+          <div className="preview-table-row">
+            <span>Contrato Mínimo</span>
+            <strong>{data.minTenancy || '0'} Meses</strong>
+          </div>
+
+          <div className="preview-table-row">
+            <span>Disponível a partir de</span>
+            <strong>{formatDate(data.moveInDate)}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* --- SEÇÃO 4: COMODIDADES E REGRAS --- */}
+      <div className="preview-section">
+        <div className="preview-header">
+           <h4 className="preview-title">Comodidades e Regras</h4>
+        </div>
+        
+        <div className="preview-list-table">
+          {/* Booleanos Principais */}
+          <div className="preview-table-row">
+            <span>Mobiliado?</span>
+            <strong>{formatBool(hasItem(data.amenities, "Mobiliado"))}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Vaga de Garagem?</span>
+            <strong>{formatBool(hasItem(data.amenities, "Vaga de Garagem"))}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Aceita Animais?</span>
+            <strong>{formatBool(hasItem(data.houseRules, "Aceita Animais"))}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Aceita Fumantes?</span>
+            <strong>{formatBool(hasItem(data.houseRules, "Permitido Fumar"))}</strong>
+          </div>
+          <div className="preview-table-row">
+            <span>Aceita Casais?</span>
+            <strong>{formatBool(hasItem(data.houseRules, "Aceita Casais"))}</strong>
+          </div>
+
+          {/* Listas Completas */}
+          <div className="preview-table-row">
+            <span>Itens Inclusos</span>
+            <strong>{data.amenities?.length > 0 ? data.amenities.join(", ") : "Nenhum"}</strong>
+          </div>
+          
+          <div className="preview-table-row">
+            <span>Regras da Casa</span>
+            <strong>{data.houseRules?.length > 0 ? data.houseRules.join(", ") : "Nenhuma"}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* --- SEÇÃO 5: DESCRIÇÃO --- */}
+      <div className="preview-section">
+        <div className="preview-header">
+           <h4 className="preview-title">Descrição do Anúncio</h4>
+        </div>
+        
+        <div className="custom-input textarea-compact" style={{ height: 'auto', minHeight: '100px', cursor: 'default' }}>
+          {data.description || "Nenhuma descrição fornecida."}
+        </div>
+      </div>
+
+      {/* --- BOTÕES DE AÇÃO --- */}
       <div className="buttons-container">
-        <button onClick={onBack} className="btn-back" disabled={isLoading}>
-          Voltar
+        <button 
+          onClick={onBack} 
+          className="btn-back" 
+          disabled={isLoading}
+        >
+          Voltar e Editar
         </button>
         
-        <button onClick={onNext} className="btn-next" disabled={isLoading} style={{ width: 'auto', minWidth: '200px' }}>
-          {isLoading ? "Publicando..." : "Finalizar"}
+        <button 
+          onClick={onNext} 
+          className="btn-next" 
+          disabled={isLoading}
+        >
+          {isLoading ? "Publicando..." : "Confirmar e Publicar"}
         </button>
       </div>
     </div>

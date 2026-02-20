@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { PropertyManagement } from "./components/PropertyManagement";
 import { UserManagement } from "./components/UserManagement";
 import * as S from "./styles";
+import Header from "@/components/Header";
+import { AgencyManagement } from "./components/AgencyManagement";
 
 export default function GerenciamentoPage() {
     const { user } = useAuth();
@@ -12,9 +14,11 @@ export default function GerenciamentoPage() {
 
     const canSeeUsers = user?.role === "ADMIN";
     const canSeeProperties = ["ADMIN", "REALTOR", "OWNER"].includes(user?.role || "");
+    const canSeeAgencies = user?.role === "ADMIN";
 
     return (
         <S.PageContainer>
+            <Header />
             <S.TitleSection>
                 <h1>Painel de Gerenciamento</h1>
                 <p>Perfil atual: <strong>{user?.role}</strong></p>
@@ -31,6 +35,11 @@ export default function GerenciamentoPage() {
                         Imóveis
                     </S.TabButton>
                 )}
+                {canSeeAgencies && (
+                    <S.TabButton $active={activeTab === "agencias"} onClick={() => setActiveTab("agencias")}>
+                        Agências
+                    </S.TabButton>
+                )}
             </S.TabsContainer>
 
             <S.ContentSection>
@@ -40,6 +49,10 @@ export default function GerenciamentoPage() {
 
                 {activeTab === "usuarios" && (
                     <UserManagement />
+                )}
+
+                {activeTab === "agencias" && (
+                    <AgencyManagement />
                 )}
             </S.ContentSection>
         </S.PageContainer>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link'; // Boa prática usar Link do Next
+import Link from 'next/link';
 import { useAuth } from "@/lib/auth/useAuth";
 import { propertyService } from "@/services/property/propertyService";
 import { PropertyCard } from "@/components/PropertyCard";
@@ -16,30 +16,27 @@ export default function MyPropertiesPage() {
 
   useEffect(() => {
     async function fetchProperties() {
-      // ADICIONE ESTE LOG PARA DEBUGAR
-      console.log("Usuário atual no useEffect:", user); 
 
-      // CORREÇÃO: Verifique se user existe E se user.id existe
-      if (user && user.id) { 
-        try {
-          const data = await propertyService.getByUser(user.id);
-          setProperties(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error("Erro ao buscar imóveis", error);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Se não tiver user.id ainda, não faça nada ou pare o loading se necessário
-        console.warn("Aguardando ID do usuário...");
+      if (!user || !user.id) {
+        
+        return; 
+      }
+
+      try {
+        const data = await propertyService.getByUser(user.id);
+        setProperties(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Erro ao buscar imóveis:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
-    // Só roda se o user mudar
     fetchProperties();
-  }, [user]);
+  }, [user]); 
 
-  if (loading) {
+ 
+  if (loading && (!user || !user.id)) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -50,14 +47,22 @@ export default function MyPropertiesPage() {
   return (
     <main className="my-properties-page">
       <div className="page-header">
-        <h1 className="page-title">Meus Imóveis</h1>
+        <div className="flex justify-between items-center">
+            <h1 className="page-title">Meus Imóveis</h1>
+            
+        </div>
       </div>
 
       {properties.length > 0 ? (
         <div className="properties-grid">
-          {properties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
+          {properties.map((property, index) => {
+            // Tenta pegar o ID de qualquer forma que o backend mandar, se falhar, usa o index
+            const uniqueKey = property.id || property.propertyId || `fallback-key-${index}`;
+            
+            return (
+              <PropertyCard key={uniqueKey} property={property} />
+            );
+          })}
         </div>
       ) : (
         <div className="empty-state-container">

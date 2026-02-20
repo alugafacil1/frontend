@@ -3,19 +3,19 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Ícones atualizados para corresponder ao design (Versão Solid/Circle)
+
 import { UserCircleIcon, DocumentTextIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 
-// Hooks de Autenticação
+
 import { useAuth } from "@/lib/auth/useAuth";
 
-// Serviço de API
+
 import { propertyService } from "@/services/property/propertyService";
 
-// CSS Global Ajustado
+
 import "@/assets/styles/ads/CreateAd.css"; 
 
-// Componentes dos Passos
+
 import { DetailsStep } from "@/components/steps/DetailsStep";
 import { RentStep } from "@/components/steps/RentStep"; 
 import { AmenitiesStep } from "@/components/steps/AmenitiesStep"; 
@@ -25,7 +25,7 @@ import { MediaStep } from "@/components/steps/MediaStep";
 import { PreviewStep } from "@/components/steps/PreviewStep"; 
 import { SuccessModal } from "@/components/SuccessModal";
 
-// Interface do Form (Estado Local)
+
 interface FormData {
   // Step 1 - Details
   country: string; 
@@ -34,9 +34,12 @@ interface FormData {
   propertyType: string;
   number: string; 
   address: string; 
+  neighborhood?: string; // Adicionado para evitar erro de campo faltante no payload
   rooms: string; 
   bathrooms: string;
   contactPhone: string;
+  lat?: number; // Armazena a latitude para o payload de geolocalização
+  lon?: number; // Armazena a longitude para o payload de geolocalização
   
   // Step 2 - Rent
   monthlyRent: string; 
@@ -55,19 +58,20 @@ interface FormData {
   description: string; 
   
   // Step 6 - Media
-  images: File[]; 
+  // AJUSTE: Aceita File (novas fotos) ou string (URLs de fotos já existentes no banco)
+  images: (File | string)[]; 
   videoLink: string;
 }
 
 export default function CreateAdPage() {
   const router = useRouter();
-  const { user } = useAuth(); // Pegando o usuário logado
+  const { user } = useAuth(); 
   
   const [step, setStep] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Estado inicial completo
+ 
   const [formData, setFormData] = useState<FormData>({
     country: '', city: '', postalCode: '', propertyType: '',
     number: '', address: '', rooms: '', bathrooms: '',
@@ -82,106 +86,119 @@ export default function CreateAdPage() {
     setFormData(prev => ({ ...prev, ...newData }));
   };
 
-  // --- NAVEGAÇÃO ENTRE PASSOS ---
+  
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
-  // --- ENVIO PARA O BACKEND ---
-  const handleFinish = async () => {
-    if (!user || !user.id) {
-      alert("Erro: Usuário não identificado. Faça login novamente.");
-      return;
-    }
+ 
+const handleFinish = async () => {
+  // Validação de segurança para garantir que o usuário está logado
+  if (!user || !user.id) {
+    alert("Erro: Usuário não identificado. Faça login novamente.");
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
+  console.log("🚀 DEBUG: Iniciando processo de criação de anúncio...");
+  
+  try {
+    // Tratamento de preço: conversão de string formatada para centavos
+    const cleanPriceString = formData.monthlyRent.replace(/[^\d,]/g, '').replace(',', '.');
+    const priceFloat = parseFloat(cleanPriceString) || 0;
+    const priceInCents = Math.round(priceFloat * 100);
+
+    // Helpers para converter tags de amenities/rules em booleanos
+    const hasAmenity = (keyword: string) => 
+      formData.amenities.some((a: any) => a.toLowerCase().includes(keyword.toLowerCase()));
     
-    try {
-      // 1. Limpeza e Conversão de Preço (De "1.500,00" para 150000 centavos)
-      // Remove tudo que não for dígito ou vírgula, troca vírgula por ponto
-      const cleanPriceString = formData.monthlyRent.replace(/[^\d,]/g, '').replace(',', '.');
-      const priceFloat = parseFloat(cleanPriceString) || 0;
-      const priceInCents = Math.round(priceFloat * 100);
+    const hasRule = (keyword: string) => 
+      formData.houseRules.some((r: any) => r.toLowerCase().includes(keyword.toLowerCase()));
 
-      // 2. Mapeamento dos Booleanos
-      const hasAmenity = (keyword: string) => 
-        formData.amenities.some(a => a.toLowerCase().includes(keyword.toLowerCase()));
+    // Montagem do Payload de Criação
+    const payload = {
+      title: formData.title || "Imóvel sem título",
+      description: formData.description || "Sem descrição",
       
-      const hasRule = (keyword: string) => 
-        formData.houseRules.some(r => r.toLowerCase().includes(keyword.toLowerCase()));
-
-      // 3. Montagem do Payload (DTO PropertyRequest)
-      const payload = {
-        title: formData.title || "Imóvel sem título",
-        description: formData.description || "Sem descrição",
-        
-        address: {
-          street: formData.address,
-          number: formData.number,
-          city: formData.city,
-          state: formData.country === 'br' ? 'Brasil' : formData.country, 
-          postalCode: formData.postalCode,
-          neighborhood: "Centro" // TODO: Adicionar campo de bairro no form se necessário
-        },
-        
-        geolocation: {
-          latitude: 0.0, // Mock, pois não temos mapa ainda
-          longitude: 0.0
-        },
-
-        priceInCents: priceInCents,
-        
-        numberOfRooms: parseInt(formData.rooms) || 0,
-        numberOfBedrooms: parseInt(formData.rooms) || 0, 
-        numberOfBathrooms: parseInt(formData.bathrooms) || 0,
-        
-        furnished: hasAmenity('Furnished') || hasAmenity('Mobiliado'),
-        petFriendly: hasRule('Pets Allowed') || hasRule('Animais permitidos'),
-        garage: hasAmenity('Garage') || hasAmenity('Parking') || hasAmenity('Estacionamento'),
-        
-        isOwner: true,
-        
-        videoUrl: formData.videoLink || "",
-        phoneNumber: formData.contactPhone || "0000000000",
-        
-        photoUrls: [], // Enviamos vazio, pois as fotos vão em outra rota
-        status: "ACTIVE", 
-        type: formData.propertyType ? formData.propertyType.toUpperCase() : "APARTMENT",
-        
-        userId: user.id 
-      };
-
-      console.log("🚀 Enviando Payload:", payload);
-
-      // 4. Criação do Imóvel
-      const newProperty = await propertyService.create(payload);
-      console.log("✅ Imóvel criado! ID:", newProperty.id);
-
-      // 5. Upload das Fotos (se houver)
-      if (formData.images && formData.images.length > 0) {
-        console.log(`📸 Enviando ${formData.images.length} imagens...`);
-        // O backend deve retornar o ID no objeto criado. Ajuste se o campo for diferente (ex: newProperty.propertyId)
-        await propertyService.uploadPhotos(newProperty.id, formData.images);
-      }
-
-      // Sucesso!
-      setIsModalOpen(true);
-
-    } catch (error: any) {
-      console.error("❌ Erro no envio:", error);
+      address: {
+        street: formData.address,
+        // CORREÇÃO: Garante que o número não vá vazio para evitar erro 400
+        number: formData.number && formData.number.trim() !== "" ? formData.number : "S/N",
+        city: formData.city,
+        state: formData.country === 'br' ? 'Brasil' : (formData.country || "Brasil"), 
+        postalCode: formData.postalCode,
+        neighborhood: formData.neighborhood || "Centro" 
+      },
       
-      let msg = "Erro desconhecido.";
-      if (error.response?.data) {
-        if (error.response.data.errors) {
-            msg = error.response.data.errors.map((e: any) => e.defaultMessage).join(", ");
-        } else {
-            msg = error.response.data.message || JSON.stringify(error.response.data);
-        }
-      }
-      alert(`Falha ao criar anúncio: ${msg}`);
-    } finally {
-      setIsSubmitting(false);
+      geolocation: {
+        latitude: formData.lat || 0.0, 
+        longitude: formData.lon || 0.0
+      },
+
+      priceInCents: priceInCents,
+      
+      numberOfRooms: parseInt(formData.rooms) || 0,
+      numberOfBedrooms: parseInt(formData.rooms) || 0, 
+      numberOfBathrooms: parseInt(formData.bathrooms) || 0,
+      
+      // Conversão explícita para booleanos (NotNull no backend)
+      furnished: !!(hasAmenity('Furnished') || hasAmenity('Mobiliado')),
+      petFriendly: !!(hasRule('Pets Allowed') || hasRule('Animais permitidos')),
+      garage: !!(hasAmenity('Garage') || hasAmenity('Parking') || hasAmenity('Estacionamento')),
+      
+      isOwner: true,
+      videoUrl: formData.videoLink || "",
+      phoneNumber: formData.contactPhone || "0000000000",
+      
+      photoUrls: [], 
+      status: "ACTIVE", 
+      type: formData.propertyType ? formData.propertyType.toUpperCase() : "APARTMENT",
+      
+      userId: user.id 
+    };
+
+    console.log("📡 DEBUG: Enviando Payload de Criação:", payload);
+
+    // 1. Criar o imóvel e aguardar a resposta com o ID gerado
+    const response = await propertyService.create(payload);
+    
+    // 2. Captura robusta do ID (o log mostrou 'propertyId')
+    const createdId = response.id || response.propertyId;
+    
+    if (!createdId) {
+      throw new Error("O servidor não retornou um ID válido para o novo imóvel.");
     }
-  };
+
+    console.log("✅ DEBUG: Imóvel criado com sucesso! ID:", createdId);
+
+    // 3. Upload de fotos utilizando o ID real recém-criado
+    const newImages = formData.images.filter((img: any) => img instanceof File);
+    
+    if (newImages.length > 0) {
+      console.log(`📸 DEBUG: Enviando ${newImages.length} imagens para o ID ${createdId}...`);
+      await propertyService.uploadPhotos(createdId, newImages);
+      console.log("✅ DEBUG: Upload de fotos concluído.");
+    }
+
+    // 4. Feedback visual de sucesso
+    setIsModalOpen(true);
+
+  } catch (error: any) {
+    console.error("❌ DEBUG: Falha no processo de criação:", error);
+    
+    let msg = "Erro desconhecido ao processar sua solicitação.";
+    
+    if (error.response?.data) {
+      console.log("📝 DETALHES DO ERRO DO BACKEND:", error.response.data);
+      // Tenta extrair mensagens de validação específicas (como a do campo number)
+      msg = error.response.data.message || JSON.stringify(error.response.data);
+    }
+    
+    alert(`Falha ao criar anúncio: ${msg}`);
+  } finally {
+    setIsSubmitting(false);
+    console.log("🏁 DEBUG: handleFinish finalizado.");
+  }
+};
 
   return (
     <main className="create-ad-page">
@@ -267,10 +284,10 @@ export default function CreateAdPage() {
         </div>
       </section>
 
-      {/* Modal de Sucesso */}
+      
       <SuccessModal 
         isOpen={isModalOpen} 
-        onClose={() => router.push('/dashboard')} // Redireciona para dashboard após sucesso
+        onClose={() => router.push('/ads/my-properties')} 
       />
 
     </main>
