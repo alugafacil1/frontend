@@ -1,10 +1,10 @@
 'use client';
 
 import Header from '@/components/Header';
-import React, { useState } from 'react';
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
-import Link from "next/link";
-import { CircleStackIcon } from '@heroicons/react/16/solid';
+import Footer from '@/components/Footer';
+import Sidebar from '@/components/Sidebar';
 
 const salesData = [
   { month: 'Jan', value: 4000 },
@@ -58,7 +58,7 @@ const listedProperties = [
 
 
 const bookingResources = [
-  { id: 1, name: 'Carla Daniela', role: 'Owner', image: '👩‍🦰'},
+  { id: 1, name: 'Carla Daniela', role: 'Owner', image: '👩‍🦰' },
   { id: 2, name: 'Inês', role: 'Owner', image: '👩‍🦰' },
   { id: 3, name: 'Everton', role: 'Admin', image: '👨‍💼' },
   { id: 4, name: 'Lucas', role: 'Realtor', image: '👨‍💼' },
@@ -466,178 +466,186 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
           width: 100px;   /* largura fixa */
           height: 100px;  /* altura fixa */
           }
+
+
+        .layout {
+          display: flex;
+          gap: 2rem;
+          margin-top: 2rem;
+        }
+        .sidebar-container {
+          width: 260px;
+          border-radius: 20px;
+          padding: 1.5rem;
+          background: #fff;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          height: fit-content;
+        }
+
+         .content-container {
+          flex: 1;
+          background: #fff;
+          border-radius: 20px;
+          padding: 2rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+     
+
       `}</style>
 
       <Header></Header>
-      <div className="title-dash"><h1>Dashboard</h1></div>    
-      <div className="workbook-section">
-     
-        <div className="workbook-header">
-        
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: '#d1d5db',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+      <div className='layout'>
+      <div className='sidebar-container'><Sidebar /></div>
+      <div className='content-container'>
+        <div className="title-dash"><h1>Dashboard</h1></div>
+        <div className="workbook-section">
+
+          <div className="workbook-header">
+
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{
-                width: '8px',
-                height: '8px',
+                width: '16px',
+                height: '16px',
                 borderRadius: '50%',
-                backgroundColor: '#3b82f6'
-              }}></div>
-            </div>
-            Post Reach
-          </h2>
-          <div className="workbook-stats">
-            <div className="workbook-stat">
-              <div className="workbook-stat-value">120</div>
-              <div className="workbook-stat-label">Total Views</div>
-            </div>
-          </div>
-        </div>
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="month" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip />
-              <Area
-                type="natural"
-                dataKey="value"
-                stroke="#1E90FF"
-                strokeWidth={3}
-                fill="#1E90FF"
-                fillOpacity={0.2}
-                dot={{ fill: '#1E90FF', r: 5 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-     
-      <div className="dashboard-grid">
-       
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Customers</h3>
-            <a href="#" className="card-link">See All →</a>
-          </div>
-          <div className="pie-chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={customerData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {customerData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="stats-section">
-            <div className="stat-item">
-              <span className="stat-value">34,249</span>
-              <span className="stat-label">New Clients</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-value">1420</span>
-              <span className="stat-label">Prospects</span>
-            </div>
-          </div>
-        </div>
-
-        
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Listed Properties</h3>
-            <a href="#" className="card-link">See All →</a>
-          </div>
-          <div className="property-list">
-            {listedProperties.map((property) => (
-              <div key={property.id} className="property-item">
-                <div className="property-image">{property.image}</div>
-                <div className="property-details">
-                  <div className="property-name">{property.name}</div>
-                  <div className="property-location">{property.location}</div>
-                </div>
-                <div className="property-date">{property.date}</div>
-                <div className="property-rating">
-                  <span className="rating-star">⭐</span>
-                  <span>{property.rating}</span>
-                  <span style={{ color: '#999' }}>({property.reviews})</span>
-                </div>
+                backgroundColor: '#d1d5db',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6'
+                }}></div>
               </div>
-            ))}
-          </div>
-        </div>
-
-       
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Booking Resource</h3>
-            <a href="#" className="card-link">See All →</a>
-          </div>
-          <div className="booking-list">
-            {bookingResources.map((booking) => (
-              <div key={booking.id} className="booking-item">
-                <div className="booking-info">
-                  <div className="booking-avatar">{booking.image}</div>
-                  <div className="booking-details">
-                    <div className="booking-name">{booking.name}</div>
-                    <div className="booking-role">{booking.role}</div>
-                  </div>
-                </div>
-                <button className="btn-booking">View Bookings</button>
+              Visualizações
+            </h2>
+            <div className="workbook-stats">
+              <div className="workbook-stat">
+                <div className="workbook-stat-value">120</div>
+                <div className="workbook-stat-label">Total Views</div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-       
-        <div className="card card-full-width">
-          <div className="card-header">
-            <h3 className="card-title">Sales Analytics</h3>
-          </div>
-          <div className="chart-container" style={{ height: '250px' }}>
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analyticsData}>
+              <AreaChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis dataKey="month" stroke="#666" />
                 <YAxis stroke="#666" />
                 <Tooltip />
-                <Line
+                <Area
                   type="natural"
-                  dataKey="line1"
+                  dataKey="value"
                   stroke="#1E90FF"
                   strokeWidth={3}
+                  fill="#1E90FF"
+                  fillOpacity={0.2}
                   dot={{ fill: '#1E90FF', r: 5 }}
                 />
-                <Line
-                  type="natural"
-                  dataKey="line2"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  dot={{ fill: '#10b981', r: 5 }}
-                />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+
+        <div className="dashboard-grid">
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Clientes</h3>
+              <a href="#" className="card-link">Todos →</a>
+            </div>
+            <div className="pie-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={customerData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {customerData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="stats-section">
+              <div className="stat-item">
+                <span className="stat-value">34,249</span>
+                <span className="stat-label">Novos Clientes</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">1420</span>
+                <span className="stat-label">Clientes em Potencial</span>
+              </div>
+            </div>
+          </div>
+
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Propriedades</h3>
+              <a href="#" className="card-link">Todas →</a>
+            </div>
+            <div className="property-list">
+              {listedProperties.map((property) => (
+                <div key={property.id} className="property-item">
+                  <div className="property-image">{property.image}</div>
+                  <div className="property-details">
+                    <div className="property-name">{property.name}</div>
+                    <div className="property-location">{property.location}</div>
+                  </div>
+                  <div className="property-date">{property.date}</div>
+                  <div className="property-rating">
+                    <span className="rating-star">⭐</span>
+                    <span>{property.rating}</span>
+                    <span style={{ color: '#999' }}>({property.reviews})</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card card-full-width">
+            <div className="card-header">
+              <h3 className="card-title">Análise das Vendas</h3>
+            </div>
+            <div className="chart-container" style={{ height: '250px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analyticsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="month" stroke="#666" />
+                  <YAxis stroke="#666" />
+                  <Tooltip />
+                  <Line
+                    type="natural"
+                    dataKey="line1"
+                    stroke="#1E90FF"
+                    strokeWidth={3}
+                    dot={{ fill: '#1E90FF', r: 5 }}
+                  />
+                  <Line
+                    type="natural"
+                    dataKey="line2"
+                    stroke="#10b981"
+                    strokeWidth={3}
+                    dot={{ fill: '#10b981', r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
       </div>
+     </div>
+     <Footer></Footer>
     </div>
   );
 }
