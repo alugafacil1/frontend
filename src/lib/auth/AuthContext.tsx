@@ -41,32 +41,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
+    
     setLoading(true);
 
     try {
-      const data = await auth.login(email, password) as LoginResponse; 
+      // 1. Autenticação inicial
       
+      const data = await auth.login(email, password) as LoginResponse;
+      
+      
+
       if (!data || !data.access_token) {
+        console.error(" [LOGIN DEBUG] Token não encontrado na resposta.");
         throw new Error("Token não fornecido pela API.");
       }
 
       const token = data.access_token;
-      const userResponse = await fetch(`${API_URL}/users/me`, {
+  
+
+      
+      const urlPerfil = `${API_URL}/users/me`;
+      
+      const userResponse = await fetch(urlPerfil, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         }
       });
+      
+      
+      const rawText = await userResponse.text();
+      
 
       if (!userResponse.ok) {
-        throw new Error("Falha ao buscar dados do perfil do usuário.");
+        throw new Error(`Falha ao buscar perfil. Status: ${userResponse.status}. Corpo: ${rawText}`);
       }
 
-      const fullUserData = await userResponse.json();
+      let fullUserData;
+      try {
+        fullUserData = JSON.parse(rawText);
+        
+      } catch (jsonError) {
+        console.error("❌ [LOGIN DEBUG] Erro fatal ao fazer JSON.parse. O servidor retornou algo inválido.");
+        console.error("Conteúdo recebido:", rawText);
+        throw new Error("A resposta do servidor não é um JSON válido.");
+      }
 
+      
       const userData: User = {
-        id: fullUserData.userId,
+        id: fullUserData.userId || fullUserData.id, 
         name: fullUserData.name,
         email: fullUserData.email,
         role: fullUserData.userType,
@@ -75,28 +99,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         cpf: fullUserData.cpf
       };
 
+      
+
+      
       setUser(userData);
       setIsAuthenticated(true);
 
+      
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
       
       document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`;
 
-      console.log("Login Sucesso. Dados completos:", userData);
       router.push("/home");
       
     } catch (error: unknown) { 
       if (error instanceof Error) {
-        console.error("Erro no login:", error.message);
+        console.error("❌ [LOGIN DEBUG] Erro capturado no catch:", error.message);
       } else {
-        console.error("Erro desconhecido no login:", error);
+        console.error("❌ [LOGIN DEBUG] Erro desconhecido:", error);
       }
       throw error; 
     } finally {
       setLoading(false);
     }
-  }
+}
 
   async function signUp(name : string, email : string, phone : string, cpf : string, type : string, password : string) {
     setLoading(true);

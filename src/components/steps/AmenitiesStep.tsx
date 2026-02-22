@@ -1,66 +1,78 @@
 "use client";
-
 import React from 'react';
 
 interface AmenitiesStepProps {
   data: any;
   updateData: (newData: any) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const AMENITIES_LIST = [
-  "Wifi", "Kitchen", "Washing Machine", "Dryer", 
-  "Air Conditioning", "Heating", "Dedicated Workspace", 
-  "TV", "Hair Dryer", "Iron", "Pool", "Free Parking", "Crib"
+  "Água", 
+  "Luz", 
+  "IPTU", 
+  "Gás", 
+  "Internet", 
+  "Condomínio",
+  "Mobiliado",
+  "Ar Condicionado",
+  "Garagem"
 ];
 
-export const AmenitiesStep = ({ data, updateData, onNext }: AmenitiesStepProps) => {
-  // Garantir que amenities seja um array
+export const AmenitiesStep = ({ data, updateData, onNext, onBack }: AmenitiesStepProps) => {
+  
   const selectedAmenities = data.amenities || [];
 
   const toggleAmenity = (amenity: string) => {
+    let newAmenities;
+    
     if (selectedAmenities.includes(amenity)) {
-      updateData({ 
-        amenities: selectedAmenities.filter((item: string) => item !== amenity) 
-      });
+      newAmenities = selectedAmenities.filter((item: string) => item !== amenity);
     } else {
-      updateData({ 
-        amenities: [...selectedAmenities, amenity] 
-      });
+      newAmenities = [...selectedAmenities, amenity];
     }
+
+    updateData({ amenities: newAmenities });
   };
 
   return (
     <div className="step-container">
-      <h2 className="step-inner-title">Amenities</h2>
-      <p style={{ color: '#666', marginBottom: '30px', marginTop: '-30px' }}>
-        Select the amenities available at your property.
+      <h2 className="step-inner-title">Detalhes do Imóvel/Quarto</h2>
+      <p className="step-description">
+        Marque o que já está pago no valor mensal
       </p>
 
-      <div className="amenities-grid">
-        {AMENITIES_LIST.map((amenity) => (
-          <div 
-            key={amenity} 
-            className={`amenity-item ${selectedAmenities.includes(amenity) ? 'selected' : ''}`}
-            onClick={() => toggleAmenity(amenity)}
-          >
-            <input 
-              type="checkbox" 
-              className="amenity-checkbox"
-              checked={selectedAmenities.includes(amenity)}
-              readOnly
-            />
-            <span className="amenity-label">{amenity}</span>
-          </div>
-        ))}
+      <div className="amenities-list">
+        {AMENITIES_LIST.map((amenity) => {
+          const isSelected = selectedAmenities.includes(amenity);
+          
+          return (
+            <div 
+              key={amenity} 
+              className={`amenity-row ${isSelected ? 'selected' : ''}`}
+              onClick={() => toggleAmenity(amenity)}
+            >
+              <span className="amenity-name">
+                {amenity}
+              </span>
+
+              {/* Toggle Switch */}
+              <div className={`toggle-switch ${isSelected ? 'active' : ''}`}>
+                <div className="toggle-thumb"></div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="button-wrapper">
-        <button 
-          onClick={onNext}
-          className="btn-next"
-        >
-          Next
+      <div className="buttons-container">
+        <button onClick={onBack} className="btn-back">
+          Voltar
+        </button>
+        
+        <button onClick={onNext} className="btn-next">
+          Próximo
         </button>
       </div>
     </div>
