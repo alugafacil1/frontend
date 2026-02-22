@@ -16,15 +16,21 @@ export interface PropertyPayload {
   };
   
   priceInCents: number;
+
+  weeklyRentInCents?: number;
+  securityDepositInCents?: number;
+  minimumLeaseMonths?: number;
+  maxOccupants?: number;
+  availableFrom?: string; 
+  
+
   numberOfRooms: number;
   numberOfBedrooms?: number;
   numberOfBathrooms?: number;
   
-  
   amenities?: string[];
   houseRules?: string[];
 
-  
   geolocation?: {
     latitude: number;
     longitude: number;
@@ -46,18 +52,15 @@ export interface PropertyPayload {
 export const propertyService = {
   
   create: async (data: PropertyPayload | any) => {
-    
     const response = await api.post('/api/properties', data);
     return response.data;
   },
 
- 
   getById: async (id: string) => {
     const response = await api.get(`/api/properties/${id}`);
     return response.data;
   },
 
-  
   update: async (id: string, data: PropertyPayload | any) => {
     const response = await api.put(`/api/properties/${id}`, data);
     return response.data;
