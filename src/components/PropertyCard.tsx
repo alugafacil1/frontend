@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   HeartIcon, 
@@ -11,28 +11,49 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import { propertyService } from "@/services/property/propertyService";
+import { useAuth } from "@/lib/auth/useAuth"; 
 
-// Importe o CSS aqui (se estiver usando modules ou global)
 import "@/assets/styles/property/MyProperties.css"; 
 
 interface PropertyCardProps {
   property: any;
-  onDeleteSuccess?: (id: string) => void;
+  onUpdateSuccess?: () => void; 
 }
 
-export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) => {
+export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) => {
   const router = useRouter();
+  const { user } = useAuth();
+  
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(property.isFavorited || false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
+  const [isFavorited, setIsFavorited] = useState(false); // Começa como false por padrão
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  
   const propertyId = property.id || property.propertyId;
 
   // Garante uma lista válida de imagens ou fallback
   const images = property.photoUrls && property.photoUrls.length > 0 
     ? property.photoUrls 
     : [];
+
+  // =================================================================
+  // NOVO: Verifica se está favoritado logo ao carregar o componente
+  // =================================================================
+  useEffect(() => {
+    async function checkFavoriteStatus() {
+      // Se não tiver usuário logado, não precisa buscar nada
+      if (!user || !user.id) return; 
+      
+      try {
+        const isFav = await propertyService.checkIfFavorited(user.id, propertyId);
+        setIsFavorited(isFav);
+      } catch (error) {
+        console.error("Erro ao verificar status de favorito", error);
+      }
+    }
+
+    checkFavoriteStatus();
+  }, [user, propertyId]);
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,31 +70,59 @@ export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) =
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     e.stopPropagation();
-    setIsFavorited(!isFavorited);
-    // Aqui você chamaria o serviço para persistir o favorito no backend
+    
+    // 1. A barreira do TypeScript: se não tiver usuário ou ID, para tudo aqui.
+    if (!user || !user.id) {
+      alert("Você precisa estar logado para favoritar um imóvel.");
+      return; 
+    }
+    
+    // 2. Atualização otimista (muda a cor do coração na hora pro usuário não esperar)
+    const previousState = isFavorited;
+    setIsFavorited(!previousState);
+    
+    try {
+      // 3. Faz a requisição para favoritar / desfavoritar
+      const response = await propertyService.toggleFavorite(user.id, propertyId);
+      
+      // Atualiza com a verdade que veio do banco de dados
+      setIsFavorited(response.isFavorited); 
+      
+    } catch (error) {
+      console.error("Erro ao favoritar", error);
+      // Se der erro no backend, desfaz a pintura do coração
+      setIsFavorited(previousState); 
+      alert("Erro ao favoritar o imóvel.");
+    }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    const newStatus = e.target.value;
 
-    if (!window.confirm("Tem certeza que deseja excluir este anúncio permanentemente?")) {
+    if (!window.confirm("Deseja realmente alterar o status deste anúncio?")) {
+      e.target.value = property.status; // Reverte para o valor original se cancelar
       return;
     }
 
-    setIsDeleting(true);
+    setIsUpdatingStatus(true);
 
     try {
-      await propertyService.delete(propertyId);
-      if (onDeleteSuccess) {
-        onDeleteSuccess(propertyId);
+      await propertyService.updateStatus(propertyId, newStatus);
+      
+      if (onUpdateSuccess) {
+        onUpdateSuccess();
       } else {
         window.location.reload();
       }
     } catch (error) {
-      console.error("Erro ao excluir imóvel:", error);
-      alert("Não foi possível excluir o anúncio.");
-      setIsDeleting(false);
+      console.error("Erro ao alterar status:", error);
+      alert("Não foi possível alterar o status do anúncio.");
+      e.target.value = property.status; // Reverte em caso de erro
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -97,9 +146,19 @@ export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) =
     return types[type] || type || 'Imóvel';
   };
 
+  // Ajuda a colorir o select de acordo com o status atual
+  const getStatusColorClass = (status: string) => {
+    switch(status) {
+      case 'ACTIVE': return 'status-active';
+      case 'PAUSED': return 'status-paused';
+      case 'PLACED': return 'status-placed';
+      default: return '';
+    }
+  };
+
   return (
     <div 
-      className={`property-card ${isDeleting ? 'is-deleting' : ''}`} 
+      className={`property-card ${isUpdatingStatus ? 'is-updating' : ''}`} 
       onClick={handleCardClick}
     >
       {/* Área da Imagem (Carrossel) */}
@@ -123,7 +182,7 @@ export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) =
           {isFavorited ? <HeartSolid className="icon-solid" /> : <HeartIcon className="icon-outline" />}
         </button>
 
-        {/* Setas de Navegação (Só exibe se tiver > 1 foto) */}
+        {/* Setas de Navegação */}
         {images.length > 1 && (
           <>
             <button onClick={handlePrevImage} className="nav-btn prev">
@@ -133,7 +192,6 @@ export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) =
               <ChevronRightIcon className="nav-icon" />
             </button>
             
-            {/* Indicador de pontos (Dots) */}
             <div className="carousel-dots">
               {images.map((_: any, idx: number) => (
                 <div 
@@ -184,9 +242,19 @@ export const PropertyCard = ({ property, onDeleteSuccess }: PropertyCardProps) =
           <button onClick={handleEdit} className="btn-action edit"> 
             Editar
           </button>
-          <button onClick={handleDelete} className="btn-action delete" disabled={isDeleting}>
-            {isDeleting ? '...' : 'Excluir'}
-          </button>
+          
+          {/*SELECT DE STATUS */}
+          <select 
+            className={`btn-action status-select ${getStatusColorClass(property.status)}`}
+            value={property.status || 'ACTIVE'}
+            onChange={handleStatusChange}
+            onClick={(e) => e.stopPropagation()} 
+            disabled={isUpdatingStatus}
+          >
+            <option value="ACTIVE">Ativo</option>
+            <option value="PAUSED">Pausado</option>
+            <option value="PLACED">Alugado</option>
+          </select>
         </div>
 
       </div>

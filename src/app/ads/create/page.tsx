@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { UserCircleIcon, DocumentTextIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 
 import { useAuth } from "@/lib/auth/useAuth";
-
 import { propertyService } from "@/services/property/propertyService";
 
 import "@/assets/styles/ads/CreateAd.css"; 
@@ -74,6 +73,19 @@ export default function CreateAdPage() {
     title: '', description: '', images: [], videoLink: ''
   });
 
+  // =================================================================
+  // PROTEÇÃO DE ROTA: Apenas OWNER e REALTOR podem ver essa tela
+  // =================================================================
+  useEffect(() => {
+    if (user) {
+      const role = user.role as string;
+      // Se for inquilino (TENANT) ou agência (AGENCY_ADMIN), joga pra fora
+      if (role !== 'OWNER' && role !== 'REALTOR') {
+        router.push('/ads/my-properties'); 
+      }
+    }
+  }, [user, router]);
+
   const updateData = (newData: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...newData }));
   };
@@ -88,7 +100,6 @@ export default function CreateAdPage() {
     }
 
     setIsSubmitting(true);
-    
     
     try {
       // Helper para converter valores monetários em string para centavos (inteiro)
@@ -108,6 +119,11 @@ export default function CreateAdPage() {
       const hasRule = (keyword: string) => 
         formData.houseRules.some((r: any) => r.toLowerCase().includes(keyword.toLowerCase()));
 
+      // =================================================================
+      // LÓGICA DE STATUS: Agente -> PENDING | Proprietário -> ACTIVE
+      // =================================================================
+      const isRealtor = (user.role as string) === 'REALTOR';
+      const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
       
       const payload = {
         title: formData.title || "Imóvel sem título",
@@ -128,8 +144,6 @@ export default function CreateAdPage() {
         },
 
         priceInCents: priceInCents,
-
-       
         weeklyRentInCents: parseCurrencyToCents(formData.weeklyRent),
         securityDepositInCents: parseCurrencyToCents(formData.deposit),
         minimumLeaseMonths: formData.minTenancy ? parseInt(formData.minTenancy, 10) : undefined,
@@ -152,13 +166,11 @@ export default function CreateAdPage() {
         phoneNumber: formData.contactPhone || "0000000000",
         
         photoUrls: [], 
-        status: "ACTIVE", 
+        status: initialStatus, 
         type: formData.propertyType ? formData.propertyType.toUpperCase() : "APARTMENT",
         
         userId: user.id 
       };
-
-      
 
       const response = await propertyService.create(payload);
       
@@ -167,8 +179,6 @@ export default function CreateAdPage() {
       if (!createdId) {
         throw new Error("O servidor não retornou um ID válido para o novo imóvel.");
       }
-
-      
 
       const newImages = formData.images.filter((img: any) => img instanceof File);
       
@@ -179,20 +189,22 @@ export default function CreateAdPage() {
       setIsModalOpen(true);
 
     } catch (error: any) {
-      
       let msg = "Erro desconhecido ao processar sua solicitação.";
       
       if (error.response?.data) {
-        
         msg = error.response.data.message || JSON.stringify(error.response.data);
       }
       
       alert(`Falha ao criar anúncio: ${msg}`);
     } finally {
       setIsSubmitting(false);
-      
     }
   };
+
+  // Previne renderização da tela enquanto redireciona um usuário sem permissão
+  if (user && user.role !== 'OWNER' && user.role !== 'REALTOR') {
+    return null; 
+  }
 
   return (
     <main className="create-ad-page">

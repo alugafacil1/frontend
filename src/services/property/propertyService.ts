@@ -66,6 +66,16 @@ export const propertyService = {
     return response.data;
   },
 
+  updateStatus: async (id: string, status: string) => {
+    const response = await api.patch(`/api/properties/${id}/status`, { status });
+    return response.data;
+  },
+
+  toggleFavorite: async (userId: string, propertyId: string) => {
+    const response = await api.post(`/api/favorites/toggle?userId=${userId}&propertyId=${propertyId}`);
+    return response.data;
+  },
+
   uploadPhotos: async (propertyId: string, files: File[]) => {
     const formData = new FormData();
     
@@ -79,6 +89,16 @@ export const propertyService = {
       },
     });
     return response.data;
+  },
+
+  getFavorites: async (userId: string) => {
+    const response = await api.get(`/api/favorites/user/${userId}`);
+    return response.data;
+  },
+
+  checkIfFavorited: async (userId: string, propertyId: string) => {
+    const response = await api.get(`/api/favorites/check?userId=${userId}&propertyId=${propertyId}`);
+    return response.data.isFavorited; 
   },
 
   getByUser: async (userId: string) => {

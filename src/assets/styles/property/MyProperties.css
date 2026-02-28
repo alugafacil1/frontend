@@ -1,92 +1,152 @@
 /* =========================
-   CONTAINER PRINCIPAL E LAYOUT BASE
+   1. CONTAINER PRINCIPAL E LAYOUT
    ========================= */
 .my-properties-page {
-  min-height: 100vh;
-  background-color: #ffffff;
-  padding: 40px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 80vh;
+  background-color: #f9fafb;
   font-family: 'Inter', sans-serif;
 }
 
+/* Cabeçalho da Página */
 .page-header {
-  max-width: 1200px;
-  margin: 0 auto 40px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .page-title {
-  padding: 30px;
-  font-size: 32px;
+  font-size: 1.875rem;
   font-weight: 800;
   color: #111827;
+  margin: 0;
 }
 
+.page-subtitle {
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   2. BOTÕES GERAIS
+   ========================= */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #2563eb;
+  color: white;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* =========================
+   3. ABAS DE FILTRO (TABS)
+   ========================= */
+.tabs-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-color: white;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.tab-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.tab-btn.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.tab-btn.tab-alert.active {
+  background-color: #fff7ed;
+  color: #ea580c;
+  border-color: #fed7aa;
+}
+
+.tab-count {
+  margin-left: 0.5rem;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-btn.active .tab-count {
+  background-color: white;
+  color: #2563eb;
+}
+
+/* =========================
+   4. GRID DE IMÓVEIS
+   ========================= */
 .properties-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 1.5rem;
 }
 
 /* =========================
-   LOADING STATE
+   5. PROPERTY CARD (CORRIGIDO)
    ========================= */
-.loading-container {
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 4px solid #e5e7eb;
-  border-bottom-color: #3b82f6;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* =========================
-   EMPTY STATE (Sem Imóveis)
-   ========================= */
-.empty-state-container {
-  text-align: center;
-  padding: 80px 0;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.empty-state-text {
-  color: #6b7280;
-  font-size: 18px;
-  margin-bottom: 24px;
-}
-
-.empty-state-link {
-  color: #3b82f6;
-  font-weight: 700;
-  font-size: 16px;
-  text-decoration: none;
-  display: inline-block;
-  margin-top: 16px;
-  transition: color 0.2s;
-}
-
-.empty-state-link:hover {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-/* =========================
-   PROPERTY CARD
-   ========================= */
-/* Card Container */
 .property-card {
   background-color: #ffffff;
   border-radius: 12px;
@@ -94,25 +154,26 @@
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #f3f4f6;
   display: flex;
   flex-direction: column;
 }
 
 .property-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
 .property-card.is-deleting {
   opacity: 0.6;
   pointer-events: none;
+  filter: grayscale(1);
 }
 
-/* Image Area */
+/* --- Imagem e Carrossel --- */
 .card-image-container {
   position: relative;
-  height: 200px;
+  height: 220px;
   background-color: #f3f4f6;
   width: 100%;
 }
@@ -140,12 +201,12 @@
   opacity: 0.5;
 }
 
-/* Favorite Button */
+/* Botões sobre a imagem */
 .fav-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -154,32 +215,21 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.2s;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .fav-btn:hover {
+  transform: scale(1.1);
   background: #ffffff;
 }
 
-.icon-outline {
-  width: 20px;
-  height: 20px;
-  color: #4b5563;
-}
-
-.icon-solid {
-  width: 20px;
-  height: 20px;
-  color: #ef4444;
-}
-
-/* Navigation Buttons (Arrows) */
 .nav-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border: none;
   border-radius: 50%;
   width: 28px;
@@ -188,34 +238,21 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0; /* Hidden by default */
-  transition: opacity 0.2s, background 0.2s;
+  opacity: 0;
+  transition: all 0.2s;
   z-index: 5;
 }
 
-.property-card:hover .nav-btn {
-  opacity: 1;
-}
+.property-card:hover .nav-btn { opacity: 1; }
+.nav-btn:hover { background: #ffffff; transform: translateY(-50%) scale(1.1); }
+.nav-btn.prev { left: 8px; }
+.nav-btn.next { right: 8px; }
 
-.nav-btn:hover {
-  background: #ffffff;
-}
+.nav-icon { width: 16px; height: 16px; color: #1f2937; }
+.icon-outline { width: 20px; height: 20px; color: #4b5563; }
+.icon-solid { width: 20px; height: 20px; color: #ef4444; }
 
-.nav-btn.prev {
-  left: 8px;
-}
-
-.nav-btn.next {
-  right: 8px;
-}
-
-.nav-icon {
-  width: 16px;
-  height: 16px;
-  color: #374151;
-}
-
-/* Carousel Dots */
+/* Dots */
 .carousel-dots {
   position: absolute;
   bottom: 8px;
@@ -231,129 +268,12 @@
   height: 6px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 50%;
-  transition: background-color 0.2s;
 }
+.dot.active { background-color: #ffffff; }
 
-.dot.active {
-  background-color: #ffffff;
-}
-
-/* Card Content */
+/* --- Conteúdo do Card --- */
 .card-content {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.card-header-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.property-type-badge {
-  background-color: #eff6ff;
-  color: #2563eb;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-.card-price {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #2563eb;
-}
-
-.price-period {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 400;
-}
-
-.card-location {
-  display: flex;
-  align-items: center;
-  color: #6b7280;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.location-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  flex-shrink: 0;
-}
-
-/* Features (Bedrooms, Bathrooms) */
-.card-features {
-  display: flex;
-  gap: 12px;
-  margin-top: 4px;
-  font-size: 0.875rem;
-  color: #4b5563;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.feature-value {
-  font-weight: 600;
-}
-
-/* Actions Buttons */
-.card-actions-grid {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.btn-action {
-  flex: 1;
-  padding: 8px 0;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s;
-  text-align: center;
-}
-
-.btn-action.edit {
-  background-color: #eff6ff;
-  color: #2563eb;
-}
-
-.btn-action.edit:hover {
-  background-color: #dbeafe;
-}
-
-.btn-action.delete {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.btn-action.delete:hover {
-  background-color: #fee2e2;
-}
-
-/* =========================
-   CARD CONTENT & INFO
-   ========================= */
-.card-content {
-  padding: 20px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -363,50 +283,56 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .property-type-badge {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 6px 12px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .card-price {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   color: #2563eb;
 }
 
 .price-period {
-  font-size: 13px;
+  font-size: 0.75rem;
   color: #6b7280;
   font-weight: 400;
-  margin-left: 2px;
 }
 
 .card-location {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #4b5563;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
+  gap: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.location-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .card-features {
   display: flex;
-  gap: 16px;
-  padding-top: 16px;
+  gap: 1rem;
+  padding-top: 1rem;
   border-top: 1px solid #f3f4f6;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .feature-item {
@@ -414,133 +340,181 @@
   align-items: baseline;
   gap: 4px;
   color: #374151;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .feature-label {
   color: #9ca3af;
   font-weight: 400;
+  font-size: 0.75rem;
 }
 
-/* =========================
-   CARD ACTIONS (EDIT/DELETE)
-   ========================= */
+.feature-value {
+  font-weight: 700;
+}
+
+/* --- Botões de Ação --- */
 .card-actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 0.75rem;
   margin-top: auto; 
 }
 
 .btn-action {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
   text-align: center;
   text-decoration: none;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-action.edit {
   background-color: #eff6ff;
   color: #2563eb;
 }
-
-.btn-action.edit:hover { 
-  background-color: #dbeafe; 
-}
+.btn-action.edit:hover { background-color: #dbeafe; }
 
 .btn-action.delete {
   background-color: #fef2f2;
   color: #dc2626;
 }
-
-.btn-action.delete:hover { 
-  background-color: #fee2e2; 
-}
+.btn-action.delete:hover { background-color: #fee2e2; }
 
 /* =========================
-   SUCCESS MODAL
+   6. LOADING E EMPTY STATE
    ========================= */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
+.loading-container {
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
 }
 
-.modal-content {
-  background: #ffffff;
-  padding: 40px;
-  border-radius: 24px;
-  width: 90%;
-  max-width: 450px;
-  text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: modalPop 0.3s ease-out;
-}
-
-@keyframes modalPop {
-  0% { transform: scale(0.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.success-icon-circle {
-  width: 80px;
-  height: 80px;
-  background-color: #ecfdf5;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px auto;
-}
-
-.success-check-icon {
+.loading-spinner {
   width: 40px;
   height: 40px;
-  color: #10b981;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;
+  border-bottom-color: #2563eb;
+  animation: spin 1s linear infinite;
 }
 
-.modal-title {
-  font-size: 24px;
-  font-weight: 800;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  background-color: white;
+  border-radius: 1rem;
+  border: 2px dashed #e5e7eb;
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 600;
   color: #111827;
-  margin-bottom: 12px;
+  margin-bottom: 0.5rem;
 }
 
-.modal-desc {
-  font-size: 16px;
+.empty-state-text {
   color: #6b7280;
-  line-height: 1.5;
-  margin-bottom: 32px;
+  max-width: 400px;
+  margin-bottom: 1rem;
 }
 
-.btn-publish {
-  width: 100%;
-  padding: 14px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 16px;
+.empty-state-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+.empty-state-link:hover { text-decoration: underline; }
+
+/* Efeito de carregamento ao mudar o status */
+.property-card.is-updating {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Select de Status - Estilizado como um botão */
+.status-select {
+  appearance: none; /* Remove a setinha nativa e feia do navegador */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  /* Adiciona uma setinha customizada (SVG) via background */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234b5563%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem top 50%;
+  background-size: 0.65rem auto;
+  
+  padding-right: 2rem !important; /* Espaço para não cobrir o texto com a seta */
+  outline: none;
   cursor: pointer;
-  transition: background 0.2s;
+  
+
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left; /* Text align left fica melhor em selects */
+  transition: all 0.2s;
 }
 
-.btn-publish:hover {
-  background-color: #2563eb;
+/* --- Cores dinâmicas para o Status --- */
+
+/* Ativo (Verde) */
+.status-select.status-active {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+.status-select.status-active:hover {
+  background-color: #dcfce7;
+}
+
+/* Pausado (Amarelo) */
+.status-select.status-paused {
+  background-color: #fefce8;
+  color: #ca8a04;
+  border: 1px solid #fef08a;
+}
+.status-select.status-paused:hover {
+  background-color: #fef9c3;
+}
+
+/* Alugado (Cinza) */
+.status-select.status-placed {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+.status-select.status-placed:hover {
+  background-color: #e5e7eb;
 }
