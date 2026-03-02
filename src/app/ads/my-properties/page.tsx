@@ -10,7 +10,7 @@ import { PlusIcon, FunnelIcon, ClipboardDocumentCheckIcon, HeartIcon } from "@he
 
 import "@/assets/styles/property/MyProperties.css";
 
-// Adicionamos 'FAVORITES' na tipagem
+// Tipagem dos status
 type PropertyStatus = 'ALL' | 'ACTIVE' | 'PAUSED' | 'PLACED' | 'PENDING' | 'REJECTED' | 'FAVORITES';
 
 export default function MyPropertiesPage() {
@@ -18,10 +18,13 @@ export default function MyPropertiesPage() {
   const router = useRouter();
   
   const [properties, setProperties] = useState<any[]>([]);
-  const [favorites, setFavorites] = useState<any[]>([]); // Novo estado para favoritos
+  const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [currentFilter, setCurrentFilter] = useState<PropertyStatus>('ALL');
+
+  
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -30,15 +33,25 @@ export default function MyPropertiesPage() {
       try {
         const role = user.role as string;
 
-        // Se for inquilino (TENANT), a aba padrão dele é Favoritos
+        
         if (role === 'TENANT') {
           setCurrentFilter('FAVORITES');
         }
 
-        // Busca simultânea: Busca os imóveis do usuário (se não for Tenant) e os favoritos dele
+        
+        let propertiesPromise;
+        if (role === 'AGENCY_ADMIN') {
+          propertiesPromise = propertyService.getByAgency(user.id); 
+        } else if (role !== 'TENANT') {
+          propertiesPromise = propertyService.getByUser(user.id);
+        } else {
+          propertiesPromise = Promise.resolve([]);
+        }
+
+        // Busca simultânea das propriedades e dos favoritos
         const [propsData, favsData] = await Promise.all([
-          role !== 'TENANT' ? propertyService.getByUser(user.id) : Promise.resolve([]),
-          propertyService.getFavorites(user.id) // Nova chamada à API
+          propertiesPromise,
+          propertyService.getFavorites(user.id)
         ]);
 
         setProperties(Array.isArray(propsData) ? propsData : []);
@@ -52,7 +65,7 @@ export default function MyPropertiesPage() {
     }
 
     fetchData();
-  }, [user]);
+  }, [user, refreshCounter]); 
 
   if (loading) {
     return (
@@ -62,28 +75,30 @@ export default function MyPropertiesPage() {
     );
   }
 
-  // --- Lógica de Filtros e Abas ---
+  // --- Lógica de Filtros e Abas por Role ---
   const getTabsForRole = (): PropertyStatus[] => {
     const role = user?.role as string;
 
     if (role === 'TENANT') {
-      return ['FAVORITES']; // Tenant só vê favoritos
+      return ['FAVORITES'];
     }
     
     if (role === 'AGENCY_ADMIN') {
       return ['PENDING', 'ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'REJECTED', 'FAVORITES'];
     }
+
+    if (role === 'REALTOR') {
+      return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
+    }
     
-    // Default para OWNER, REALTOR, ADMIN
     return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'FAVORITES'];
   };
 
   const tabs = getTabsForRole();
 
   // Define qual lista será renderizada dependendo da aba
-  // Se for aba FAVORITES, extraímos o imóvel de dentro do objeto Favorite (fav.property)
   const listToRender = currentFilter === 'FAVORITES' 
-    ? favorites.map(fav => fav.property) // Mapeia para pegar apenas a propriedade
+    ? favorites.map(fav => fav.property) 
     : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
 
   const translateStatus = (status: string) => {
@@ -112,7 +127,9 @@ export default function MyPropertiesPage() {
             {isAgencyAdmin ? 'Gestão da Agência' : isTenant ? 'Minha Conta' : 'Meus Imóveis'}
           </h1>
           <p className="page-subtitle">
-            {isTenant ? 'Veja os imóveis que você curtiu.' : 'Gerencie seus anúncios e acompanhe o status.'}
+            {isAgencyAdmin 
+              ? 'Gerencie e aprove os anúncios dos corretores da sua agência.' 
+              : isTenant ? 'Veja os imóveis que você curtiu.' : 'Gerencie seus anúncios e acompanhe o status.'}
           </p>
         </div>
       </div>
@@ -144,15 +161,15 @@ export default function MyPropertiesPage() {
       {listToRender.length > 0 ? (
         <div className="properties-grid">
           {listToRender.map((property, index) => {
-            if (!property) return null; // Prevenção de erro caso fav.property venha nulo
+            if (!property) return null;
             const uniqueKey = property.id || property.propertyId || `prop-${index}`;
             
             return (
               <PropertyCard 
                 key={uniqueKey} 
                 property={property} 
-                // Se estiver na aba favoritos e o usuário desfavoritar, recarregamos a página para sumir da lista
-                onUpdateSuccess={() => currentFilter === 'FAVORITES' ? window.location.reload() : null}
+                
+                onUpdateSuccess={() => setRefreshCounter(prev => prev + 1)}
               />
             );
           })}

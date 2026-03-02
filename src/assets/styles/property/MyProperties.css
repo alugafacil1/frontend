@@ -489,32 +489,52 @@
 
 /* --- Cores dinâmicas para o Status --- */
 
-/* Ativo (Verde) */
-.status-select.status-active {
-  background-color: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
-}
-.status-select.status-active:hover {
-  background-color: #dcfce7;
+/* ==========================================================================
+   CORES DO SELECT DE STATUS (PropertyCard)
+   ========================================================================== */
+
+/* Estilo base para garantir que a cor da fonte e o fundo fiquem legais */
+.btn-action.status-select {
+  font-weight: 600;
+  border-width: 1px;
+  border-style: solid;
+  transition: all 0.2s ease;
 }
 
-/* Pausado (Amarelo) */
-.status-select.status-paused {
-  background-color: #fefce8;
-  color: #ca8a04;
-  border: 1px solid #fef08a;
-}
-.status-select.status-paused:hover {
-  background-color: #fef9c3;
+/* 🟢 ATIVO: Verde */
+.status-active {
+  background-color: #d1fae5; 
+  color: #065f46; 
+  border-color: #a7f3d0;
 }
 
-/* Alugado (Cinza) */
-.status-select.status-placed {
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
+/* ⏸️ PAUSADO: Cinza */
+.status-paused {
+  background-color: #f3f4f6; 
+  color: #4b5563; 
+  border-color: #d1d5db;
 }
-.status-select.status-placed:hover {
-  background-color: #e5e7eb;
+
+/* 🔵 ALUGADO (Placed): Azul */
+.status-placed {
+  background-color: #dbeafe; 
+  color: #1e40af; 
+  border-color: #bfdbfe;
 }
+
+/* 🟠 PENDENTE: Amarelo/Laranja (Alerta) */
+.status-pending {
+  background-color: #fef3c7; 
+  color: #92400e; 
+  border-color: #fde68a;
+  opacity: 0.85;
+  cursor: not-allowed !important; /* Mostra o cursor de bloqueado */
+}
+
+/* 🔴 REJEITADO: Vermelho */
+.status-rejected {
+  background-color: #fee2e2; 
+  color: #991b1b; 
+  border-color: #fecaca;
+}
+

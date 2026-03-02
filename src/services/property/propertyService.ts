@@ -56,6 +56,15 @@ export const propertyService = {
     return response.data;
   },
 
+  getByAgency: async (userId: string) => {
+    if (!userId || userId === "undefined") {
+        console.error("Tentativa de buscar imóveis da agência com ID inválido");
+        return [];
+    }
+    const response = await api.get(`/api/properties/agency/${userId}`);
+    return response.data;
+  },
+
   getById: async (id: string) => {
     const response = await api.get(`/api/properties/${id}`);
     return response.data;

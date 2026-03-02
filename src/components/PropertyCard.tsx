@@ -26,22 +26,16 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false); // Começa como false por padrão
+  const [isFavorited, setIsFavorited] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
   const propertyId = property.id || property.propertyId;
-
-  // Garante uma lista válida de imagens ou fallback
   const images = property.photoUrls && property.photoUrls.length > 0 
     ? property.photoUrls 
     : [];
 
-  // =================================================================
-  // NOVO: Verifica se está favoritado logo ao carregar o componente
-  // =================================================================
   useEffect(() => {
     async function checkFavoriteStatus() {
-      // Se não tiver usuário logado, não precisa buscar nada
       if (!user || !user.id) return; 
       
       try {
@@ -54,6 +48,10 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
 
     checkFavoriteStatus();
   }, [user, propertyId]);
+
+  
+  const isAgencyAdmin = user?.role === 'AGENCY_ADMIN';
+  const canManageProperty = user?.role === 'OWNER' || user?.role === 'REALTOR' || isAgencyAdmin;
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -71,26 +69,19 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     e.preventDefault(); 
     e.stopPropagation();
     
-    // 1. A barreira do TypeScript: se não tiver usuário ou ID, para tudo aqui.
     if (!user || !user.id) {
       alert("Você precisa estar logado para favoritar um imóvel.");
       return; 
     }
     
-    // 2. Atualização otimista (muda a cor do coração na hora pro usuário não esperar)
     const previousState = isFavorited;
     setIsFavorited(!previousState);
     
     try {
-      // 3. Faz a requisição para favoritar / desfavoritar
       const response = await propertyService.toggleFavorite(user.id, propertyId);
-      
-      // Atualiza com a verdade que veio do banco de dados
       setIsFavorited(response.isFavorited); 
-      
     } catch (error) {
       console.error("Erro ao favoritar", error);
-      // Se der erro no backend, desfaz a pintura do coração
       setIsFavorited(previousState); 
       alert("Erro ao favoritar o imóvel.");
     }
@@ -103,7 +94,7 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     const newStatus = e.target.value;
 
     if (!window.confirm("Deseja realmente alterar o status deste anúncio?")) {
-      e.target.value = property.status; // Reverte para o valor original se cancelar
+      e.target.value = property.status; 
       return;
     }
 
@@ -120,7 +111,7 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     } catch (error) {
       console.error("Erro ao alterar status:", error);
       alert("Não foi possível alterar o status do anúncio.");
-      e.target.value = property.status; // Reverte em caso de erro
+      e.target.value = property.status; 
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -146,12 +137,13 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     return types[type] || type || 'Imóvel';
   };
 
-  // Ajuda a colorir o select de acordo com o status atual
   const getStatusColorClass = (status: string) => {
     switch(status) {
       case 'ACTIVE': return 'status-active';
       case 'PAUSED': return 'status-paused';
       case 'PLACED': return 'status-placed';
+      case 'PENDING': return 'status-pending';
+      case 'REJECTED': return 'status-rejected'; 
       default: return '';
     }
   };
@@ -161,7 +153,6 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
       className={`property-card ${isUpdatingStatus ? 'is-updating' : ''}`} 
       onClick={handleCardClick}
     >
-      {/* Área da Imagem (Carrossel) */}
       <div className="card-image-container">
         {images.length > 0 && !imgError ? (
           <img 
@@ -177,12 +168,10 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
           </div>
         )}
 
-        {/* Botão Favoritar */}
         <button onClick={toggleFavorite} className="fav-btn">
           {isFavorited ? <HeartSolid className="icon-solid" /> : <HeartIcon className="icon-outline" />}
         </button>
 
-        {/* Setas de Navegação */}
         {images.length > 1 && (
           <>
             <button onClick={handlePrevImage} className="nav-btn prev">
@@ -204,7 +193,6 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
         )}
       </div>
 
-      {/* Conteúdo do Card */}
       <div className="card-content">
         
         <div className="card-header-info">
@@ -238,24 +226,31 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
           )}
         </div>
 
-        <div className="card-actions-grid">
-          <button onClick={handleEdit} className="btn-action edit"> 
-            Editar
-          </button>
-          
-          {/*SELECT DE STATUS */}
-          <select 
-            className={`btn-action status-select ${getStatusColorClass(property.status)}`}
-            value={property.status || 'ACTIVE'}
-            onChange={handleStatusChange}
-            onClick={(e) => e.stopPropagation()} 
-            disabled={isUpdatingStatus}
-          >
-            <option value="ACTIVE">Ativo</option>
-            <option value="PAUSED">Pausado</option>
-            <option value="PLACED">Alugado</option>
-          </select>
-        </div>
+        {canManageProperty && (
+          <div className="card-actions-grid">
+            <button onClick={handleEdit} className="btn-action edit"> 
+              Editar
+            </button>
+            
+            <select 
+              className={`btn-action status-select ${getStatusColorClass(property.status)}`}
+              value={property.status || 'ACTIVE'}
+              onChange={handleStatusChange}
+              onClick={(e) => e.stopPropagation()} 
+              
+              disabled={isUpdatingStatus || (property.status === 'PENDING' && !isAgencyAdmin)}
+            >
+              <option value="ACTIVE">Ativo</option>
+              <option value="PAUSED">Pausado</option>
+              <option value="PLACED">Alugado</option>
+              <option value="PENDING" disabled={property.status !== 'PENDING'}>Pendente</option>
+              
+              {(isAgencyAdmin || property.status === 'REJECTED') && (
+                <option value="REJECTED">Rejeitado</option>
+              )}
+            </select>
+          </div>
+        )}
 
       </div>
     </div>

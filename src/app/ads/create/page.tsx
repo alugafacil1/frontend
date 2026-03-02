@@ -125,6 +125,7 @@ export default function CreateAdPage() {
       const isRealtor = (user.role as string) === 'REALTOR';
       const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
       
+      
       const payload = {
         title: formData.title || "Imóvel sem título",
         description: formData.description || "Sem descrição",
@@ -173,7 +174,7 @@ export default function CreateAdPage() {
       };
 
       const response = await propertyService.create(payload);
-      
+      console.log(response)
       const createdId = response.id || response.propertyId;
       
       if (!createdId) {
