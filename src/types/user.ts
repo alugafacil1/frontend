@@ -1,4 +1,4 @@
-export type UserType = 'ADMIN' | 'REALTOR' | 'OWNER' | 'TENANT';
+export type UserType = 'ADMIN' | 'REALTOR' | 'OWNER' | 'TENANT' | 'AGENCY_ADMIN';
 
 export interface UserResponse {
     userId: string;
