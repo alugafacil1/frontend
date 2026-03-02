@@ -102,6 +102,13 @@ export default function Header({ transparent = false }: HeaderProps) {
                       >
                         Visualizar Perfil
                       </Link>
+                      <Link 
+                        href="/preferences" 
+                        className="dropdown-item"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Preferências
+                      </Link>
                       <button onClick={handleLogout} className="dropdown-item logout">
                         Sair
                       </button>
