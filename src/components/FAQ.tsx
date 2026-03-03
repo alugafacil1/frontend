@@ -11,33 +11,33 @@ interface FAQItem {
 const faqItems: FAQItem[] = [
   {
     id: 1,
-    question: "How do I start searching for a property with Urbanouse?",
+    question: "Como começo a procurar um imóvel no AlugaFácil?",
     answer:
-      "You can begin by using our property search tool, which allows you to filter by location, property type, price range, and other features. Once you find a property you're interested in, simply click 'View Details' to learn more or schedule a visit.",
+      "É muito simples! Use nossa barra de busca e os filtros avançados para escolher a localização, o tipo de imóvel (casa, apartamento ou studio) e a faixa de preço. Quando encontrar o imóvel ideal, basta visualizar os detalhes e entrar em contato direto com o anunciante.",
   },
   {
     id: 2,
-    question: "What services does Urbanouse offer for first-time homebuyers?",
+    question: "Quem pode anunciar imóveis na plataforma?",
     answer:
-      "Urbanouse offers comprehensive services for first-time homebuyers including property search assistance, financing guidance, legal support, and step-by-step guidance through the entire purchasing process.",
+      "O AlugaFácil foi desenhado para atender todo o mercado imobiliário. Aceitamos anúncios de Imobiliárias (que podem cadastrar toda a sua equipe de corretores), Corretores independentes e também de Proprietários pessoa física que desejam negociar seus próprios imóveis.",
   },
   {
     id: 3,
-    question: "Can Urbanouse help me sell my property?",
+    question: "É seguro negociar pelos anúncios da plataforma?",
     answer:
-      "Yes, Urbanouse provides full-service property selling assistance including property valuation, marketing, staging advice, and negotiation support to help you get the best price for your property.",
+      "Sim, a segurança é a nossa prioridade. Todos os nossos usuários (sejam eles inquilinos, proprietários ou imobiliárias) passam por um processo de cadastro estruturado. Além disso, nós facilitamos a comunicação direta e transparente entre as partes.",
   },
   {
     id: 4,
-    question: "What types of properties does Urbanouse specialize in?",
+    question: "Quais tipos de imóveis eu encontro por aqui?",
     answer:
-      "Urbanouse specializes in a wide range of properties including residential homes, apartments, commercial spaces, and rental properties. We work with properties of all sizes and price ranges.",
+      "Nossa plataforma é focada em versatilidade residencial e comercial. Você encontrará desde studios práticos e apartamentos bem localizados até casas espaçosas, gerenciados tanto por imobiliárias profissionais quanto direto com os donos.",
   },
   {
     id: 5,
-    question: "Can I schedule a visit to view properties?",
+    question: "Como faço para agendar uma visita ao imóvel?",
     answer:
-      "Absolutely! You can schedule property viewings directly through our platform. Simply select a property you're interested in and choose an available time slot that works for you.",
+      "Sem burocracia! Na página do imóvel que você gostou, haverá um botão indicando 'Falar com o Corretor' ou 'Falar com o Proprietário'. Clicando ali, você inicia o contato diretamente com o responsável para alinhar o melhor dia e horário da sua visita.",
   },
 ];
 
@@ -52,20 +52,20 @@ export default function FAQ() {
     <section className="faq-section">
       <div className="landing-container">
         <div className="faq-content">
-          {/* Right side - Header */}
+          {/* Lado Direito - Cabeçalho */}
           <div className="faq-header">
             <div className="faq-label">
               <span className="faq-dot">•</span>
-              <span>FAQ's</span>
+              <span>Dúvidas Frequentes</span>
             </div>
-            <h2 className="faq-title">Frequently Asked Questions</h2>
+            <h2 className="faq-title">Perguntas Frequentes</h2>
             <p className="faq-description">
-              Have questions about buying, selling, or renting with Urbanouse? We've got the answers to help guide you
-              through the process.
+              Tem alguma dúvida sobre como alugar, comprar ou anunciar no AlugaFácil? 
+              Reunimos as principais respostas para te ajudar em cada etapa do processo.
             </p>
           </div>
 
-          {/* Left side - FAQ Items */}
+          {/* Lado Esquerdo - Itens do FAQ */}
           <div className="faq-items">
             {faqItems.map((item) => (
               <div key={item.id} className={`faq-item ${openItem === item.id ? "open" : ""}`}>
