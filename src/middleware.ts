@@ -4,9 +4,13 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const publicRoutes = ["/", "/login", "/signUp"];
+  const publicRoutes = ["/", "/login", "/signUp", "/ads/create"];
 
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))) {
+  // Verifica se é rota pública - para "/" verifica exatamente, para outras verifica se começa com
+  const isPublicRoute = pathname === "/" || 
+    publicRoutes.some(route => route !== "/" && (pathname === route || pathname.startsWith(route + "/")));
+
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 

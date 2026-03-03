@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-interface Property {
+export interface Property {
   id: number;
   title: string;
   location: string;
@@ -12,74 +12,17 @@ interface Property {
   image?: string;
 }
 
-const mockProperties: Property[] = [
-  {
-    id: 1,
-    title: "Melton Road, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "all",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 2,
-    title: "Hamilton, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "house",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 3,
-    title: "Uppingham Road, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "apartment",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 4,
-    title: "City Center, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "kitnet",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 5,
-    title: "Oadby, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "house",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 6,
-    title: "City Center, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "apartment",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 7,
-    title: "Hamilton, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "kitnet",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-  {
-    id: 8,
-    title: "City Center, Leicester",
-    location: "Is simply dummy text of the and typesetting",
-    type: "house",
-    bedrooms: 3,
-    bathrooms: 2,
-  },
-];
+interface FeaturedAdsProps {
+  properties: Property[];
+  title?: string;
+  subtitle?: string;
+}
 
-export default function FeaturedListings() {
+export default function FeaturedAds({ 
+  properties, 
+  title = "Anúncios com Destaque",
+  subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+}: FeaturedAdsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
   const filters = [
@@ -91,19 +34,26 @@ export default function FeaturedListings() {
 
   const filteredProperties =
     activeFilter === "all"
-      ? mockProperties
-      : mockProperties.filter((property) => property.type === activeFilter);
+      ? properties
+      : properties.filter((property) => property.type === activeFilter);
 
   return (
     <section className="featured-section">
       <div className="landing-container">
         <div className="section-header">
           <h2 className="section-title">
-            Anúncios com <span className="highlight">Destaque</span>
+            {(() => {
+              const words = title.split(" ");
+              const lastWord = words.pop();
+              return (
+                <>
+                  {words.join(" ")} <span className="highlight">{lastWord}</span>
+                </>
+              );
+            })()}
           </h2>
           <p className="section-subtitle">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-            magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+            {subtitle}
           </p>
         </div>
 

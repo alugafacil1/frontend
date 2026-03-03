@@ -1,0 +1,60 @@
+"use client";
+
+import { useState } from "react";
+import { useAuth } from "@/lib/auth/useAuth";
+import { PropertyManagement } from "./components/PropertyManagement";
+import { UserManagement } from "./components/UserManagement";
+import * as S from "./styles";
+import Header from "@/components/Header";
+import { AgencyManagement } from "./components/AgencyManagement";
+
+export default function GerenciamentoPage() {
+    const { user } = useAuth();
+    const [activeTab, setActiveTab] = useState("imoveis");
+
+    const canSeeUsers = user?.role === "ADMIN";
+    const canSeeProperties = ["ADMIN", "REALTOR", "OWNER"].includes(user?.role || "");
+    const canSeeAgencies = user?.role === "ADMIN";
+
+    return (
+        <S.PageContainer>
+            <Header />
+            <S.TitleSection>
+                <h1>Painel de Gerenciamento</h1>
+                <p>Perfil atual: <strong>{user?.role}</strong></p>
+            </S.TitleSection>
+
+            <S.TabsContainer>
+                {canSeeUsers && (
+                    <S.TabButton $active={activeTab === "usuarios"} onClick={() => setActiveTab("usuarios")}>
+                        Usuários
+                    </S.TabButton>
+                )}
+                {canSeeProperties && (
+                    <S.TabButton $active={activeTab === "imoveis"} onClick={() => setActiveTab("imoveis")}>
+                        Imóveis
+                    </S.TabButton>
+                )}
+                {canSeeAgencies && (
+                    <S.TabButton $active={activeTab === "agencias"} onClick={() => setActiveTab("agencias")}>
+                        Agências
+                    </S.TabButton>
+                )}
+            </S.TabsContainer>
+
+            <S.ContentSection>
+                {activeTab === "imoveis" && (
+                    <PropertyManagement userId={user?.id} userRole={user?.role} />
+                )}
+
+                {activeTab === "usuarios" && (
+                    <UserManagement />
+                )}
+
+                {activeTab === "agencias" && (
+                    <AgencyManagement />
+                )}
+            </S.ContentSection>
+        </S.PageContainer>
+    );
+}

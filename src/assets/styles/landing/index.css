@@ -432,6 +432,7 @@
   overflow: hidden;
   margin-bottom: 32px;
   position: relative;
+  width: 100%;
 }
 
 .carousel-container {
@@ -444,6 +445,8 @@
 
 .agent-card {
   flex: 0 0 calc((100% - 72px) / 4);
+  min-width: 0;
+  max-width: calc((100% - 72px) / 4);
   width: calc((100% - 72px) / 4);
   background: #fff;
   border-radius: 16px;
@@ -451,6 +454,10 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .agent-card:hover {
@@ -482,6 +489,11 @@
 
 .agent-info {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .agent-header {
@@ -489,6 +501,8 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 8px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .agent-name {
@@ -496,6 +510,11 @@
   font-weight: 700;
   color: #1a1a2e;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .agent-rating {
@@ -505,12 +524,21 @@
   font-size: 14px;
   color: #6b7280;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .agent-title {
   font-size: 14px;
   color: #6b7280;
   margin: 0 0 16px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  max-height: 2.8em;
 }
 
 .agent-details {
