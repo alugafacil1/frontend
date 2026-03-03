@@ -16,15 +16,21 @@ export interface PropertyPayload {
   };
   
   priceInCents: number;
+
+  weeklyRentInCents?: number;
+  securityDepositInCents?: number;
+  minimumLeaseMonths?: number;
+  maxOccupants?: number;
+  availableFrom?: string; 
+  
+
   numberOfRooms: number;
   numberOfBedrooms?: number;
   numberOfBathrooms?: number;
   
-  
   amenities?: string[];
   houseRules?: string[];
 
-  
   geolocation?: {
     latitude: number;
     longitude: number;
@@ -46,20 +52,36 @@ export interface PropertyPayload {
 export const propertyService = {
   
   create: async (data: PropertyPayload | any) => {
-    
     const response = await api.post('/api/properties', data);
     return response.data;
   },
 
- 
+  getByAgency: async (userId: string) => {
+    if (!userId || userId === "undefined") {
+        console.error("Tentativa de buscar imóveis da agência com ID inválido");
+        return [];
+    }
+    const response = await api.get(`/api/properties/agency/${userId}`);
+    return response.data;
+  },
+
   getById: async (id: string) => {
     const response = await api.get(`/api/properties/${id}`);
     return response.data;
   },
 
-  
   update: async (id: string, data: PropertyPayload | any) => {
     const response = await api.put(`/api/properties/${id}`, data);
+    return response.data;
+  },
+
+  updateStatus: async (id: string, status: string) => {
+    const response = await api.patch(`/api/properties/${id}/status`, { status });
+    return response.data;
+  },
+
+  toggleFavorite: async (userId: string, propertyId: string) => {
+    const response = await api.post(`/api/favorites/toggle?userId=${userId}&propertyId=${propertyId}`);
     return response.data;
   },
 
@@ -76,6 +98,16 @@ export const propertyService = {
       },
     });
     return response.data;
+  },
+
+  getFavorites: async (userId: string) => {
+    const response = await api.get(`/api/favorites/user/${userId}`);
+    return response.data;
+  },
+
+  checkIfFavorited: async (userId: string, propertyId: string) => {
+    const response = await api.get(`/api/favorites/check?userId=${userId}&propertyId=${propertyId}`);
+    return response.data.isFavorited; 
   },
 
   getByUser: async (userId: string) => {

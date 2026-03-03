@@ -62,10 +62,8 @@ export default function EditAdPage() {
 
         // MAPEAMENTO DE ENTRADA (BACKEND -> FORM)
         setFormData({
-          // Ajuste: Se o estado for 'Brasil' ou null, define 'br' para o seletor. Caso contrário, mantém o valor original.
           country: (data.address?.state === 'Brasil' || !data.address?.state) ? 'br' : data.address.state, 
           city: data.address?.city || "",
-          // Ajuste: Suporta 'zipCode' ou 'postalCode' vindo do backend
           postalCode: data.address?.zipCode || data.address?.postalCode || "",
           propertyType: data.type || "APARTMENT",
           number: data.address?.number || "",
@@ -74,6 +72,15 @@ export default function EditAdPage() {
           bathrooms: String(data.numberOfBathrooms || "0"),
           contactPhone: data.phoneNumber || "",
           monthlyRent: formatCurrency(data.priceInCents),
+          
+          // --- NOVOS CAMPOS MAPEADOS (BACKEND -> FORM) ---
+          weeklyRent: formatCurrency(data.weeklyRentInCents),
+          deposit: formatCurrency(data.securityDepositInCents),
+          minTenancy: data.minimumLeaseMonths ? String(data.minimumLeaseMonths) : "",
+          maxAttendants: data.maxOccupants ? String(data.maxOccupants) : "",
+          moveInDate: data.availableFrom || "",
+          // -----------------------------------------------
+
           amenities: data.amenities || [],
           houseRules: data.houseRules || [],
           title: data.title || "",
@@ -100,8 +107,15 @@ export default function EditAdPage() {
     setIsSubmitting(true);
     
     try {
-      const cleanPrice = formData.monthlyRent.replace(/[^\d,]/g, '').replace(',', '.');
-      const priceInCents = Math.round(parseFloat(cleanPrice) * 100) || 0;
+      // Helper para converter valores monetários em string para centavos (inteiro)
+      const parseCurrencyToCents = (val: string) => {
+        if (!val) return undefined;
+        const cleanStr = val.replace(/[^\d,]/g, '').replace(',', '.');
+        const floatVal = parseFloat(cleanStr);
+        return isNaN(floatVal) ? undefined : Math.round(floatVal * 100);
+      };
+
+      const priceInCents = parseCurrencyToCents(formData.monthlyRent) || 0;
 
       const hasAmenity = (keyword: string) => 
         formData.amenities.some((a: string) => a.toLowerCase().includes(keyword.toLowerCase()));
@@ -115,9 +129,8 @@ export default function EditAdPage() {
         description: formData.description,
         address: {
           street: formData.address,
-          number: formData.number,
+          number: formData.number && formData.number.trim() !== "" ? formData.number : "S/N",
           city: formData.city,
-          // Ajuste: Salva 'Brasil' se for 'br', senão salva o código do país/estado selecionado
           state: formData.country === 'br' ? 'Brasil' : (formData.country || "Brasil"), 
           postalCode: formData.postalCode, 
           neighborhood: formData.neighborhood || "Centro" 
@@ -127,6 +140,15 @@ export default function EditAdPage() {
           longitude: formData.lon || 0.0
         },
         priceInCents,
+
+        
+        weeklyRentInCents: parseCurrencyToCents(formData.weeklyRent),
+        securityDepositInCents: parseCurrencyToCents(formData.deposit),
+        minimumLeaseMonths: formData.minTenancy ? parseInt(formData.minTenancy, 10) : undefined,
+        maxOccupants: formData.maxAttendants ? parseInt(formData.maxAttendants, 10) : undefined,
+        availableFrom: formData.moveInDate ? formData.moveInDate : undefined,
+        
+
         numberOfRooms: parseInt(formData.rooms) || 0,
         numberOfBedrooms: parseInt(formData.rooms) || 0, 
         numberOfBathrooms: parseInt(formData.bathrooms) || 0,
@@ -135,7 +157,7 @@ export default function EditAdPage() {
         garage: !!hasAmenity('Garagem') || !!hasAmenity('Estacionamento') || !!hasAmenity('Garage'),
         isOwner: true,
         videoUrl: formData.videoLink || "",
-        phoneNumber: formData.contactPhone,
+        phoneNumber: formData.contactPhone || "0000000000",
         photoUrls: formData.images.filter((img: any) => typeof img === 'string'), 
         type: formData.propertyType?.toUpperCase() || "APARTMENT",
         userId: user?.id,
