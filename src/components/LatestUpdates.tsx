@@ -133,7 +133,7 @@ export default function LatestUpdates({
             </div>
           )}
         </div>
-        <button className="contact-agent-btn">Contact Agent</button>
+        <button className="contact-agent-btn">Falar com o Anunciante</button>
       </div>
     </div>
   );
