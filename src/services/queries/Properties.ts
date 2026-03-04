@@ -65,6 +65,19 @@ export function useRecentProperties() {
   });
 }
 
+export function useTopPropertiesByViews() {
+  return useQuery({
+    queryKey: ["properties", "top-by-views"],
+    queryFn: async () => {
+      const { data } = await api.get<PropertyResponse[]>(
+        "/api/properties/top-by-views"
+      );
+      return data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
+}
+
 export function useUpdatePropertyStatus() {
     const queryClient = useQueryClient();
 
