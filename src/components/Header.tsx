@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN"];
-const ROLES_DASHBOARD = ["OWNER", "ADMIN"];
+const ROLES_DASHBOARD = ["OWNER", "ADMIN", "AGENCY_ADMIN"];
 
 export default function Header({ transparent = false }: HeaderProps) {
   const { user, logout, isAuthenticated } = useAuth();

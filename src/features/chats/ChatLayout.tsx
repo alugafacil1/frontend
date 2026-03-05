@@ -500,45 +500,6 @@ export default function ChatLayout() {
                   </button>
                 </div>
               </div>
-
-            
-              <div className="property-panel">
-                <div className="prop-profile">
-                  <img src={PROPERTY.avatar} alt={PROPERTY.name} />
-                  <div className="pname">{PROPERTY.name}</div>
-                </div>
-
-                <div className="prop-card">
-                  <div className="prop-prices">
-                    <div>
-                      <div className="room">{PROPERTY.room}</div>
-                      <div className="loc">{PROPERTY.location}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div className="price-main">{PROPERTY.price}</div>
-                      <div className="price-sub">{PROPERTY.weekly}</div>
-                    </div>
-                  </div>
-                  <div className="deposit-tag">{PROPERTY.deposit}</div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#555", marginBottom: 6 }}>Images:</div>
-                  <div className="prop-images">
-                    {PROPERTY.images.map((src, i) => (
-                      <img key={i} src={src} alt={`room ${i + 1}`} />
-                    ))}
-                  </div>
-                </div>
-
-                <p className="prop-desc">{PROPERTY.description}</p>
-
-                <div className="prop-tags">
-                  <span className="prop-tag">🛏 {PROPERTY.beds}</span>
-                  <span className="prop-tag">🚿 {PROPERTY.baths}</span>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
