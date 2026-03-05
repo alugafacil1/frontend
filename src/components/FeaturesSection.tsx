@@ -49,9 +49,9 @@ const features: Feature[] = [
         />
       </svg>
     ),
-    title: "Secure Account Creation",
+    title: "Cadastro e Verificação Segura",
     description:
-      "StudentHub provides secure account creation of both student and landlord by strong and secured verification process.",
+      "O AlugaFácil valida a identidade de inquilinos, proprietários e imobiliárias através de um processo de verificação rigoroso e confiável.",
   },
   {
     id: 2,
@@ -67,9 +67,9 @@ const features: Feature[] = [
         <path d="M12 15V18" stroke="#515DEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Rental Privacy Policy",
+    title: "Privacidade e Proteção",
     description:
-      "Following governmental regulation on renting as a privacy policy in website protects students and make their payments secured.",
+      "Seguimos rigorosamente a LGPD e as regulamentações do mercado imobiliário para proteger seus dados pessoais e garantir transações seguras.",
   },
   {
     id: 3,
@@ -86,9 +86,9 @@ const features: Feature[] = [
         <path d="M8 13H12" stroke="#515DEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Direct Communication",
+    title: "Negociação Direta",
     description:
-      "StudentHub helps students to make direct communication with landlords or home owners to help them finding answers to their queries and many more,",
+      "Comunique-se rapidamente com o dono do imóvel ou corretor responsável. Tire dúvidas, agende visitas e envie propostas num ambiente centralizado.",
   },
   {
     id: 4,
@@ -98,8 +98,8 @@ const features: Feature[] = [
         <path d="M12 6V12L16 14" stroke="#515DEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Fast Process",
-    description: "A fast way to book an accommodation from anywhere around the world.",
+    title: "Processo 100% Ágil",
+    description: "Esqueça a papelada infinita. Um sistema rápido e digital para você alugar ou anunciar o seu imóvel de onde estiver.",
   },
 ];
 
@@ -109,11 +109,10 @@ export default function FeaturesSection() {
       <div className="landing-container">
         <div className="section-header">
           <h2 className="section-title">
-            Features that make us <span className="highlight">Unique</span>
+            O que nos torna <span className="highlight">Diferentes</span>
           </h2>
           <p className="section-subtitle">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-            dolore magna.
+            Entenda por que o AlugaFácil é a escolha certa para simplificar sua vida no mercado imobiliário, seja você inquilino ou anunciante.
           </p>
           <div className="section-divider"></div>
         </div>

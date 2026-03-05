@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 const menuItems = [
   { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { name: "Imóveis",   url: "/imoveis",   icon: Warehouse },
+  { name: "Imóveis",   url: "/dashboardProperties",   icon: Warehouse },
   { name: "Chats",     url: "/chat",      icon: MessagesSquare },
 ];
 
@@ -19,7 +19,7 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-1">
         {menuItems.map((item, index) => {
           const Icon     = item.icon;
-          const isActive = pathname.startsWith(item.url);
+          const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
 
           return (
             <motion.div

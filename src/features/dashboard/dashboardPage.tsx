@@ -5,6 +5,10 @@ import Header from '@/components/Header';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
+import { userService } from '@/services/userService/userService';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/useAuth';
+import { propertyService } from '@/services/property/propertyService';
 
 const salesData = [
   { month: 'Jan', value: 4000 },
@@ -66,11 +70,81 @@ const bookingResources = [
   { id: 6, name: 'Luan', role: 'Admin', image: '👨‍💼' },
 ];
 
+
+const propertyIcon = (type: string) => {
+  const icons: Record<string, string> = {
+    HOUSE: '🏠',
+    APARTMENT: '🏢',
+    COMMERCIAL: '🏪',
+    LAND: '🌿',
+  };
+  return icons[type] ?? '🏠';
+};
+
+const formatPrice = (cents: number) =>
+  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+};
+
+
 interface HeaderProps {
   transparent?: boolean;
 }
 
 export default function Dashboard({ transparent = false }: HeaderProps) {
+  
+  const { user } = useAuth();
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [customerChartData, setCustomerChartData] = useState([
+    { name: 'Usuários', value: 0 },
+    { name: 'Restante', value: 1 },
+  ]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loadingProperties, setLoadingProperties] = useState(true);
+
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const total = await userService.getTotalCount();
+
+        setTotalUsers(total);
+
+        const potencial = Math.round(total * 0.3);
+        setCustomerChartData([
+          { name: 'Usuários Cadastrados', value: total },
+          { name: 'Potenciais',           value: potencial || 1 },
+        ]);
+      } catch (error) {
+        console.error('Erro ao buscar total de usuários:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    async function fetchProperties() {
+      if (!user?.id) return;
+      try {
+        const data = await propertyService.getByUser(user.id);
+        setProperties(Array.isArray(data) ? data.slice(0, 3) : []);
+      } catch (error) {
+        console.error('Erro ao buscar imóveis:', error);
+      } finally {
+        setLoadingProperties(false);
+      }
+    }
+    fetchProperties();
+  }, [user]);
+  
   return (
     <div className="dashboard-container">
       <style jsx>{`
@@ -552,66 +626,104 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
 
         <div className="dashboard-grid">
 
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Clientes</h3>
-              <a href="#" className="card-link">Todos →</a>
-            </div>
-            <div className="pie-chart-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={customerData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {customerData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="stats-section">
-              <div className="stat-item">
-                <span className="stat-value">34,249</span>
-                <span className="stat-label">Novos Clientes</span>
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Clientes</h3>
               </div>
-              <div className="stat-item">
-                <span className="stat-value">1420</span>
-                <span className="stat-label">Clientes em Potencial</span>
+              <div className="pie-chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={customerChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {customerChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name) => [value?.toLocaleString('pt-BR'), name]} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-          </div>
-
-
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Propriedades</h3>
-              <a href="#" className="card-link">Todas →</a>
-            </div>
-            <div className="property-list">
-              {listedProperties.map((property) => (
-                <div key={property.id} className="property-item">
-                  <div className="property-image">{property.image}</div>
-                  <div className="property-details">
-                    <div className="property-name">{property.name}</div>
-                    <div className="property-location">{property.location}</div>
-                  </div>
-                  <div className="property-date">{property.date}</div>
-                  <div className="property-rating">
-                    <span className="rating-star">⭐</span>
-                    <span>{property.rating}</span>
-                    <span style={{ color: '#999' }}>({property.reviews})</span>
-                  </div>
+              <div className="stats-section">
+                <div className="stat-item">
+                  {loadingUsers
+                    ? <div className="stat-loading" />
+                    : <span className="stat-value">{totalUsers.toLocaleString('pt-BR')}</span>
+                  }
+                  <span className="stat-label">Usuários Cadastrados</span>
                 </div>
-              ))}
+                <div className="stat-item">
+                  {loadingUsers
+                    ? <div className="stat-loading" />
+                    : <span className="stat-value">{Math.round(totalUsers * 0.3).toLocaleString('pt-BR')}</span>
+                  }
+                  <span className="stat-label">Clientes em Potencial</span>
+                </div>
+              </div>
             </div>
-          </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Propriedades</h3>
+                <a href="/dashboardProperties" className="card-link">Todas →</a>
+              </div>
+
+              {loadingProperties ? (
+                <div className="property-list">
+                  {[1,2,3].map(i => <div key={i} className="skeleton skeleton-row" />)}
+                </div>
+              ) : properties.length === 0 ? (
+                <p style={{ color: '#999', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
+                  Nenhum imóvel cadastrado.
+                </p>
+              ) : (
+                <div className="property-list">
+                  {properties.map((property) => {
+                    const id = property.id ?? property.propertyId;
+                    const photo = property.photoUrls?.[0];
+                    const location = property.address
+                      ? `${property.address.neighborhood}, ${property.address.city}`
+                      : property.city ?? '—';
+
+                    return (
+                      <div key={id} className="property-item">
+
+                        <div className="property-image">
+                          {photo
+                            ? <img src={photo} />
+                            : propertyIcon(property.type)
+                          }
+                        </div>
+
+                        <div className="property-details">
+                          <div className="property-name">{property.title}</div>
+                          <div className="property-location">{location}</div>
+                        </div>
+
+                        <div className="property-date">
+                          {formatDate(property.createdAt)}
+                        </div>
+
+                        <div className="property-price">
+                          {formatPrice(property.priceInCents)}
+                        </div>
+
+                        <span className={`property-status status-${property.status}`}>
+                          {property.status}
+                        </span>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
           <div className="card card-full-width">
             <div className="card-header">

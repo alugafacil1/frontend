@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const publicRoutes = ["/", "/login", "/signUp", "/ads/create"];
+  const publicRoutes = ["/", "/login", "/signUp"];
 
   // Verifica se é rota pública - para "/" verifica exatamente, para outras verifica se começa com
   const isPublicRoute = pathname === "/" || 

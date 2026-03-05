@@ -1,31 +1,72 @@
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import React from 'react';
 
-interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface Option {
   label: string;
-  isSelect?: boolean; 
+  value: string | number;
 }
 
-export const FloatingInput = ({ label, isSelect, ...props }: FloatingInputProps) => {
+interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement> {
+  label: string;
+  options?: Option[];
+  icon?: React.ReactNode; 
+}
+
+const ChevronDownIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+    stroke="currentColor"
+    className={className}
+    style={{ width: '20px', height: '20px' }}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
+export const FloatingInput = ({ label, options, icon, ...props }: FloatingInputProps) => {
+  const isSelect = Boolean(options && options.length > 0);
+
   return (
-    <div className="relative w-full">
+    <div className="floating-input-container">
       
-      <input
-        {...props}
-        className="peer w-full h-[50px] px-4 pt-1 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-transparent focus:outline-none focus:border-black transition-colors"
-        placeholder={label} 
-      />
-      
-      
-      <label className="absolute -top-2.5 left-3 bg-white px-1 text-sm text-gray-600 font-medium transition-all peer-placeholder-shown:text-gray-400 peer-focus:text-black">
+      <label className="floating-label">
         {label}
       </label>
 
-      
-      {isSelect && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-          <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-        </div>
-      )}
+      <div className="relative w-full">
+        {isSelect ? (
+          <>
+            <select
+              {...(props as any)}
+              className="custom-select"
+            >
+              {/* Opção vazia para servir como placeholder no Select */}
+              <option value="" disabled hidden>
+                {props.placeholder || `Selecione...`}
+              </option>
+              {options?.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            
+            <ChevronDownIcon className="select-icon" />
+          </>
+        ) : (
+          <>
+            <input
+              {...props}
+              className="custom-input"
+              placeholder={props.placeholder || ""} 
+            />
+            {/* Renderiza ícone à direita se existir (ex: Bandeira) */}
+            {icon && <div className="input-floating-icon">{icon}</div>}
+          </>
+        )}
+      </div>
     </div>
   );
 };
