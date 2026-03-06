@@ -15,9 +15,6 @@ const AMENITIES_LIST = [
   "Gás", 
   "Internet", 
   "Condomínio",
-  "Mobiliado",
-  "Ar Condicionado",
-  "Garagem"
 ];
 
 export const AmenitiesStep = ({ data, updateData, onNext, onBack }: AmenitiesStepProps) => {

@@ -2,40 +2,21 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/useAuth";
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { NotificationBell } from "./NotificationBell"; // Ajuste o caminho se necessário
+import { UserMenu } from "./UserMenu";                 // Ajuste o caminho se necessário
 import "@/assets/styles/header/index.css";
 
 interface HeaderProps {
   transparent?: boolean;
 }
 
-const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN"];
+const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN", "AGENCY_ADMIN"];
 
 export default function Header({ transparent = false }: HeaderProps) {
   const { user, logout, isAuthenticated } = useAuth();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const canAccessManagement = user?.role && ROLES_ADMINISTRATIVAS.includes(user.role);
-
   const canPostAd = user?.role === 'OWNER' || user?.role === 'REALTOR';
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    setIsDropdownOpen(false);
-  };
 
   return (
     <header className={`landing-header ${transparent ? "transparent" : ""}`}>
@@ -50,71 +31,22 @@ export default function Header({ transparent = false }: HeaderProps) {
               <nav className="header-nav">
                 <Link href="/" className="nav-link">Home</Link>
                 <Link href="/ads/my-properties" className="nav-link">Imóveis</Link>
-                
                 {canAccessManagement && (
-                  <Link href="/management" className="nav-link">
-                    Gerenciamento
-                  </Link>
+                  <Link href="/management" className="nav-link">Gerenciamento</Link>
                 )}
-                
                 <Link href="/dashboard" className="nav-link">Dashboard</Link>
               </nav>
 
               <div className="header-actions">
-                
                 {canPostAd && (
                   <Link href="/ads/create" className="btn-post-ad">
                     Publicar Anúncio
                   </Link>
                 )}
                 
-                <button className="icon-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                </button>
-
-                <div className="user-menu" ref={dropdownRef}>
-                  <button 
-                    className="avatar-btn" 
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                    {user?.photoUrl ? (
-                      <img src={user.photoUrl} alt="Perfil" />
-                    ) : (
-                      <div className="avatar-placeholder">
-                        {user?.name?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    )}
-                  </button>
-
-                  {isDropdownOpen && (
-                    <div className="dropdown-menu">
-                      <div className="dropdown-header">
-                        <strong>{user?.name}</strong>
-                        <span>{user?.email}</span>
-                        <small style={{ color: 'var(--primary-blue)', display: 'block', marginTop: '4px' }}>
-                           {user?.role}
-                        </small>
-                      </div>
-                      <Link 
-                        href="/profile" 
-                        className="dropdown-item"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        Visualizar Perfil
-                      </Link>
-                      <Link 
-                        href="/preferences" 
-                        className="dropdown-item"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        Preferências
-                      </Link>
-                      <button onClick={handleLogout} className="dropdown-item logout">
-                        Sair
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* Componentes Abstraídos */}
+                <NotificationBell isAuthenticated={isAuthenticated} />
+                <UserMenu user={user} logout={logout} />
               </div>
             </>
           ) : (
