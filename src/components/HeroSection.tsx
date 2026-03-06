@@ -6,13 +6,12 @@ export default function HeroSection() {
       <div className="hero-overlay"></div>
       <div className="hero-content">
         <h1 className="hero-title">
-          Let's Begin Your Journey
+          O seu próximo imóvel
           <br />
-          With <span className="highlight">Us</span>
+          Está <span className="highlight">Aqui</span>
         </h1>
         <p className="hero-subtitle">
-          Find your desirable accommodation with StudentHub which provides you secure and fast process to
-          start your new journey
+          Encontre o lar ideal com o AlugaFácil. Uma plataforma segura, rápida e sem burocracia para você dar o próximo passo com tranquilidade.
         </p>
       </div>
     </section>

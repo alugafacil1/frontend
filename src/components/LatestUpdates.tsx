@@ -8,17 +8,16 @@ export interface CardItem {
   rating?: number;
   title: string;
   location: string;
-  propertiesSold?: number;
   image?: string;
-  [key: string]: any; // Permite propriedades adicionais para flexibilidade futura
+  [key: string]: any; 
 }
 
 interface LatestUpdatesProps {
-  title: string; // Obrigatório: título deve ser fornecido pela página
-  description: string; // Obrigatório: descrição deve ser fornecida pela página
-  items: CardItem[]; // Obrigatório: dados devem ser fornecidos pela página
+  title: string; 
+  description: string; 
+  items: CardItem[]; 
   cardsPerSlide?: number;
-  renderCard?: (item: CardItem) => React.ReactNode; // Opcional: permite customização completa do card
+  renderCard?: (item: CardItem) => React.ReactNode; 
 }
 
 const CARDS_PER_SLIDE = 4;
@@ -55,7 +54,6 @@ export default function LatestUpdates({
         const scrollAmount = currentSlide * wrapperWidth;
         carouselRef.current.style.transform = `translateX(-${scrollAmount}px)`;
         
-        // Garante que cada card tenha exatamente a largura correta
         const gap = 24;
         const cardWidth = (wrapperWidth - (gap * (cardsPerSlide - 1))) / cardsPerSlide;
         const cards = carouselRef.current.querySelectorAll('.agent-card');
@@ -69,7 +67,6 @@ export default function LatestUpdates({
       }
     };
 
-    // Pequeno delay para garantir que o DOM esteja renderizado
     const timeoutId = setTimeout(updateCarousel, 0);
     updateCarousel();
     window.addEventListener("resize", updateCarousel);
@@ -83,7 +80,7 @@ export default function LatestUpdates({
     <div key={item.id} className="agent-card">
       <div className="agent-image">
         {item.image ? (
-          <img src={item.image} alt={item.name} className="agent-photo" />
+          <img src={item.image} alt={`Foto de ${item.name}`} className="agent-photo" />
         ) : (
           <div className="image-placeholder"></div>
         )}
@@ -129,11 +126,11 @@ export default function LatestUpdates({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span>{item.propertiesSold} properties sold</span>
+              <span>{item.propertiesSold} imóveis anunciados</span>
             </div>
           )}
         </div>
-        <button className="contact-agent-btn">Contact Agent</button>
+        <button className="contact-agent-btn">Falar com o Anunciante</button>
       </div>
     </div>
   );
@@ -161,7 +158,7 @@ export default function LatestUpdates({
             className="carousel-arrow prev"
             onClick={prevSlide}
             disabled={currentSlide === 0}
-            aria-label="Previous slide"
+            aria-label="Slide anterior"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -174,7 +171,7 @@ export default function LatestUpdates({
                 key={index}
                 className={`carousel-dot ${currentSlide === index ? "active" : ""}`}
                 onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Ir para o slide ${index + 1}`}
               />
             ))}
           </div>
@@ -183,7 +180,7 @@ export default function LatestUpdates({
             className="carousel-arrow next"
             onClick={nextSlide}
             disabled={currentSlide === totalSlides - 1}
-            aria-label="Next slide"
+            aria-label="Próximo slide"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
