@@ -11,11 +11,14 @@ interface HeaderProps {
 }
 
 const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN", "AGENCY_ADMIN"];
+const ROLES_DASHBOARD = ["OWNER", "ADMIN", "AGENCY_ADMIN"];
 
 export default function Header({ transparent = false }: HeaderProps) {
   const { user, logout, isAuthenticated } = useAuth();
 
   const canAccessManagement = user?.role && ROLES_ADMINISTRATIVAS.includes(user.role);
+
+  const canAccessDashboard = user?.role && ROLES_DASHBOARD.includes(user.role);
   const canPostAd = user?.role === 'OWNER' || user?.role === 'REALTOR';
 
   return (
@@ -34,7 +37,9 @@ export default function Header({ transparent = false }: HeaderProps) {
                 {canAccessManagement && (
                   <Link href="/management" className="nav-link">Gerenciamento</Link>
                 )}
-                <Link href="/dashboard" className="nav-link">Dashboard</Link>
+                {canAccessDashboard && (
+                  <Link href="/dashboard" className="nav-link">Dashboard</Link>
+                )}
               </nav>
 
               <div className="header-actions">
