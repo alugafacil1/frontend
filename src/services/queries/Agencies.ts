@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AgencyResponse, PaginatedAgencyResponse, AgencyRequest } from "@/types/agency";
 import api from "../api";
 
+export function useRegisterAgencyWithAdmin() {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: async (payload: any) => {
+            const { data } = await api.post<AgencyResponse>('/api/realStateAgencies/register', payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["agencies"] });
+        }
+    });
+}
+
 export function useAgencies(page: number, size: number) {
     return useQuery({
         queryKey: ["agencies", page, size],
