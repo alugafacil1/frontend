@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export interface Property {
-  id: number;
+  id: string;
   title: string;
   location: string;
   type: string;
@@ -18,10 +19,10 @@ interface FeaturedAdsProps {
   subtitle?: string;
 }
 
-export default function FeaturedAds({ 
-  properties, 
+export default function FeaturedAds({
+  properties,
   title = "Anúncios com Destaque",
-  subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+  subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco",
 }: FeaturedAdsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
@@ -71,7 +72,7 @@ export default function FeaturedAds({
 
         <div className="property-grid">
           {filteredProperties.map((property) => (
-            <div key={property.id} className="property-card">
+            <Link key={property.id} href={`/ads/${property.id}`} className="property-card" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div className="property-image">
                 {/* Placeholder for image */}
                 <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
@@ -117,7 +118,7 @@ export default function FeaturedAds({
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
