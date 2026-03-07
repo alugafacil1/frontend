@@ -2,7 +2,7 @@
 
 import { FloatingInput } from "../FloatingInput";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
-import { useMasks } from "../../../hooks/useMasks.ts"
+import { useMasks } from "../../../hooks/useMasks"
 
 interface RentStepProps {
   data: any;

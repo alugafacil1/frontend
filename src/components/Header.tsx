@@ -11,6 +11,7 @@ interface HeaderProps {
 }
 
 const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN"];
+const ROLES_DASHBOARD = ["OWNER", "ADMIN", "AGENCY_ADMIN"];
 
 export default function Header({ transparent = false }: HeaderProps) {
   const { user, logout, isAuthenticated } = useAuth();
@@ -19,6 +20,8 @@ export default function Header({ transparent = false }: HeaderProps) {
   const router = useRouter();
 
   const canAccessManagement = user?.role && ROLES_ADMINISTRATIVAS.includes(user.role);
+
+  const canAccessDashboard = user?.role && ROLES_DASHBOARD.includes(user.role);
 
   const canPostAd = user?.role === 'OWNER' || user?.role === 'REALTOR';
 
@@ -56,8 +59,10 @@ export default function Header({ transparent = false }: HeaderProps) {
                     Gerenciamento
                   </Link>
                 )}
+                {canAccessDashboard && (
+                  <Link href="/dashboard" className="nav-link">Dashboard</Link>
+                )}
                 
-                <Link href="/dashboard" className="nav-link">Dashboard</Link>
               </nav>
 
               <div className="header-actions">
