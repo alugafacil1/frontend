@@ -3,6 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: "Casa",
+  apartment: "Apartamento",
+  kitnet: "Kit",
+};
+
 export interface Property {
   id: string;
   title: string;
@@ -82,8 +88,8 @@ export default function FeaturedAds({
               <div className="property-info">
                 <h3 className="property-title">{property.title}</h3>
                 <p className="property-location">
-                  <span style={{ fontSize: "12px", color: "#8B8E99" }}>Type:</span>{" "}
-                  <span style={{ color: "#8B8E99" }}>Learn more</span>
+                  <span style={{ fontSize: "12px", color: "#8B8E99" }}>Tipo:</span>{" "}
+                  <span style={{ color: "#8B8E99" }}>{PROPERTY_TYPE_LABELS[property.type] ?? property.type}</span>
                 </p>
                 <p className="property-description">{property.location}</p>
                 <div className="property-features">
