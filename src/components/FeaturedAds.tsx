@@ -17,12 +17,14 @@ interface FeaturedAdsProps {
   properties: Property[];
   title?: string;
   subtitle?: string;
+  onTabChange?: () => void;
 }
 
 export default function FeaturedAds({
   properties,
   title = "Anúncios com Destaque",
   subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco",
+  onTabChange,
 }: FeaturedAdsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
@@ -63,7 +65,7 @@ export default function FeaturedAds({
             <button
               key={filter.id}
               className={`category-tab ${activeFilter === filter.id ? "active" : ""}`}
-              onClick={() => setActiveFilter(filter.id)}
+              onClick={() => { setActiveFilter(filter.id); onTabChange?.(); }}
             >
               {filter.label}
             </button>
