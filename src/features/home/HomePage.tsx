@@ -1,25 +1,28 @@
 "use client";
 
 import { useAuth } from "@/lib/auth/useAuth";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
-import SearchForm from "@/components/SearchForm";
+import SearchForm, { SearchFilters } from "@/components/SearchForm";
 import FeaturedAds, { Property } from "@/components/FeaturedAds";
 import LatestUpdates, { CardItem } from "@/components/LatestUpdates";
 import Footer from "@/components/Footer";
 import { useRecentProperties, useTopPropertiesByViews } from "@/services/queries/Properties";
-import { 
+import {
   transformPropertyResponsesToProperties,
-  transformPropertyResponsesToCardItems 
+  transformPropertyResponsesToCardItems
 } from "@/utils/propertyTransformers";
+import { RENT_RANGES } from "@/components/SearchForm";
 
 export default function HomePage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const { data: recentProperties, isLoading: isLoadingProperties } = useRecentProperties();
   const { data: topByViewsProperties } = useTopPropertiesByViews();
+  const [filters, setFilters] = useState<SearchFilters>({ location: "", date: "", propertyType: "", rentRange: "" });
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -27,11 +30,23 @@ export default function HomePage() {
     }
   }, [isAuthenticated, loading, router]);
 
+  const filteredRecent = useMemo(() => {
+    if (!recentProperties) return [];
+    return recentProperties.filter((p) => {
+      if (filters.location && p.address.city !== filters.location) return false;
+      if (filters.propertyType && p.type !== filters.propertyType) return false;
+      if (filters.rentRange) {
+        const range = RENT_RANGES.find((r) => r.value === filters.rentRange);
+        if (range && (p.priceInCents < range.min || p.priceInCents >= range.max)) return false;
+      }
+      return true;
+    });
+  }, [recentProperties, filters]);
+
   // Transforma os dados da API para o formato esperado pelo componente FeaturedAds
   const properties: Property[] = useMemo(() => {
-    if (!recentProperties) return [];
-    return transformPropertyResponsesToProperties(recentProperties);
-  }, [recentProperties]);
+    return transformPropertyResponsesToProperties(filteredRecent);
+  }, [filteredRecent]);
 
   // Transforma os dados da API para o formato esperado pelo componente LatestUpdates
   const latestUpdatesItems: CardItem[] = useMemo(() => {
@@ -61,13 +76,14 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Search Form */}
-      <SearchForm />
+      <SearchForm properties={recentProperties ?? []} onSearch={setFilters} resetKey={searchResetKey} />
 
       {/* Featured Ads */}
-      <FeaturedAds 
+      <FeaturedAds
         properties={properties}
         title="Anúncios Recentes"
         subtitle="Confira os anúncios mais recentes disponíveis para locação"
+        onTabChange={() => { setFilters({ location: "", date: "", propertyType: "", rentRange: "" }); setSearchResetKey((k) => k + 1); }}
       />
 
       {/* Meus anúncios mais vistos */}

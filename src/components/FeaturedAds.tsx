@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: "Casa",
+  apartment: "Apartamento",
+  kitnet: "Kit",
+};
 
 export interface Property {
-  id: number;
+  id: string;
   title: string;
   location: string;
   type: string;
@@ -16,12 +23,14 @@ interface FeaturedAdsProps {
   properties: Property[];
   title?: string;
   subtitle?: string;
+  onTabChange?: () => void;
 }
 
-export default function FeaturedAds({ 
-  properties, 
+export default function FeaturedAds({
+  properties,
   title = "Anúncios com Destaque",
-  subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"
+  subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco",
+  onTabChange,
 }: FeaturedAdsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
@@ -62,7 +71,7 @@ export default function FeaturedAds({
             <button
               key={filter.id}
               className={`category-tab ${activeFilter === filter.id ? "active" : ""}`}
-              onClick={() => setActiveFilter(filter.id)}
+              onClick={() => { setActiveFilter(filter.id); onTabChange?.(); }}
             >
               {filter.label}
             </button>
@@ -71,7 +80,7 @@ export default function FeaturedAds({
 
         <div className="property-grid">
           {filteredProperties.map((property) => (
-            <div key={property.id} className="property-card">
+            <Link key={property.id} href={`/ads/${property.id}`} className="property-card" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div className="property-image">
                 {/* Placeholder for image */}
                 <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
@@ -79,8 +88,8 @@ export default function FeaturedAds({
               <div className="property-info">
                 <h3 className="property-title">{property.title}</h3>
                 <p className="property-location">
-                  <span style={{ fontSize: "12px", color: "#8B8E99" }}>Type:</span>{" "}
-                  <span style={{ color: "#8B8E99" }}>Learn more</span>
+                  <span style={{ fontSize: "12px", color: "#8B8E99" }}>Tipo:</span>{" "}
+                  <span style={{ color: "#8B8E99" }}>{PROPERTY_TYPE_LABELS[property.type] ?? property.type}</span>
                 </p>
                 <p className="property-description">{property.location}</p>
                 <div className="property-features">
@@ -117,7 +126,7 @@ export default function FeaturedAds({
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

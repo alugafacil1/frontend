@@ -137,6 +137,19 @@
   outline: none;
 }
 
+.search-field .custom-select {
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  border-radius: 8px;
+  height: 44px;
+}
+
+.search-field .custom-select:focus {
+  border-color: #515def;
+  box-shadow: 0 0 0 3px rgba(81, 93, 239, 0.1);
+  outline: none;
+}
+
 .search-field select option:first-child {
   color: #6b7280;
 }
