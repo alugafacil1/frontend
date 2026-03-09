@@ -134,7 +134,7 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
     async function fetchProperties() {
       if (!user?.id) return;
       try {
-        const data = await propertyService.getByUser(user.id);
+        const data = await propertyService.getByUserId(user.id);
         setProperties(Array.isArray(data) ? data.slice(0, 3) : []);
       } catch (error) {
         console.error('Erro ao buscar imóveis:', error);

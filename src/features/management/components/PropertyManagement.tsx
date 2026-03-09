@@ -17,12 +17,10 @@ interface PropertyManagementProps {
 export function PropertyManagement({ userId, userRole }: PropertyManagementProps) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     
-    // 1. NOVO ESTADO: O Filtro de Status
     const [activeFilter, setActiveFilter] = useState<PropertyStatus | 'ALL'>('ALL');
     
     const [selectedProperty, setSelectedProperty] = useState<PropertyResponse | null>(null);
 
-    // 2. PASSANDO O FILTRO PRO HOOK (Como o 5º parâmetro que criamos)
     const { data, isLoading, isError } = useProperties(
         pagination.pageIndex,
         pagination.pageSize,
@@ -39,7 +37,6 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
     };  
 
     const handleReject = (id: string) => {
-        // Num fluxo real, você poderia abrir um prompt aqui pedindo o `reason` (motivo da rejeição)
         updateStatus({ id, status: "REJECTED", reason: "Não atende aos critérios da plataforma." });
         setSelectedProperty(null);
     };
@@ -86,14 +83,12 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
         {
             header: "Status",
             accessorKey: "status",
-            // Mantendo o seu badge original e elegante
             cell: ({ row }) => <StatusBadge $status={row.original.status}>{row.original.status}</StatusBadge>
         },
         {
-            header: "Ações",
+            header: "Ação",
             id: "actions",
             cell: ({ row }) => {
-                // Lógica de UX: Se for Admin e o imóvel estiver pendente, o botão muda de cor e texto para chamar atenção!
                 const needsModeration = userRole === "ADMIN" && row.original.status === 'PENDING';
                 
                 return (
@@ -101,19 +96,12 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
                         <button 
                             onClick={() => setSelectedProperty(row.original)}
                             style={{ 
-                                color: needsModeration ? '#ea580c' : '#059669', // Laranja se precisar avaliar, Verde se for só visualizar
+                                color: needsModeration ? '#ea580c' : '#059669',
                                 background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 
                             }}
                         >
                             {needsModeration ? 'Avaliar Imóvel' : 'Visualizar'}
                         </button>
-                        
-                        {userRole !== "ADMIN" && (
-                            <>
-                                <button style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Editar</button>
-                                <button style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Excluir</button>
-                            </>
-                        )}
                     </div>
                 );
             }
@@ -147,18 +135,15 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* 4. BARRA DE FILTROS SUPERIOR */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingBottom: '10px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginRight: '8px' }}>Filtrar por:</span>
                 {renderFilterPill('ALL', 'Todos')}
-                {renderFilterPill('PENDING', userRole === "ADMIN" ? '🟠 Fila de Avaliação' : '🟠 Em Análise')}
-                {renderFilterPill('ACTIVE', '🟢 Ativos')}
-                {renderFilterPill('REJECTED', '🔴 Rejeitados')}
-                {renderFilterPill('PAUSED', '⏸️ Pausados')}
-                {renderFilterPill('PLACED', '🔵 Alugados/Vendidos')}
+                {renderFilterPill('PENDING', userRole === "ADMIN" ? 'Fila de Avaliação' : 'Em Análise')}
+                {renderFilterPill('ACTIVE', 'Ativos')}
+                {renderFilterPill('REJECTED', 'Rejeitados')}
+                {renderFilterPill('PAUSED', 'Pausados')}
+                {renderFilterPill('PLACED', 'Alugados/Vendidos')}
             </div>
 
-            {/* TABELA ORIGINAL */}
             {isLoading ? (
                 <div style={{ padding: '3rem', textAlign: 'center' }}>Carregando imóveis...</div>
             ) : isError ? (

@@ -23,7 +23,6 @@ export interface PropertyPayload {
   maxOccupants?: number;
   availableFrom?: string; 
   
-
   numberOfRooms: number;
   numberOfBedrooms?: number;
   numberOfBathrooms?: number;
@@ -50,18 +49,18 @@ export interface PropertyPayload {
 }
 
 export const propertyService = {
-  
   create: async (data: PropertyPayload | any) => {
     const response = await api.post('/api/properties', data);
     return response.data;
   },
 
-  getByAgency: async (userId: string) => {
+  getByUserId: async (userId: string, params?: { page?: number; size?: number; status?: string }) => {
     if (!userId || userId === "undefined") {
-        console.error("Tentativa de buscar imóveis da agência com ID inválido");
-        return [];
+        console.error("Tentativa de buscar imóveis com ID inválido");
+        return { content: [], totalElements: 0, totalPages: 0 }; // Retorno seguro paginado
     }
-    const response = await api.get(`/api/properties/agency/${userId}`);
+    
+    const response = await api.get(`/api/properties/user/${userId}`, { params });
     return response.data;
   },
 
@@ -108,15 +107,6 @@ export const propertyService = {
   checkIfFavorited: async (userId: string, propertyId: string) => {
     const response = await api.get(`/api/favorites/check?userId=${userId}&propertyId=${propertyId}`);
     return response.data.isFavorited; 
-  },
-
-  getByUser: async (userId: string) => {
-    if (!userId || userId === "undefined") {
-        console.error("Tentativa de buscar imóveis com ID inválido");
-        return [];
-    }
-    const response = await api.get(`/api/properties/owner/${userId}`);
-    return response.data;
   },
 
   delete: async (id: string) => {
