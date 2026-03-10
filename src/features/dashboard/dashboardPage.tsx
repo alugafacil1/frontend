@@ -1,134 +1,50 @@
 'use client';
 
 import Header from '@/components/Header';
-
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 import Footer from '@/components/Footer';
-import Sidebar from '@/components/Sidebar';
 import { userService } from '@/services/userService/userService';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/useAuth';
 import { propertyService } from '@/services/property/propertyService';
-
-const salesData = [
-  { month: 'Jan', value: 4000 },
-  { month: 'Feb', value: 3000 },
-  { month: 'Mar', value: 5000 },
-  { month: 'Apr', value: 4500 },
-  { month: 'May', value: 6000 },
-  { month: 'Jun', value: 5500 },
-  { month: 'Jul', value: 7000 },
-];
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts';
+import { PropertyCard } from '@/components/PropertyCard';
+import { UserResponse } from '@/types/user';
 
 
-const analyticsData = [
-  { month: 'Jan', line1: 4000, line2: 1500 },
-  { month: 'Feb', line1: 3500, line2: 2500 },
-  { month: 'Mar', line1: 3000, line2: 3000 },
-  { month: 'Apr', line1: 3500, line2: 1500 },
-  { month: 'May', line1: 4000, line2: 3800 },
-  { month: 'Jun', line1: 4500, line2: 4200 },
-];
+const COLORS     = ['#2483ff', '#bfdbfe'];
+const BAR_COLORS = ['#60a5fa', '#34d399', '#1a1a2e', '#93c5fd', '#c4b5fd', '#86efac'];
 
 
-const customerData = [
-  { name: 'Segment A', value: 34249 },
-  { name: 'Segment B', value: 14201 },
-];
-
-const COLORS = ['#6366f1', '#e0e7ff'];
-
-
-const listedProperties = [
-  {
-    id: 1,
-    name: 'James Reed',
-    location: 'California, USA',
-    date: '20 Dec',
-    rating: 4.5,
-    reviews: 40,
-    image: '🏠',
-  },
-  {
-    id: 2,
-    name: 'Sarah Martin',
-    location: 'New York, USA',
-    date: '18 Dec',
-    rating: 4.8,
-    reviews: 52,
-    image: '🏢',
-  },
-];
-
-
-const bookingResources = [
-  { id: 1, name: 'Carla Daniela', role: 'Owner', image: '👩‍🦰' },
-  { id: 2, name: 'Inês', role: 'Owner', image: '👩‍🦰' },
-  { id: 3, name: 'Everton', role: 'Admin', image: '👨‍💼' },
-  { id: 4, name: 'Lucas', role: 'Realtor', image: '👨‍💼' },
-  { id: 5, name: 'Genilson', role: 'Tenant', image: '👨‍💼' },
-  { id: 6, name: 'Luan', role: 'Admin', image: '👨‍💼' },
-];
-
-
-const propertyIcon = (type: string) => {
-  const icons: Record<string, string> = {
-    HOUSE: '🏠',
-    APARTMENT: '🏢',
-    COMMERCIAL: '🏪',
-    LAND: '🌿',
-  };
-  return icons[type] ?? '🏠';
-};
-
-const formatPrice = (cents: number) =>
-  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-};
-
-
-interface HeaderProps {
-  transparent?: boolean;
+function getInitials(name: string) {
+  return name.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
 }
 
-export default function Dashboard({ transparent = false }: HeaderProps) {
-  
+const AVATAR_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+
+
+
+
+interface DashboardProps { transparent?: boolean; }
+
+export default function Dashboard({ transparent = false }: DashboardProps) {
+
   const { user } = useAuth();
-  const [totalUsers, setTotalUsers] = useState<number>(0);
-  const [customerChartData, setCustomerChartData] = useState([
-    { name: 'Usuários', value: 0 },
-    { name: 'Restante', value: 1 },
+
+  const [totalUsers,         setTotalUsers]         = useState<number>(0);
+  const [customerChartData,  setCustomerChartData]  = useState([
+    { name: 'Usuários',  value: 0 },
+    { name: 'Restante',  value: 1 },
   ]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-
-  const [properties, setProperties] = useState<any[]>([]);
-  const [loadingProperties, setLoadingProperties] = useState(true);
-
-
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const total = await userService.getTotalCount();
-
-        setTotalUsers(total);
-
-        const potencial = Math.round(total * 0.3);
-        setCustomerChartData([
-          { name: 'Usuários Cadastrados', value: total },
-          { name: 'Potenciais',           value: potencial || 1 },
-        ]);
-      } catch (error) {
-        console.error('Erro ao buscar total de usuários:', error);
-      } finally {
-        setLoadingUsers(false);
-      }
-    }
-
-    fetchUsers();
-  }, []);
+  const [loadingUsers,       setLoadingUsers]        = useState(true);
+  const [properties,         setProperties]          = useState<any[]>([]);
+  const [loadingProperties,  setLoadingProperties]   = useState(true);
+  const [imoveisDisponiveis, setImoveisDisponiveis] = useState<number>(0);
+  const [imoveisIndisponiveis, setImoveisIndisponiveis] = useState<number>(0);
+  const [barData, setBarData] = useState<{ name: string; value: number }[]>([]);
+  const [contacts, setContacts] = useState<UserResponse[]>([]);
 
   useEffect(() => {
     async function fetchProperties() {
@@ -136,628 +52,599 @@ export default function Dashboard({ transparent = false }: HeaderProps) {
       try {
         const data = await propertyService.getByUser(user.id);
         setProperties(Array.isArray(data) ? data.slice(0, 3) : []);
+        
+        const disponiveis: any = data.filter((im : any) => im.status == "ACTIVE");
+        const indisponiveis: any = data.filter((im : any) => im.status == "PLACED" || im.status == "PAUSED" || im.status == "PENDING");
+        setImoveisDisponiveis( disponiveis.length);
+        setImoveisIndisponiveis(indisponiveis.length);
+
+        setCustomerChartData([
+          {
+            name: 'Disponíveis',
+            value: data.length > 0 ? Math.round((disponiveis.length / data.length) * 100) : 0,
+          },
+          {
+            name: 'Indisponíveis',
+            value: data.length > 0 ? Math.round((indisponiveis.length / data.length) * 100) : 0,
+          },
+        ]);
+
+        const top6 = [...data]
+          .sort((a: any, b: any) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
+          .slice(0, 6)
+          .map((p: any) => ({
+            name: p.title?.slice(0, 12) ?? 'Imóvel', 
+            value: p.viewCount ?? 0,
+          }));
+
+        setBarData(top6);
+
       } catch (error) {
         console.error('Erro ao buscar imóveis:', error);
       } finally {
         setLoadingProperties(false);
+        setLoadingUsers(false); 
       }
     }
     fetchProperties();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.role) return;
+    async function fetchContatos() {
+      try {
+        const page = await userService.getAll(0, 50);
+  
+        let listUsersChats: any = [];
+
+        if (user?.role === 'OWNER') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && (u.userType === "TENANT" || u.userType === "ADMIN"));
+        } else if (user?.role === 'REALTOR') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && (u.userType === "TENANT" || u.userType === "AGENCY_ADMIN"));
+        } else if (user?.role === 'AGENCY_ADMIN') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && u.userType === "REALTOR");
+        } else if (user?.role === 'ADMIN') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id);
+        }
+        setContacts(listUsersChats);
+        
+      } catch (err) {
+        console.error("Erro ao buscar admins:", err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+    fetchContatos();
+  }, [user?.role]);
+
   
   return (
-    <div className="dashboard-container">
+    <div className="pg">
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .dashboard-container {
-          font-family: 'Inter', sans-serif;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        .pg {
+          background: #f4f6fb;
           min-height: 100vh;
-          padding: 2rem;
         }
 
-        .dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2.5rem;
+        .wrap {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 5.5rem 1.5rem 3rem;
         }
 
-        .dashboard-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 2.5rem;
+        .page-title {
+          font-size: 1.5rem;
           font-weight: 800;
           color: #1a1a2e;
-          letter-spacing: -0.02em;
+          margin-bottom: 1.25rem;
         }
 
-        .dashboard-actions {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-        }
-
-        .search-input {
-          padding: 0.75rem 1.5rem;
-          border: 2px solid #e0e0e0;
-          border-radius: 12px;
-          font-size: 0.95rem;
-          width: 250px;
-          transition: all 0.3s ease;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color:rgb(36, 131, 255);
-          box-shadow: 0 0 0 3px rgba(80, 176, 255, 0.1);
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg,rgb(36, 131, 255) 0%,rgb(70, 152, 229) 100%);
-          color: white;
-          border: none;
-          padding: 0.75rem 1.5rem;
-          border-radius: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          font-size: 0.95rem;
-          box-shadow: 0 4px 12px rgba(99, 161, 241, 0.3);
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(59, 138, 241, 0.4);
-        }
-
-        .dashboard-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-          margin-bottom: 1.5rem;
-        }
-
+        
         .card {
-          background: white;
-          border-radius: 20px;
-          padding: 1.5rem;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-          transition: all 0.3s ease;
-          border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
+          background: #fff;
+          border-radius: 16px;
+          padding: 1.25rem 1.5rem;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+          border: 1px solid rgba(0,0,0,0.04);
         }
 
         .card-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.25rem;
           font-weight: 700;
+          font-size: 0.95rem;
           color: #1a1a2e;
         }
 
-        .card-link {
-          color:rgb(0, 153, 255);
-          text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 500;
-          transition: color 0.2s;
-        }
+        
+        .views-card { margin-bottom: 1.25rem; }
 
-        .card-link:hover {
-          color:rgb(0, 153, 255);
-        }
-
-        .stats-section {
+        .views-header {
           display: flex;
-          justify-content: space-around;
-          margin-top: 1rem;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.25rem;
         }
 
-        .stat-item {
-          text-align: center;
+        .views-legend {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.78rem;
+          color: #2483ff;
+          font-weight: 600;
         }
 
-        .stat-value {
-          font-family: 'Syne', sans-serif;
-          font-size: 2rem;
+        .views-legend-dot {
+          width: 10px; height: 10px;
+          background:#2483ff;
+          border-radius: 50%;
+        }
+
+        .views-count {
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #1a1a2e;
+          margin-bottom: 0.75rem;
+        }
+
+        .views-count small {
+          font-size: 0.78rem;
+          color: #888;
+          font-weight: 400;
+          margin-left: 6px;
+        }
+
+        .toggle-group { display: flex; gap: 6px; }
+
+        .toggle-btn {
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          background: #fff;
+          padding: 4px 12px;
+          font-size: 0.75rem;
+          cursor: pointer;
+          color: #888;
+        }
+
+        .toggle-btn.active {
+          background: #2483ff;
+          color: #fff;
+          border-color:rgb(27, 124, 252);
+        }
+
+       
+        .row-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.25rem;
+          margin-bottom: 1.25rem;
+        }
+
+       
+        .pie-wrap {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 160px;
+        }
+
+        .pie-stats {
+          display: flex;
+          justify-content: center;
+          gap: 2.5rem;
+          margin-top: 0.75rem;
+        }
+
+        .pie-stat { text-align: center; }
+
+        .pie-stat-value {
+          font-size: 1.4rem;
           font-weight: 800;
           color: #1a1a2e;
           display: block;
-          margin-bottom: 0.25rem;
         }
 
-        .stat-label {
-          font-size: 0.875rem;
-          color: #666;
+        .pie-stat-label {
+          font-size: 0.72rem;
+          color: #888;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          justify-content: center;
+          margin-top: 2px;
+        }
+
+        .dot {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        
+        .row-2-bottom {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.25rem;
+        }
+
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .link-all {
+          font-size: 0.78rem;
+          color: #2483ff;
+          text-decoration: none;
           font-weight: 500;
         }
 
-        .chart-container {
-          height: 200px;
-          margin-top: 1rem;
-        }
-
-        .pie-chart-container {
-          height: 180px;
+        
+        .prop-item {
           display: flex;
-          justify-content: center;
-          align-items: center;
+          gap: 10px;
+          align-items: flex-start;
+          padding: 10px 0;
+          border-bottom: 1px solid #f4f4f4;
         }
 
-        .property-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
+        .prop-item:last-child { border-bottom: none; }
 
-        .property-item {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 1rem;
-          background: #f8f9fa;
-          border-radius: 12px;
-          transition: all 0.2s;
-        }
-
-        .property-item:hover {
+        .prop-thumb {
+          width: 64px; height: 52px;
+          border-radius: 8px;
+          flex-shrink: 0;
           background: #e9ecef;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.5rem;
+          overflow: hidden;
         }
 
-        .property-image {
-          width: 60px;
-          height: 60px;
-          border-radius: 10px;
-          background: linear-gradient(135deg,rgb(99, 165, 241) 0%,rgb(49, 171, 241) 100%);
+        .prop-thumb img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+        }
+
+        .prop-info { flex: 1; min-width: 0; }
+
+        .prop-name {
+          font-weight: 600;
+          font-size: 0.85rem;
+          color: #1a1a2e;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .prop-location {
+          font-size: 0.75rem;
+          color: #888;
+          margin: 2px 0 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .prop-meta {
+          display: flex;
+          gap: 8px;
+          font-size: 0.72rem;
+          color: #aaa;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .status-badge {
+          font-size: 0.68rem;
+          padding: 2px 8px;
+          border-radius: 20px;
+          font-weight: 600;
+          background: #e0e7ff;
+          color: #2483ff;
+        }
+
+        .prop-price {
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: #2483ff;
+          white-space: nowrap;
+          text-align: right;
+          flex-shrink: 0;
+          align-self: center;
+        }
+
+       
+        .msg-item {
           display: flex;
           align-items: center;
-          justify-content: center;
-          font-size: 1.75rem;
+          gap: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid #f4f4f4;
         }
 
-        .property-details {
-          flex: 1;
+        .msg-item:last-child { border-bottom: none; }
+
+        .msg-avatar {
+          width: 38px; height: 38px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.78rem; font-weight: 700;
+          color: #fff; flex-shrink: 0;
         }
 
-        .property-name {
+        .msg-info { flex: 1; }
+
+        .msg-name {
+          font-size: 0.85rem;
           font-weight: 600;
           color: #1a1a2e;
-          margin-bottom: 0.25rem;
         }
 
-        .property-location {
-          font-size: 0.875rem;
-          color: #666;
+        .msg-time { font-size: 0.72rem; color: #aaa; }
+
+        .msg-btn {
+          border: none;
+          border-radius: 8px;
+          padding: 5px 14px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          flex-shrink: 0;
         }
 
-        .property-date {
-          font-size: 0.875rem;
-          color: #999;
-          margin-right: 1rem;
+        .btn-blue  { 
+          background:rgba(190, 207, 243, 0.91); 
+          color: rgb(85, 142, 248); 
         }
 
-        .property-rating {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
+        
+        .skeleton {
+          background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite;
+          border-radius: 8px;
         }
 
-        .rating-star {
-          color: #fbbf24;
-        }
-
-        .booking-list {
+        .props-list {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
         }
 
-        .booking-item {
+        .props-list :global(.property-card) {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1rem;
-          background: #f8f9fa;
-          border-radius: 12px;
+          flex-direction: row !important;
+          height: 90px !important;
+          min-height: unset !important;
         }
 
-        .booking-info {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
+        .props-list :global(.card-image-container) {
+          width: 100px !important;
+          height: 90px !important;
+          flex-shrink: 0 !important;
+          border-radius: 10px 0 0 10px !important;
         }
 
-        .booking-avatar {
-          width: 45px;
-          height: 45px;
-          border-radius: 50%;
-          background: linear-gradient(135deg,rgb(72, 143, 236) 0%,rgb(50, 166, 243) 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.25rem;
+        .props-list :global(.card-img) {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
         }
 
-        .booking-details {
-          display: flex;
-          flex-direction: column;
+        .props-list :global(.card-content) {
+          flex: 1 !important;
+          padding: 8px 12px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          gap: 4px !important;
         }
 
-        .booking-name {
-          font-weight: 600;
-          color: #1a1a2e;
-          font-size: 0.9rem;
+        .props-list :global(.card-actions-grid) {
+          display: none !important;
         }
 
-        .booking-role {
-          font-size: 0.8rem;
-          color: #666;
+        .props-list :global(.card-features) {
+          display: none !important;
         }
 
-        .btn-booking {
-          background:rgb(99, 156, 241);
-          color: white;
-          border: none;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-booking:hover {
-          background:rgb(70, 179, 229);
-          transform: scale(1.05);
-        }
-
-        .workbook-section {
-          background: white;
-          border-radius: 20px;
-          padding: 1.5rem;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-          margin-bottom: 1.5rem;
-          margin-top: 3.5rem;
-        }
-
-        .workbook-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-       
-        }
-        
-        .title-dash {
-         display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-          margin-top: 4rem;
-        }
-
-        .workbook-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1a1a2e;
-        }
-
-        .workbook-stats {
-          display: flex;
-          gap: 2rem;
-          align-items: center;
-        }
-
-        .workbook-stat {
-          text-align: center;
-        }
-
-        .workbook-stat-value {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.25rem;
-          font-weight: 700;
-          color:rgb(99, 172, 241);
-        }
-
-        .workbook-stat-label {
-          font-size: 0.875rem;
-          color: #666;
-        }
-
-        .card-full-width {
-          grid-column: 1 / -1;
-        }
-
-        @media (max-width: 1200px) {
-          .dashboard-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
 
         @media (max-width: 768px) {
-          .dashboard-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .dashboard-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: flex-start;
-          }
-
-          .dashboard-actions {
-            width: 100%;
-            flex-direction: column;
-          }
-
-          .search-input {
-            width: 100%;
-          }
+          .row-2, .row-2-bottom { grid-template-columns: 1fr; }
+          .wrap { padding: 5rem 1rem 2rem; }
         }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .card {
-          animation: fadeInUp 0.6s ease-out;
-        }
-
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
-        
-        .minha-imagem {
-          width: 100px;   /* largura fixa */
-          height: 100px;  /* altura fixa */
-          }
-
-
-        .layout {
-          display: flex;
-          gap: 2rem;
-          margin-top: 2rem;
-        }
-        .sidebar-container {
-          width: 260px;
-          border-radius: 20px;
-          padding: 1.5rem;
-          background: #fff;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-          height: fit-content;
-        }
-
-         .content-container {
-          flex: 1;
-          background: #fff;
-          border-radius: 20px;
-          padding: 2rem;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-     
-
       `}</style>
 
-      <Header></Header>
-      <div className='layout'>
-      <div className='sidebar-container'><Sidebar /></div>
-      <div className='content-container'>
-        <div className="title-dash"><h1>Dashboard</h1></div>
-        <div className="workbook-section">
+      <Header />
 
-          <div className="workbook-header">
+      <div className="wrap">
+        <h1 className="page-title">Dashboard</h1>
 
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                backgroundColor: '#d1d5db',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6'
-                }}></div>
-              </div>
+        {/* <div className="card views-card">
+          <div className="views-header">
+            <div className="views-legend">
+            <div className="views-legend-dot" />
               Visualizações
-            </h2>
-            <div className="workbook-stats">
-              <div className="workbook-stat">
-                <div className="workbook-stat-value">120</div>
-                <div className="workbook-stat-label">Total Views</div>
-              </div>
             </div>
+            {/* <div className="toggle-group">
+              <button className="toggle-btn active">Mês</button>
+            </div> 
           </div>
-          <div className="chart-container">
+
+          <div className="views-count">
+            730 Visualizações <small>Total</small>
+          </div>
+
+          <div style={{ height: 180 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="month" stroke="#666" />
-                <YAxis stroke="#666" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" stroke="#ccc" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#ccc" tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Area
-                  type="natural"
+                  type="monotone"
                   dataKey="value"
-                  stroke="#1E90FF"
-                  strokeWidth={3}
-                  fill="#1E90FF"
-                  fillOpacity={0.2}
-                  dot={{ fill: '#1E90FF', r: 5 }}
+                  stroke="#2483ff"
+                  strokeWidth={2.5}
+                  fill="#2483ff"
+                  fillOpacity={0.12}
+                  dot={false}
+                  activeDot={{ r: 5, fill: '#2483ff' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </div> */}
 
+        
+        <div className="row-2">
 
-        <div className="dashboard-grid">
-
-            <div className="card">
-              <div className="card-header">
-                <h3 className="card-title">Clientes</h3>
-              </div>
-              <div className="pie-chart-container">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={customerChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {customerChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value, name) => [value?.toLocaleString('pt-BR'), name]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="stats-section">
-                <div className="stat-item">
-                  {loadingUsers
-                    ? <div className="stat-loading" />
-                    : <span className="stat-value">{totalUsers.toLocaleString('pt-BR')}</span>
-                  }
-                  <span className="stat-label">Usuários Cadastrados</span>
-                </div>
-                <div className="stat-item">
-                  {loadingUsers
-                    ? <div className="stat-loading" />
-                    : <span className="stat-value">{Math.round(totalUsers * 0.3).toLocaleString('pt-BR')}</span>
-                  }
-                  <span className="stat-label">Clientes em Potencial</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="card-header">
-                <h3 className="card-title">Propriedades</h3>
-                <a href="/dashboardProperties" className="card-link">Todas →</a>
-              </div>
-
-              {loadingProperties ? (
-                <div className="property-list">
-                  {[1,2,3].map(i => <div key={i} className="skeleton skeleton-row" />)}
-                </div>
-              ) : properties.length === 0 ? (
-                <p style={{ color: '#999', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
-                  Nenhum imóvel cadastrado.
-                </p>
-              ) : (
-                <div className="property-list">
-                  {properties.map((property) => {
-                    const id = property.id ?? property.propertyId;
-                    const photo = property.photoUrls?.[0];
-                    const location = property.address
-                      ? `${property.address.neighborhood}, ${property.address.city}`
-                      : property.city ?? '—';
-
-                    return (
-                      <div key={id} className="property-item">
-
-                        <div className="property-image">
-                          {photo
-                            ? <img src={photo} />
-                            : propertyIcon(property.type)
-                          }
-                        </div>
-
-                        <div className="property-details">
-                          <div className="property-name">{property.title}</div>
-                          <div className="property-location">{location}</div>
-                        </div>
-
-                        <div className="property-date">
-                          {formatDate(property.createdAt)}
-                        </div>
-
-                        <div className="property-price">
-                          {formatPrice(property.priceInCents)}
-                        </div>
-
-                        <span className={`property-status status-${property.status}`}>
-                          {property.status}
-                        </span>
-
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-          <div className="card card-full-width">
-            <div className="card-header">
-              <h3 className="card-title">Análise das Vendas</h3>
-            </div>
-            <div className="chart-container" style={{ height: '250px' }}>
+          <div className="card">
+            <p className="card-title" style={{ marginBottom: '0.5rem' }}>Imóveis</p>
+            <div className="pie-wrap">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analyticsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="month" stroke="#666" />
-                  <YAxis stroke="#666" />
-                  <Tooltip />
-                  <Line
-                    type="natural"
-                    dataKey="line1"
-                    stroke="#1E90FF"
-                    strokeWidth={3}
-                    dot={{ fill: '#1E90FF', r: 5 }}
-                  />
-                  <Line
-                    type="natural"
-                    dataKey="line2"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', r: 5 }}
-                  />
-                </LineChart>
+                <PieChart>
+                  <Pie
+                    data={customerChartData}
+                    cx="50%" cy="50%"
+                    innerRadius={52} outerRadius={72}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {customerChartData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: any, n: any) => [`${v}%`, n]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="pie-stats">
+              <div className="pie-stat">
+                {loadingUsers
+                  ? <div className="skeleton" style={{ width: 60, height: 28, margin: '0 auto' }} />
+                  : <span className="pie-stat-value">{imoveisDisponiveis}</span>
+                }
+                <span className="pie-stat-label">
+                  <i className="dot" style={{ background: '#2483ff' }} /> Disponíveis
+                </span>
+              </div>
+              <div className="pie-stat">
+                {loadingUsers
+                  ? <div className="skeleton" style={{ width: 60, height: 28, margin: '0 auto' }} />
+                  : <span className="pie-stat-value">{imoveisIndisponiveis}</span>
+                }
+                <span className="pie-stat-label">
+                  <i className="dot" style={{ background: '#e0e7ff' }} /> Indisponíveis
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <p className="card-title" style={{ marginBottom: '0.75rem' }}>Os mais visualizados</p>
+            <div style={{ height: 225 }}>
+              <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} barSize={28} barGap={3}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis
+                   dataKey="name"
+                   axisLine={false}       
+                   tickLine={false}       
+                   tick={{ fontSize: 9, fill: '#888' }}
+                   interval={0}
+                   angle={-15}
+                   textAnchor="end"
+                   height={40}
+                />
+                <YAxis
+                  axisLine={false}       
+                  tickLine={false}        
+                  tick={{ fontSize: 9, fill: '#888' }}  
+                  domain={[0, 100000]}
+                  ticks={[1000, 10000, 50000, 100000]}
+                />
+                 <Tooltip formatter={(v: any) => [`${v.toLocaleString('pt-BR')} views`]} />
+                 <Bar dataKey="value" fill="#2483ff" radius={[6,6,0,0]} > 
+                 {barData.map((_: any, i: number) => (
+                    <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                  ))}
+                 </Bar>
+              </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
+
+        </div>
+
+        
+        <div className="row-2-bottom">
+
+          <div className="card">
+            <div className="section-header">
+              <p className="card-title">Listagem dos Imóveis</p>
+              <a href="/ads/my-properties" className="link-all">Ver Todos</a>
+            </div>
+
+            {loadingProperties ? (
+              [1,2,3].map(i => (
+                <div key={i} className="skeleton" style={{ height: 280, borderRadius: 12, marginBottom: 12 }} />
+              ))
+            ) : properties.length === 0 ? (
+              <p style={{ color:'#bbb', fontSize:'0.82rem', textAlign:'center', padding:'1.5rem 0' }}>
+                Nenhum imóvel cadastrado.
+              </p>
+            ) : (
+              <div className="props-list">
+                {properties.map((p) => (
+                  <PropertyCard
+                    key={p.id ?? p.propertyId}
+                    property={p}
+                    onUpdateSuccess={() => propertyService.getByUser(String(user?.id)).then(data => setProperties(Array.isArray(data) ? data.slice(0, 3) : []))}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="section-header">
+              <p className="card-title">Mensagens Recentes</p>
+              <a href="/chat" className="link-all">Ver Todos</a>
+            </div>
+
+            {contacts.slice(0, 4).map((m, i) => (
+              <div key={m.userId} className="msg-item">
+                <div
+                  className="msg-avatar"
+                  style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
+                >
+                  {getInitials(m.name)}
+                </div>
+                <div className="msg-info">
+                  <div className="msg-name">{m.name}</div>
+                </div>
+               
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
-     </div>
-     <Footer></Footer>
+
+      <Footer />
     </div>
   );
 }

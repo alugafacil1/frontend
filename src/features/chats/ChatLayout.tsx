@@ -2,15 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import Footer from '@/components/Footer';
-import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { UserResponse } from "@/types/user";
 import { userService } from "@/services/userService/userService";
-import {db} from '../../../src/firebaseConfig.js'
+import { db } from '../../../src/firebaseConfig.js';
 import { ref, push, onValue, serverTimestamp, query, orderByChild } from "firebase/database";
 import { useAuth } from "@/lib/auth/useAuth";
-
-
 
 function getInitials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
@@ -21,7 +18,6 @@ const AVATAR_COLORS = [
   "#ef4444", "#8b5cf6", "#14b8a6", "#f97316",
 ];
 
-
 interface Message {
   id: string;
   text: string;
@@ -30,36 +26,35 @@ interface Message {
   timestamp: number;
 }
 
-
 export default function ChatLayout() {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
-  const [contacts, setContacts]             = useState<UserResponse[]>([]);
+  const [contacts,       setContacts]       = useState<UserResponse[]>([]);
   const [loadingContacts, setLoading]       = useState(true);
-  const [activeContact, setActiveContact]   = useState<UserResponse | null>(null);
-  const [messages, setMessages]             = useState<Message[]>([]);
-  const [loadingMsgs, setLoadingMsgs]       = useState(false);
-  const [input, setInput]                   = useState("");
-  const [search, setSearch]                 = useState("");
+  const [activeContact,  setActiveContact]  = useState<UserResponse | null>(null);
+  const [messages,       setMessages]       = useState<Message[]>([]);
+  const [loadingMsgs,    setLoadingMsgs]    = useState(false);
+  const [input,          setInput]          = useState("");
+  const [search,         setSearch]         = useState("");
   const bottomRef                           = useRef<HTMLDivElement>(null);
 
- 
   useEffect(() => {
-    async function fetchAdmins() {
+    if (!user?.role) return;
+    async function fetchContatos() {
       try {
         const page = await userService.getAll(0, 50);
-        let listUsersChats:any = []
+  
+        let listUsersChats: any = [];
 
-        if (user?.role == 'OWNER') {
-          listUsersChats = page.content.filter((u: any) => u.id !== user.id && u.userType === "TENANT");
-        } else if (user?.role == 'REALTOR') {
-          listUsersChats = page.content.filter((u: any) =>  u.id !== user.id && (u.userType === "TENANT" || u.userType === "AGENCY_ADMIN"));
-        } else if (user?.role == 'AGENCY_ADMIN') {
-          listUsersChats = page.content.filter((u: any) =>  u.id !== user.id && u.userType === "REALTOR" );
-        } else if (user?.role == 'ADMIN') {
-          listUsersChats = page.content.filter((u: any) =>  u.id !== user.id)
+        if (user?.role === 'OWNER') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && (u.userType === "TENANT" || u.userType === "ADMIN"));
+        } else if (user?.role === 'REALTOR') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && (u.userType === "TENANT" || u.userType === "AGENCY_ADMIN"));
+        } else if (user?.role === 'AGENCY_ADMIN') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && u.userType === "REALTOR");
+        } else if (user?.role === 'ADMIN') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id);
         }
-      
         setContacts(listUsersChats);
         if (listUsersChats.length > 0) setActiveContact(listUsersChats[0]);
       } catch (err) {
@@ -68,26 +63,23 @@ export default function ChatLayout() {
         setLoading(false);
       }
     }
-    fetchAdmins();
-  }, []);
+    fetchContatos();
+  }, [user?.role]);
 
-
+  
   useEffect(() => {
     if (!user?.id || !activeContact?.userId) return;
 
     setLoadingMsgs(true);
     setMessages([]);
 
-    const roomId = [user.id, activeContact.userId].sort().join("_");
+    const roomId  = [user.id, activeContact.userId].sort().join("_");
     const msgsRef = query(ref(db, `chats/${roomId}/messages`), orderByChild("timestamp"));
 
-    const unsubscribe = onValue(msgsRef, (snapshot:any) => {
+    const unsubscribe = onValue(msgsRef, (snapshot: any) => {
       const data = snapshot.val();
       if (data) {
-        const parsed: Message[] = Object.entries(data).map(([id, msg]: any) => ({
-          id,
-          ...msg,
-        }));
+        const parsed: Message[] = Object.entries(data).map(([id, msg]: any) => ({ id, ...msg }));
         setMessages(parsed);
       } else {
         setMessages([]);
@@ -97,16 +89,18 @@ export default function ChatLayout() {
 
     return () => unsubscribe();
   }, [user?.id, activeContact?.userId]);
- 
+
+  
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+ 
   const send = async () => {
     const text = input.trim();
     if (!text || !user?.id || !activeContact?.userId) return;
 
-    const roomId = [user.id, activeContact.userId].sort().join("_");
+    const roomId  = [user.id, activeContact.userId].sort().join("_");
     const msgsRef = ref(db, `chats/${roomId}/messages`);
 
     await push(msgsRef, {
@@ -127,420 +121,447 @@ export default function ChatLayout() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-
   return (
     <>
       <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .dashboard-container {
-          font-family: 'Inter', sans-serif;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        .pg {
+          background:rgb(255, 255, 255);
           min-height: 100vh;
-          padding: 2rem;
-        }
-        .layout {
-          display: flex;
-          gap: 2rem;
-          margin-top: 2rem;
-        }
-        .sidebar-container {
-          width: 260px;
-          flex-shrink: 0;
-          border-radius: 20px;
-          padding: 1.5rem;
-          background: #fff;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-          height: fit-content;
-        }
-        .content-container {
-          flex: 1;
-          background: #fff;
-          border-radius: 20px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-          overflow: hidden;
-          height: calc(100vh - 240px);
-          min-height: 480px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
-        .chat-root {
-          display: grid;
-          grid-template-columns: 230px 1fr 210px;
-          height: 100%;
-          overflow: hidden;
+        
+        .wrap {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 5.5rem 1.5rem 2rem;
         }
 
-        .chat-contacts {
-          border-right: 1px solid #f0f0f0;
-          display: flex;
-          flex-direction: column;
-          padding: 1.25rem 1rem;
-          gap: 1rem;
-          overflow-y: auto;
-        }
-        .chat-contacts h2 {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.15rem;
-          font-weight: 700;
+        .page-title {
+          font-size: 1.8rem;
+          font-weight: 800;
           color: #1a1a2e;
+          margin-bottom: 1.5rem;
         }
+
+       
+        .chat-shell {
+          display: grid;
+          grid-template-columns: 280px 1fr;
+          background: #fff;
+          border-radius: 5px;
+          overflow: hidden;
+          height: calc(100vh - 200px);
+          min-height: 500px;
+        }
+
+        .contacts-col {
+            background:rgb(240, 246, 250);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;  
+            border-radius: 5px;
+            height: 100%;      
+        }
+
+        .contacts-search {
+          padding: 1rem;
+          border-bottom: 1px solidrgb(255, 255, 255);
+          flex-shrink: 0;
+        }
+
         .search-box {
           display: flex;
           align-items: center;
           gap: 8px;
-          background: #f8f9fa;
-          border-radius: 12px;
+          background:rgb(255, 255, 255);
+          border-radius: 10px;
           padding: 8px 12px;
-          border: 2px solid #e0e0e0;
-          transition: all 0.3s;
+          border: 1.5px solidrgb(255, 253, 253);
+          transition: border-color 0.2s;
         }
+
         .search-box:focus-within {
-          border-color: rgb(36,131,255);
-          box-shadow: 0 0 0 3px rgba(80,176,255,0.1);
+          border-color: #2483ff;
         }
+
         .search-box input {
           border: none;
-          background: transparent;
+          background:rgb(255, 255, 255);
           outline: none;
-          font-size: 0.82rem;
+          font-size: 0.83rem;
           color: #555;
           width: 100%;
-          font-family: 'Inter', sans-serif;
         }
-        .section-label {
-          font-size: 0.72rem;
+
+        .contacts-label {
+          padding: 0.75rem 1rem 0.4rem;
+          font-size: 0.7rem;
           font-weight: 600;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           color: #aaa;
           text-transform: uppercase;
+          flex-shrink: 0;
         }
-        .contact-list { display: flex; flex-direction: column; gap: 2px; }
+
+        .contacts-list {
+          flex: 1;
+          overflow-y: auto;  
+          padding: 0 0.5rem 1rem;
+          min-height: 0;     
+        }
+
+        /* Skeleton */
+        .skel {
+          height: 60px;
+          border-radius: 10px;
+          margin-bottom: 4px;
+          background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite;
+        }
+
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
         .contact-item {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 9px 8px;
-          border-radius: 12px;
+          padding: 10px 8px;
+          border-radius: 10px;
           cursor: pointer;
-          transition: all 0.2s;
-          border: 1px solid transparent;
-        }
-        .contact-item:hover { background: #f8f9fa; }
-        .contact-item.active {
-          background: rgba(36,131,255,0.07);
-          border-color: rgba(36,131,255,0.15);
-        }
-        .avatar-img {
-          width: 38px; height: 38px;
-          border-radius: 50%; object-fit: cover; flex-shrink: 0;
-        }
-        .avatar-initials {
-          width: 38px; height: 38px;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 0.78rem; font-weight: 700;
-          color: #fff; flex-shrink: 0;
-        }
-        .contact-info .name  { font-size: 0.84rem; font-weight: 600; color: #1a1a2e; }
-        .role-badge {
-          font-size: 0.68rem;
-          font-weight: 600;
-          color: rgb(36,131,255);
-          background: rgba(36,131,255,0.1);
-          padding: 2px 6px;
-          border-radius: 20px;
+          transition: background 0.15s;
         }
 
-        .chat-area {
+        .contact-item:hover  { background: #f4f6fb; }
+
+        .contact-item.active { background: #f0f6ff; }
+
+        .avatar-img {
+          width: 40px; height: 40px;
+          border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+
+        .avatar-ini {
+          width: 40px; height: 40px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.8rem; font-weight: 700;
+          color: #fff; flex-shrink: 0;
+        }
+
+        .contact-info { min-width: 0; }
+
+        .contact-name {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1a1a2e;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .contact-preview {
+          font-size: 0.75rem;
+          color: #aaa;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-top: 2px;
+        }
+
+        .role-badge {
+          display: inline-block;
+          font-size: 0.65rem;
+          font-weight: 600;
+          color: #2483ff;
+          background: rgba(36,131,255,0.1);
+          padding: 1px 6px;
+          border-radius: 20px;
+          margin-top: 2px;
+        }
+
+        .chat-col {
           display: flex;
           flex-direction: column;
-          border-right: 1px solid #f0f0f0;
           min-width: 0;
+          height: 100%;     
+          overflow: hidden;  
         }
+
         .chat-header {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          gap: 12px;
           padding: 1rem 1.25rem;
           border-bottom: 1px solid #f0f0f0;
           flex-shrink: 0;
         }
-        .chat-header-info { display: flex; align-items: center; gap: 10px; }
-        .chat-header .avatar-img { width: 38px; height: 38px; }
-        .cname { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; color: #1a1a2e; }
-        .status { font-size: 0.72rem; color: #22c55e; font-weight: 500; }
-        .icon-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 1rem; }
 
-        .messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 1.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        .loading-msgs {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #bbb;
-          font-size: 0.85rem;
-        }
-        .empty-msgs {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 8px;
-          color: #ccc;
-          font-size: 0.82rem;
+        .chat-header-name {
+          font-size: 1rem;
+          font-weight: 700;
+          color: #1a1a2e;
         }
 
-        .msg-row { 
+        
+        .messages-area {
+            flex: 1;
+            overflow-y: auto; 
+            padding: 1.25rem;
             display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            width: 100%;    
-            }
-        .msg-row.me { 
-          flex-direction: row-reverse; 
-          justify-content: flex-start;
-          }
+            flex-direction: column;
+            gap: 0.75rem;
+            min-height: 0;     
+        }
+
+        .loading-msgs, .empty-msgs {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: #ccc;
+          font-size: 0.85rem;
+          gap: 8px;
+        }
+
+        .msg-row {
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+          width: 100%;
+        }
+
+        .msg-row.me {
+          flex-direction: row-reverse;
+        }
 
         .bubble {
-          max-width: 65%;
-          min-width: 60px;          
-          width: fit-content;       
+          max-width: 60%;
+          min-width: 50px;
+          width: fit-content;
           padding: 10px 14px;
-          border-radius: 16px;
-          font-size: 0.83rem;
+          border-radius: 18px;
+          font-size: 0.875rem;
           line-height: 1.5;
-          word-break: break-word;    
-          overflow-wrap: anywhere;   
-          white-space: pre-wrap;    
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          white-space: pre-wrap;
         }
+
         .bubble.other {
-          background: #f8f9fa; color: #333;
+          background: #f4f6fb;
+          color: #333;
           border-bottom-left-radius: 4px;
-          border: 1px solid #e9ecef;
+          border: 1px solid #ececec;
         }
+
         .bubble.me {
-          background: linear-gradient(135deg, rgb(36,131,255) 0%, rgb(70,152,229) 100%);
+          background: #2483ff;
           color: #fff;
           border-bottom-right-radius: 4px;
           box-shadow: 0 4px 12px rgba(36,131,255,0.25);
         }
-        .msg-time { font-size: 0.68rem; color: #bbb; margin-top: 3px; text-align: right; }
+
+        .msg-time {
+          font-size: 0.65rem;
+          color: #ccc;
+          margin-top: 3px;
+        }
+
+        .msg-row.me .msg-time { text-align: right; }
         .msg-row:not(.me) .msg-time { text-align: left; }
 
-        .chat-input-row {
+       
+        .input-row {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 0.875rem 1.25rem;
-          border-top: 1px solid #f0f0f0;
           flex-shrink: 0;
         }
-        .chat-input-row input {
+
+        .input-row input {
           flex: 1;
-          border: 2px solid #e0e0e0;
-          border-radius: 12px;
-          padding: 0.6rem 1rem;
+          border: 1.5px solidrgb(243, 243, 243);
+          border-radius: 5px;
+          padding: 0.65rem 1rem;
           outline: none;
           font-size: 0.875rem;
-          font-family: 'Inter', sans-serif;
+          background:rgb(240, 246, 250);
           color: #333;
-          transition: all 0.3s;
+          transition: border-color 0.2s;
+          font-family: inherit;
         }
-        .chat-input-row input:focus {
-          border-color: rgb(36,131,255);
-          box-shadow: 0 0 0 3px rgba(80,176,255,0.1);
+
+        .input-row input:focus {
+          border-color: #2483ff;
+          box-shadow: 0 0 0 3px rgba(36,131,255,0.08);
         }
-        .chat-input-row input::placeholder { color: #bbb; }
+
+        .input-row input::placeholder { color: #ccc; }
+
         .send-btn {
-          background: linear-gradient(135deg, rgb(36,131,255) 0%, rgb(70,152,229) 100%);
-          border: none; border-radius: 12px;
           width: 40px; height: 40px;
+          background: #2483ff;
+          border: none;
+          border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
-          cursor: pointer; flex-shrink: 0;
-          transition: all 0.3s;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.2s;
           box-shadow: 0 4px 12px rgba(36,131,255,0.3);
         }
-        .send-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(36,131,255,0.4); }
-        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .send-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(36,131,255,0.4); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
         .send-btn svg { fill: #fff; }
 
-        
-        .property-panel {
-          background: #f8f9fa;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 1.25rem 1rem;
-          gap: 8px;
-          color: #ccc;
-          font-size: 0.8rem;
-          text-align: center;
-        }
-        .property-panel svg { opacity: 0.3; }
-
-        
-        @media (max-width: 1200px) {
-          .chat-root { grid-template-columns: 220px 1fr; }
-          .property-panel { display: none; }
-        }
-        @media (max-width: 900px) {
-          .chat-root { grid-template-columns: 1fr; }
-          .chat-contacts { display: none; }
-        }
+       
         @media (max-width: 768px) {
-          .layout { flex-direction: column; }
-          .sidebar-container { width: 100%; }
-          .content-container { height: 480px; }
-          .dashboard-container { padding: 1rem; }
+          .chat-shell { grid-template-columns: 1fr; }
+          .contacts-col { display: none; }
+          .wrap { padding: 5rem 1rem 2rem; }
         }
       `}</style>
 
       <Header />
 
-      <div className="dashboard-container">
-        <div className="layout">
+      <div className="pg">
+        <div className="wrap">
+          <h1 className="page-title">Mensagens</h1>
 
-          <div className="sidebar-container">
-            <Sidebar />
-          </div>
+          <div className="chat-shell">
 
-          <div className="content-container">
-            <div className="chat-root">
+            
+            <div className="contacts-col">
 
-             
-              <div className="chat-contacts">
-                <h2>Chats</h2>
-
+              <div className="contacts-search">
                 <div className="search-box">
-                  <span style={{ color: "#aaa" }}>🔍</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
                   <input
-                    placeholder="Buscar..."
+                    placeholder="Pesquisar"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
+              </div>
 
-                <span className="section-label">Administradores</span>
+              <div className="contacts-label">Suas Mensagens</div>
 
-                <div className="contact-list">
-                  {loadingContacts ? (
-                    [1, 2, 3, 4].map((i) => (
-                      <div key={i} style={{
-                        height: 52, borderRadius: 12,
-                        background: "linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%)",
-                        backgroundSize: "200% 100%",
-                        animation: "shimmer 1.4s infinite",
-                        marginBottom: 4,
-                      }} />
-                    ))
-                  ) : filtered.length === 0 ? (
-                    <p style={{ fontSize: "0.8rem", color: "#999", textAlign: "center", padding: "1rem 0" }}>
-                      Nenhum admin encontrado.
-                    </p>
-                  ) : (
-                    filtered.map((c, index) => (
-                      <div
-                        key={c.userId}
-                        className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
-                        onClick={() => setActiveContact(c)}
-                      >
-                        {c.photoUrl ? (
-                          <img className="avatar-img" src={c.photoUrl} alt={c.name} />
-                        ) : (
-                          <div
-                            className="avatar-initials"
-                            style={{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }}
-                          >
-                            {getInitials(c.name)}
-                          </div>
-                        )}
-                        <div className="contact-info">
-                          <div className="name">{c.name}</div>
+              <div className="contacts-list">
+                {loadingContacts ? (
+                  [1,2,3,4].map(i => <div key={i} className="skel" />)
+                ) : filtered.length === 0 ? (
+                  <p style={{ fontSize:"0.8rem", color:"#bbb", textAlign:"center", padding:"1.5rem 0" }}>
+                    Nenhum contato encontrado.
+                  </p>
+                ) : (
+                  filtered.map((c, idx) => (
+                    <div
+                      key={c.userId}
+                      className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
+                      onClick={() => setActiveContact(c)}
+                    >
+                      {c.photoUrl ? (
+                        <img className="avatar-img" src={c.photoUrl}  />
+                      ) : (
+                        <div className="avatar-ini" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
+                          {getInitials(c.name)}
+                        </div>
+                      )}
+                      <div className="contact-info">
+                        <div className="contact-name">{c.name}</div>
+                        <div className="contact-preview">
                           <span className="role-badge">{c.userType}</span>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            
+            <div className="chat-col">
+
+              
+              <div className="chat-header">
+                {activeContact ? (
+                  <>
+                    {activeContact.photoUrl ? (
+                      <img className="avatar-img" src={activeContact.photoUrl} />
+                    ) : (
+                      <div className="avatar-ini" style={{ background: AVATAR_COLORS[0] }}>
+                        {getInitials(activeContact.name)}
+                      </div>
+                    )}
+                    <div className="chat-header-name">{activeContact.name}</div>
+                  </>
+                ) : (
+                  <div className="chat-header-name" style={{ color: "#ccc" }}>Selecione um contato</div>
+                )}
               </div>
 
               
-              <div className="chat-area">
-                <div className="chat-header">
-                  <div className="chat-header-info">
-                    {activeContact?.photoUrl ? (
-                      <img className="avatar-img" src={activeContact.photoUrl} alt={activeContact.name} />
-                    ) : (
-                      <div className="avatar-initials" style={{ backgroundColor: AVATAR_COLORS[0], width: 38, height: 38 }}>
-                        {activeContact ? getInitials(activeContact.name) : "?"}
-                      </div>
-                    )}
-                    <div>
-                      <div className="cname">{activeContact?.name ?? "Selecione um contato"}</div>
-                      <div className="status">● Online</div>
-                    </div>
-                  </div>
-                  <button className="icon-btn">🔍</button>
+              {loadingMsgs ? (
+                <div className="loading-msgs">Carregando mensagens…</div>
+              ) : messages.length === 0 ? (
+                <div className="empty-msgs">
+                  <span style={{ fontSize: "2rem" }}>💬</span>
+                  Nenhuma mensagem ainda. Diga olá!
                 </div>
-
-                {loadingMsgs ? (
-                  <div className="loading-msgs">Carregando mensagens…</div>
-                ) : messages.length === 0 ? (
-                  <div className="empty-msgs">
-                    <span style={{ fontSize: "2rem" }}>💬</span>
-                    Nenhuma mensagem ainda.<br />Diga olá!
-                  </div>
-                ) : (
-                  <div className="messages">
-                    {messages.map((msg) => {
-                      const isMe = msg.senderId === user?.id;
-                      const time = msg.timestamp
-                        ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                        : "";
-                      return (
-                        <div key={msg.id} className={`msg-row${isMe ? " me" : ""}`}>
-                          {!isMe && (
-                            activeContact?.photoUrl
-                              ? <img className="avatar-img" src={activeContact.photoUrl} alt="" style={{ width: 28, height: 28 }} />
-                              : <div className="avatar-initials" style={{ backgroundColor: AVATAR_COLORS[0], width: 28, height: 28, fontSize: "0.65rem" }}>
-                                  {activeContact ? getInitials(activeContact.name) : "?"}
-                                </div>
-                          )}
-                          <div>
-                            <div className={`bubble ${isMe ? "me" : "other"}`}>{msg.text}</div>
-                            <div className="msg-time">{time}</div>
-                          </div>
+              ) : (
+                <div className="messages-area">
+                  {messages.map((msg) => {
+                    const isMe = msg.senderId === user?.id;
+                    const time = msg.timestamp
+                      ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : "";
+                    return (
+                      <div key={msg.id} className={`msg-row${isMe ? " me" : ""}`}>
+                        {!isMe && (
+                          activeContact?.photoUrl
+                            ? <img className="avatar-img" src={activeContact.photoUrl} style={{ width:32, height:32 }} />
+                            : <div className="avatar-ini" style={{ background: AVATAR_COLORS[0], width:32, height:32, fontSize:"0.65rem" }}>
+                                {activeContact ? getInitials(activeContact.name) : "?"}
+                              </div>
+                        )}
+                        <div>
+                          <div className={`bubble ${isMe ? "me" : "other"}`}>{msg.text}</div>
+                          <div className="msg-time">{time}</div>
                         </div>
-                      );
-                    })}
-                    <div ref={bottomRef} />
-                  </div>
-                )}
-
-                <div className="chat-input-row">
-                  <input
-                    placeholder="Digite uma mensagem..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKey}
-                    disabled={!activeContact}
-                  />
-                  <button className="send-btn" onClick={send} disabled={!activeContact || !input.trim()}>
-                    <svg viewBox="0 0 24 24" width="15" height="15">
-                      <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
-                    </svg>
-                  </button>
+                      </div>
+                    );
+                  })}
+                  <div ref={bottomRef} />
                 </div>
+              )}
+
+              
+              <div className="input-row">
+                <input
+                  placeholder="Digite aqui..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  disabled={!activeContact}
+                />
+                <button className="send-btn" onClick={send} disabled={!activeContact || !input.trim()}>
+                  <svg viewBox="0 0 24 24" width="15" height="15">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+                  </svg>
+                </button>
               </div>
+
             </div>
           </div>
         </div>
