@@ -1,3 +1,6 @@
+/* ==========================================================================
+   HEADER PRINCIPAL (AlugaFácil)
+   ========================================================================== */
 .landing-header {
   position: absolute;
   top: 0;
@@ -113,23 +116,6 @@
   background-color: #4146d4;
 }
 
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.icon-btn:hover {
-  background-color: #f3f4f6;
-  color: #515def;
-}
-
 .user-menu {
   position: relative;
   margin-left: 8px;
@@ -233,29 +219,34 @@
 }
 
 @media (max-width: 768px) {
-  .header-nav {
-    display: none;
-  }
-  
-  .btn-post-ad {
-    display: none;
-  }
-  
-  .header-actions {
-    gap: 12px;
-  }
+  .header-nav { display: none; }
+  .btn-post-ad { display: none; }
+  .header-actions { gap: 12px; }
 }
 
 /* ==========================================================================
-   MODAL DE NOTIFICAÇÕES (NotificationBell)
+   MODAL DE NOTIFICAÇÕES 
    ========================================================================== */
 
-/* Posição relativa no botão para colocar a bolinha vermelha */
-.icon-btn {
-  position: relative;
+/* Botão principal (sininho) e badge */
+.icon-btn { 
+  position: relative; 
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-/* Bolinha vermelha ajustada para conter texto (contador) */
+.icon-btn:hover {
+  background-color: #f3f4f6;
+  color: #515def;
+}
+
 .notif-badge {
   position: absolute;
   top: -2px;
@@ -263,7 +254,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  background-color: #ef4444; /* Vermelho alerta */
+  background-color: #ef4444; 
   color: white;
   border-radius: 10px;
   border: 2px solid white;
@@ -275,278 +266,201 @@
   box-sizing: border-box;
 }
 
-/* Fundo escuro atrás do modal */
+/* Modal e Overlay */
 .notif-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: transparent; /* A imagem 3 não tem overlay escuro */
+  display: flex; justify-content: flex-end; /* Alinha o dropdown para a direita */
   z-index: 9999;
-  backdrop-filter: blur(2px);
 }
 
-/* Caixa principal do modal */
-.notif-modal {
+.modern-notif-modal {
   background-color: #ffffff;
-  width: 90%;
-  max-width: 800px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px; /* Largura padrão de dropdown */
+  position: absolute;
+  top: 70px;
+  right: calc((100vw - 1200px) / 2 + 24px); /* Tenta alinhar com o container do Header */
+  border-radius: 0 0 8px 8px; /* Cantos arredondados inferiores */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  animation: slideUp 0.3s ease;
+  animation: slideDown 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-top: none;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+/* Fallback de alinhamento em telas menores */
+@media (max-width: 1200px) {
+  .modern-notif-modal {
+    right: 24px;
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Cabeçalho do modal */
-.notif-modal-header {
+/* Header do Modal */
+.modern-notif-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 12px 20px;
+  border-bottom: 2px solid #0284c7; /* A linha azul da Imagem 3 */
+  background-color: #ffffff;
 }
 
-.notif-modal-header h2 {
+.modern-notif-header h2 {
   margin: 0;
-  font-size: 1.5rem;
-  color: #111827;
-  font-weight: 700;
+  font-size: 1.1rem;
+  color: #374151;
+  font-weight: 500;
 }
 
-.close-notif-btn {
-  background: none;
+.modern-clear-btn {
+  background-color: #f5f0e6; /* Cor begezinha clara do botão limpar */
   border: none;
-  font-size: 1.2rem;
-  color: #6b7280;
+  color: #1f2937;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
   transition: background 0.2s;
 }
 
-.close-notif-btn:hover {
-  background-color: #f3f4f6;
-  color: #111827;
-}
+.modern-clear-btn:hover { background-color: #e6dfd3; }
 
-/* Corpo do modal */
-.notif-modal-body {
-  padding: 24px;
+/* Corpo e Seções */
+.modern-notif-body {
   max-height: 70vh;
   overflow-y: auto;
+  padding-bottom: 16px;
 }
 
-.notif-empty-state {
-  text-align: center;
-  color: #6b7280;
-  padding: 20px;
-}
+.notif-empty-state { text-align: center; color: #6b7280; padding: 30px; }
 
-/* ==========================================================================
-   CARDS DE NOTIFICAÇÃO
-   ========================================================================== */
-
-/* Comportamento de clique para todos os cards */
-.notif-highlight, .notif-item {
-  cursor: pointer;
-  transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-/* Opacidade para notificações já lidas */
-.notif-highlight.is-read {
-  opacity: 0.8;
-}
-
-.notif-item.is-read {
-  opacity: 0.6;
-}
-
-/* Efeito de hover ao passar o mouse */
-.notif-item:hover {
-  background-color: #f9fafb;
-}
-
-.notif-highlight:hover {
-  background-color: #2563eb; /* Azul levemente mais escuro */
-}
-
-/* --- Card Destaque (Azul) --- */
-.notif-highlight {
-  background-color: #3b82f6; 
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  color: white;
-}
-
-.notif-highlight-icon {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  font-size: 1.2rem;
-}
-
-.notif-highlight-content {
-  flex-grow: 1;
-}
-
-.notif-highlight-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-  font-size: 1rem;
-  margin-top: 0;
-}
-
-.notif-highlight-msg {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin: 0;
-}
-
-/* --- Cards da Lista (Mensagens normais) --- */
-.notif-item {
-  display: flex;
-  gap: 16px;
-  padding: 16px; /* Ajustado para dar espaço no hover */
-  border-bottom: 1px solid #f3f4f6;
-  border-radius: 8px; /* Arredonda levemente para o hover ficar bonito */
-}
-
-.notif-item:last-child {
-  border-bottom: none;
-}
-
-.notif-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.notif-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background-color: #eff6ff;
-  color: #3b82f6;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
-.notif-content {
-  flex-grow: 1;
-}
-
-.notif-text {
-  margin: 0 0 8px 0;
-  color: #4b5563;
+.modern-notif-section h3 {
   font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.notif-sender-name {
-  color: #111827;
+  color: #1f2937;
+  margin: 0;
+  padding: 16px 20px 8px 20px;
   font-weight: 600;
+  background-color: #ffffff;
 }
 
-.notif-meta {
+/* Item de Notificação (Os Cards da Lista) */
+.modern-notif-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
-}
-
-.notif-time {
-  color: #9ca3af;
-}
-
-.notif-action-text {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-weight: 600;
+  align-items: flex-start;
+  padding: 16px 20px;
+  position: relative;
   cursor: pointer;
-  padding: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
-.notif-action-text:hover {
-  text-decoration: underline;
+.modern-notif-item:hover { opacity: 0.85; }
+
+/* Estados Lido x Não Lido */
+.unread-bg {
+  background-color: #eff6ff; /* Azul bem clarinho das "Não lidas" */
+  border-bottom: 2px solid #ffffff; /* Separador branco para destacar no fundo azul */
 }
 
-/* Espaçamentos do texto no card Azul */
-.notif-highlight-title {
-  font-weight: 600;
-  margin-bottom: 4px;
+.read-bg {
+  background-color: #ffffff;
+  border-bottom: 1px solid #f3f4f6; /* Borda cinza suave entre itens lidos */
+}
+
+/* Bolinha Vermelha */
+.modern-unread-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #be123c; /* Vermelho escuro/magenta */
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 18px; /* Centraliza verticalmente com o avatar */
+  margin-right: 12px;
+}
+
+/* Avatar / Imagem / Iniciais */
+.modern-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+/* Se for Lida (Recente), aplica margin extra porque não tem a bolinha vermelha na esquerda */
+.read-bg .modern-avatar { margin-left: 18px; }
+
+.modern-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modern-initials {
+  width: 100%;
+  height: 100%;
+  background-color: #1e293b; /* Fundo escuro igual a imagem */
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
   font-size: 1rem;
-  margin-top: 0;
 }
 
-.notif-highlight-msg {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin: 0 0 8px 0; /* Dá espaço para o botão em baixo */
-  line-height: 1.4;
+/* Textos do Item */
+.modern-notif-content {
+  flex-grow: 1;
+  padding-right: 24px; /* Espaço para o "X" de fechar não ficar em cima do texto */
 }
 
-/* O link de ação "Ver anúncio" dentro do card azul */
-.highlight-link {
-  color: #ffffff;
-  opacity: 0.9;
-  font-size: 0.85rem;
-}
-
-.highlight-link:hover {
-  color: #ffffff;
-  opacity: 1;
-}
-
-/* O link de ação "Ver mensagem" na lista normal */
-.list-link {
-  font-size: 0.85rem;
-  color: #3b82f6;
-}
-
-/* Estrutura de texto da lista normal */
-.notif-text-header {
+.modern-notif-title {
   margin: 0 0 4px 0;
   font-size: 0.95rem;
-  color: #111827;
-}
-
-.notif-item-title {
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.notif-msg-body {
-  margin: 0 0 8px 0;
-  color: #6b7280;
-  font-size: 0.9rem;
+  color: #374151;
   line-height: 1.4;
-  /* Limita a mensagem a 2 linhas com "..." no final se for muito grande */
-  display: -webkit-box;
-  -webkit-line-clamp: 2; 
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+}
+
+.modern-notif-subtitle {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.modern-notif-time {
+  font-size: 0.85rem;
+  color: #6b7280;
+  display: block;
+  margin-top: 6px;
+}
+
+/* Botão de Excluir (X) */
+.modern-delete-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.modern-delete-btn:hover { 
+  color: #dc2626; 
+  opacity: 1;
 }

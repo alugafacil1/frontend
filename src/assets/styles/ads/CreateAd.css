@@ -752,3 +752,93 @@
 .btn-publish:hover {
   background-color: #2563eb;
 }
+
+/* ==========================================================================
+   TELA ÚNICA DE EDIÇÃO (EDIT AD PAGE)
+   ========================================================================== */
+.edit-ad-single-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+.single-page-header {
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+.single-page-header .page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.single-page-header .page-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.single-page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 40px; /* Grande espaço entre as seções para dar respiro */
+}
+
+.form-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.section-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* Esconder os botões de navegação padrão que vêm dentro dos "Steps" */
+.form-section .step-navigation,
+.form-section .step-actions {
+  display: none !important;
+}
+
+.single-page-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 60px;
+}
+
+.btn-save {
+  background-color: #2563eb;
+  color: white;
+  padding: 16px 48px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.btn-save:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.btn-save:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

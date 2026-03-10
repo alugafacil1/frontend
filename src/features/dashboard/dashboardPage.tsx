@@ -50,7 +50,8 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
     async function fetchProperties() {
       if (!user?.id) return;
       try {
-        const data = await propertyService.getByUserId(user.id);
+
+        const data = await propertyService.getPropertiesByUserId(user.id);
         console.log(data)
         setProperties(Array.isArray(data.content) ? data.content.slice(0, 3) : []);
         
@@ -554,7 +555,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
             </div>
           </div>
 
-          <div className="card">
+          {/* <div className="card">
             <p className="card-title" style={{ marginBottom: '0.75rem' }}>Os mais visualizados</p>
             <div style={{ height: 225 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -586,7 +587,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
               </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </div> */}
 
         </div>
 
@@ -613,7 +614,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
                   <PropertyCard
                     key={p.id ?? p.propertyId}
                     property={p}
-                    onUpdateSuccess={() => propertyService.getByUserId(String(user?.id)).then(data => setProperties(Array.isArray(data) ? data.slice(0, 3) : []))}
+                    onUpdateSuccess={() => propertyService.getPropertiesByUserId(String(user?.id)).then(data => setProperties(data.content? data.content.slice(0, 3) : []))}
                   />
                 ))}
               </div>

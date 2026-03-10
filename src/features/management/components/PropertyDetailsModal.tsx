@@ -1,255 +1,281 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { PropertyResponse } from "@/types/property";
-import { BaseModal, ModalBody } from '@/components/Modal/Modal';
-import { useUser } from '@/services/queries/Users';
-import { formatCPF } from '@/utils/masks';
+import { BaseModal, ModalBody } from "@/components/Modal/Modal";
+import { useUser } from "@/services/queries/Users";
+import { formatCPF } from "@/utils/masks";
+import { useUpdatePropertyStatus } from "@/services/queries/Properties";
+import type { StaticImageData } from "next/image";
+
+import {
+  PropertyTabsHeader,
+  PropertyTabBtn,
+  ReadonlyFieldWrapper,
+  ReadonlyFieldLabel,
+  ReadonlyFieldValue,
+  StatusSelect,
+  BtnModalOutline,
+  BtnModalPrimary
+} from "../styles";
 
 interface PropertyDetailsProps {
-    property: PropertyResponse;
-    isOpen: boolean;
-    onClose: () => void;
-    onApprove: (id: string) => void; 
-    onReject: (id: string, reason: string) => void;
-    isAdmin: boolean;
-    // Opcional: Adicione uma função onEdit se for implementar a edição agora
-    onEdit?: (id: string) => void; 
+  property: PropertyResponse;
+  isOpen: boolean;
+  onClose: () => void;
+  userRole?: string;
 }
 
-export function PropertyDetailsModal({ property, isOpen, onClose, onApprove, onReject, isAdmin, onEdit }: PropertyDetailsProps) {
-    const [activeTab, setActiveTab] = useState<'details' | 'location' | 'owner'>('details');
-    const [isPending, setIsPending] = useState(false);
-    const [isRejecting, setIsRejecting] = useState(false);
-    const [rejectReason, setRejectReason] = useState("");
+const ReadOnlyField = ({ label, value, fullWidth = false }: { label: string; value: React.ReactNode; fullWidth?: boolean }) => (
+  <ReadonlyFieldWrapper $fullWidth={fullWidth}>
+    <ReadonlyFieldLabel>{label}</ReadonlyFieldLabel>
+    <ReadonlyFieldValue>{value}</ReadonlyFieldValue>
+  </ReadonlyFieldWrapper>
+);
 
-    const { data: owner, isLoading: isLoadingOwner, isError: isErrorOwner } = useUser(
-        property.ownerId, 
-        activeTab === 'owner'
-    );
+export function PropertyDetailsModal({ property, isOpen, onClose, userRole }: PropertyDetailsProps) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"details" | "location" | "owner">("details");
+  const [currentStatus, setCurrentStatus] = useState(property.status);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
-    const formatCurrency = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const formatBoolean = (val: boolean) => val ? "Sim" : "Não";
+  const { mutateAsync: updateStatus, isPending: isUpdating } = useUpdatePropertyStatus();
 
-    const propertyTypeLabels: Record<string, string> = {
-        HOUSE: 'Casa',
-        APARTMENT: 'Apartamento',
-        STUDIO: 'Studio'
-    };
+  const { data: owner, isLoading: isLoadingOwner, isError: isErrorOwner } = useUser(
+    property.ownerId,
+    activeTab === "owner"
+  );
 
-    const handleApprove = async () => {
-        setIsPending(true);
-        await onApprove(property.propertyId);
-        setIsPending(false);
-    };
+  // =========================================================================
+  // VALIDAÇÃO DE PERFIL (CORRIGIDO PARA ACEITAR AGENCY_ADMIN)
+  // =========================================================================
+  const isAgency = userRole === "AGENCY" || userRole === "AGENCY_ADMIN" || userRole?.includes("AGENCY");
+  const isAdmin = userRole === "ADMIN";
+  const isRealtor = userRole === "REALTOR";
 
-    const handleRejectSubmit = async () => {
-        if (!rejectReason.trim()) {
-            alert("Informe o motivo da reprovação.");
-            return;
-        }
-        setIsPending(true);
-        await onReject(property.propertyId, rejectReason);
-        setIsPending(false);
-    };
+  const formatCurrency = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatBoolean = (val: boolean) => (val ? "Sim" : "Não");
 
-    // Componente auxiliar para renderizar os campos no estilo "input read-only" do mockup
-    const ReadOnlyField = ({ label, value, fullWidth = false }: { label: string, value: React.ReactNode, fullWidth?: boolean }) => (
-        <div className={`flex flex-col ${fullWidth ? 'col-span-full' : ''}`}>
-            <span className="text-xs font-medium text-[#64748b] mb-1.5">{label}</span>
-            <div className="bg-[#f8fafc] text-[#334155] p-3 rounded-[10px] text-sm min-h-[44px] flex items-center">
-                {value}
-            </div>
-        </div>
-    );
+  // Nome da terceira aba muda dinamicamente com base na correção da Role
+  const ownerTabLabel = isAgency ? "Agente Responsável" : "Proprietário";
 
-    const renderDetailsTab = () => (
-        <div className="flex flex-col gap-6 animate-fadeIn">
-            {/* Galeria de Imagens */}
-            <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-                {property.photoUrls && property.photoUrls.length > 0 ? (
-                    property.photoUrls.map((url, idx) => (
-                        <img 
-                            key={idx} 
-                            src={url} 
-                            alt={`Foto ${idx + 1}`} 
-                            className="h-[140px] w-[220px] rounded-[10px] object-cover flex-shrink-0 border border-gray-100 shadow-sm"
-                        />
-                    ))
-                ) : (
-                    <div className="h-[140px] w-full bg-[#f8fafc] rounded-[10px] flex items-center justify-center text-[#9ca3af] border border-dashed border-gray-300">
-                        Sem imagens no momento
-                    </div>
-                )}
-            </div>
+  const propertyTypeLabels: Record<string, string> = {
+    HOUSE: "Casa", APARTMENT: "Apartamento", STUDIO: "Studio", ROOM: "Quarto", KITNET: "Kitnet"
+  };
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ReadOnlyField label="Valor" value={formatCurrency(property.priceInCents)} />
-                <ReadOnlyField label="Tipo" value={propertyTypeLabels[property.type] || property.type} />
-                <ReadOnlyField label="Quartos" value={property.numberOfBedrooms} />
-                <ReadOnlyField label="Banheiros" value={property.numberOfBathrooms} />
-            </div>
+  // Trava de segurança: Agente não pode aprovar um imóvel Pendente para Ativo!
+  const isPending = property.status === "PENDING";
+  const canChangeStatus = !(isRealtor && isPending);
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ReadOnlyField label="Garagem" value={formatBoolean(property.garage)} />
-                <ReadOnlyField label="Mobiliado" value={formatBoolean(property.furnished)} />
-                <ReadOnlyField label="Aceita Pets" value={formatBoolean(property.petFriendly)} />
-            </div>
+  // Ações Diretas da Agência/Admin (Botões de Aprovar e Reprovar)
+  const handleApprove = async () => {
+    try {
+      await updateStatus({ id: property.propertyId, status: "ACTIVE" });
+      onClose();
+    } catch (e) {
+      alert("Erro ao aprovar imóvel.");
+    }
+  };
 
-            {/* Linha 3: Descrição */}
-            <ReadOnlyField 
-                label="Descrição" 
-                fullWidth 
-                value={property.description || "Nenhuma descrição fornecida."} 
+  const handleRejectSubmit = async () => {
+    if (!rejectReason.trim()) return alert("Informe o motivo da reprovação.");
+    try {
+      await updateStatus({ id: property.propertyId, status: "REJECTED", reason: rejectReason });
+      onClose();
+    } catch (e) {
+      alert("Erro ao reprovar imóvel.");
+    }
+  };
+
+  // Ação via Select (Para mudança normal de Ativo para Pausado, etc)
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value;
+    let reason = "";
+
+    if (newStatus === "REJECTED") {
+      const promptReason = window.prompt("Informe o motivo da reprovação deste imóvel:");
+      if (!promptReason) return;
+      reason = promptReason;
+    }
+
+    setCurrentStatus(newStatus);
+    
+    try {
+      await updateStatus({ id: property.propertyId, status: newStatus, reason });
+    } catch (error) {
+      alert("Erro ao atualizar o status.");
+      setCurrentStatus(property.status); 
+    }
+  };
+
+  const renderDetailsTab = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      {property.photoUrls && property.photoUrls.length > 0 ? (
+        <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px" }}>
+          {property.photoUrls.slice(0, 3).map((url, index) => (
+            <img
+              key={index}
+              src={typeof url === "string" ? url : (url as StaticImageData).src}
+              alt={`Foto ${index + 1}`}
+              style={{ width: "calc(33.33% - 8px)", height: "140px", objectFit: "cover", borderRadius: "8px" }}
             />
+          ))}
         </div>
-    );
-
-    const renderLocationTab = () => (
-        <div className="animate-fadeIn">
-            <ReadOnlyField 
-                label="Endereço cadastrado" 
-                fullWidth
-                value={
-                    <div className="flex flex-col">
-                        <span className="font-medium">{property.address.street}, {property.address.number}</span>
-                        <span className="text-gray-500 text-xs mt-1">{property.address.city} - {property.address.state}</span>
-                    </div>
-                } 
-            />
+      ) : (
+        <div style={{ height: "120px", width: "100%", background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af" }}>
+          Sem imagens no momento
         </div>
-    );
+      )}
 
-    const renderOwnerTab = () => {
-        if (isLoadingOwner) return <div className="text-center p-8 text-gray-500">Carregando perfil...</div>;
-        if (isErrorOwner || !owner) return <div className="text-center p-8 text-red-500">Erro ao buscar dados.</div>;
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <ReadOnlyField label="Valor" value={formatCurrency(property.priceInCents)} />
+        <ReadOnlyField label="Tipo" value={propertyTypeLabels[property.type] || property.type} />
+        <ReadOnlyField label="Quartos" value={property.numberOfBedrooms} />
+        <ReadOnlyField label="Banheiros" value={property.numberOfBathrooms} />
+      </div>
 
-        return (
-            <div className="flex flex-col gap-6 animate-fadeIn">
-                <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
-                    {owner.photoUrl ? (
-                        <img src={owner.photoUrl} alt={owner.name} className="w-16 h-16 rounded-full object-cover" />
-                    ) : (
-                        <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold">
-                            {owner.name.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-900 m-0">{owner.name}</h3>
-                        <span className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full mt-1 inline-block">
-                            {owner.userType}
-                        </span>
-                    </div>
-                </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <ReadOnlyField label="Garagem" value={formatBoolean(property.garage)} />
+        <ReadOnlyField label="Mobiliado" value={formatBoolean(property.furnished)} />
+        <ReadOnlyField label="Aceita Pets" value={formatBoolean(property.petFriendly)} />
+      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ReadOnlyField label="E-mail" value={owner.email} />
-                    <ReadOnlyField label="Telefone" value={owner.phoneNumber || "Não informado"} />
-                    <ReadOnlyField label="CPF" value={formatCPF(owner.cpf)} />
-                    {owner.creciNumber && <ReadOnlyField label="Registro CRECI" value={owner.creciNumber} />}
-                </div>
+      <ReadOnlyField label="Descrição" value={property.description || "Nenhuma descrição fornecida."} fullWidth />
+    </div>
+  );
 
-                {owner.agency && (
-                    <div className="mt-2 p-4 bg-green-50 border border-green-200 rounded-[10px]">
-                        <span className="text-[10px] text-green-800 uppercase font-bold tracking-wider">Vinculado à Imobiliária</span>
-                        <p className="mt-1 font-medium text-green-900">Agência: {owner.agency.name}</p>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    const renderFooter = () => {
-        if (isAdmin && property.status === 'PENDING') {
-            return (
-                <div className="flex justify-between w-full items-center mt-2">
-                    <div className="flex gap-2">
-                        {isRejecting ? (
-                            <>
-                                <input 
-                                    type="text" 
-                                    placeholder="Motivo da reprovação..." 
-                                    value={rejectReason}
-                                    onChange={(e) => setRejectReason(e.target.value)}
-                                    className="px-3 h-[40px] rounded-[10px] border border-gray-300 w-[250px] outline-none text-sm focus:ring-2 focus:ring-red-500"
-                                />
-                                <button onClick={handleRejectSubmit} disabled={isPending} className="h-[40px] px-6 bg-red-600 text-white rounded-[10px] font-semibold hover:bg-red-700 transition flex items-center justify-center">Confirmar</button>
-                                <button onClick={() => setIsRejecting(false)} className="h-[40px] px-6 border border-gray-300 rounded-[10px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center">Cancelar</button>
-                            </>
-                        ) : (
-                            <>
-                                <button onClick={() => setIsRejecting(true)} disabled={isPending} className="h-[40px] px-6 border border-red-600 text-red-600 rounded-[10px] font-semibold hover:bg-red-50 transition flex items-center justify-center">Reprovar</button>
-                                <button onClick={handleApprove} disabled={isPending} className="h-[40px] px-6 bg-green-600 text-white rounded-[10px] font-semibold hover:bg-green-700 transition flex items-center justify-center">
-                                    {isPending ? 'Aprovando...' : 'Aprovar Imóvel'}
-                                </button>
-                            </>
-                        )}
-                    </div>
-                    <button onClick={onClose} disabled={isPending} className="h-[40px] px-6 bg-gray-100 rounded-[10px] font-semibold text-gray-700 hover:bg-gray-200 transition flex items-center justify-center">Fechar</button>
-                </div>
-            );
+  const renderLocationTab = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <ReadOnlyField
+        label="Endereço cadastrado"
+        fullWidth
+        value={
+          <span>
+            {property.address?.street}, {property.address?.number}
+            <br />
+            <span style={{ color: "#6b7280", fontSize: "0.85em", fontWeight: 500 }}>
+              {property.address?.city} - {property.address?.state}
+            </span>
+          </span>
         }
+      />
+    </div>
+  );
 
-        return (
-            <div className="flex justify-center items-center gap-4 w-full mt-4">
-                <button 
-                    onClick={onClose} 
-                    className="w-[140px] h-[40px] rounded-[10px] border border-[#515DEF] text-[#515DEF] font-semibold bg-white hover:bg-blue-50 transition-colors flex items-center justify-center"
-                >
-                    Cancelar
-                </button>
-                <button 
-                    onClick={() => onEdit && onEdit(property.propertyId)} 
-                    className="w-[140px] h-[40px] rounded-[10px] bg-[#515DEF] text-white font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
-                    Editar
-                </button>
-            </div>
-        );
-    };
+  const renderOwnerTab = () => {
+    if (isLoadingOwner) return <div style={{ textAlign: "center", padding: "3rem", color: "#9ca3af" }}>Carregando perfil...</div>;
+    if (isErrorOwner || !owner) return <div style={{ textAlign: "center", padding: "3rem", color: "#ef4444" }}>Erro ao buscar dados.</div>;
 
     return (
-        <BaseModal
-            isOpen={isOpen} 
-            onRequestClose={onClose} 
-            title={isAdmin && property.status === 'PENDING' ? `Moderação: ${property.title}` : property.title}
-            footer={renderFooter()}
-        >
-            <ModalBody>
-                <div className="flex gap-6 border-b border-gray-200 mb-6">
-                    <button 
-                        className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'details' ? 'text-[#515DEF]' : 'text-[#64748b] hover:text-[#334155]'}`}
-                        onClick={() => setActiveTab('details')}
-                    >
-                        Detalhes
-                        {activeTab === 'details' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#515DEF] rounded-t-md" />}
-                    </button>
-                    
-                    <button 
-                        className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'location' ? 'text-[#515DEF]' : 'text-[#64748b] hover:text-[#334155]'}`}
-                        onClick={() => setActiveTab('location')}
-                    >
-                        Localização
-                        {activeTab === 'location' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#515DEF] rounded-t-md" />}
-                    </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {owner.photoUrl ? (
+            <img src={owner.photoUrl} alt={owner.name} style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#f8fafc", color: "#9ca3af", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", fontWeight: "bold" }}>
+              {owner.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <span style={{ fontSize: "1.1rem", color: "#111827", fontWeight: 600, display: "block" }}>{owner.name}</span>
+            <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600 }}>{owner.userType}</span>
+          </div>
+        </div>
 
-                    {isAdmin && (
-                        <button 
-                            className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'owner' ? 'text-[#515DEF]' : 'text-[#64748b] hover:text-[#334155]'}`}
-                            onClick={() => setActiveTab('owner')}
-                        >
-                            Proprietário
-                            {activeTab === 'owner' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#515DEF] rounded-t-md" />}
-                        </button>
-                    )}
-                </div>
-
-                <div className="pb-4">
-                    {activeTab === 'details' && renderDetailsTab()}
-                    {activeTab === 'location' && renderLocationTab()}
-                    {activeTab === 'owner' && isAdmin && renderOwnerTab()}
-                </div>
-            </ModalBody>
-        </BaseModal>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <ReadOnlyField label="E-mail" value={owner.email} fullWidth />
+          <ReadOnlyField label="Telefone" value={owner.phoneNumber || "Não informado"} />
+          <ReadOnlyField label="CPF" value={formatCPF(owner.cpf)} />
+          {owner.creciNumber && <ReadOnlyField label="Registro CRECI" value={owner.creciNumber} fullWidth />}
+        </div>
+      </div>
     );
+  };
+
+  // ==========================================
+  // LÓGICA DO RODAPÉ (Moderação vs Gerenciamento Padrão)
+  // ==========================================
+  const isModerating = (isAgency || isAdmin) && isPending;
+
+  const footerContent = isModerating ? (
+    // Visual de Moderação (Botões Centralizados de Aprovar / Reprovar como na Imagem)
+    <div style={{ display: "flex", justifyContent: "center", width: "100%", paddingTop: "16px", borderTop: "1px solid #e5e7eb" }}>
+      {isRejecting ? (
+         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <input 
+              type="text" 
+              placeholder="Motivo da reprovação..." 
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #d1d5db", outline: "none", width: "200px" }}
+            />
+            <BtnModalPrimary onClick={handleRejectSubmit} disabled={isUpdating}>Confirmar</BtnModalPrimary>
+            <BtnModalOutline onClick={() => setIsRejecting(false)}>Cancelar</BtnModalOutline>
+         </div>
+      ) : (
+         <div style={{ display: "flex", gap: "16px" }}>
+            <BtnModalOutline onClick={() => setIsRejecting(true)} style={{ color: "#3b82f6", borderColor: "#3b82f6" }}>
+              Reprovar
+            </BtnModalOutline>
+            <BtnModalPrimary onClick={handleApprove} disabled={isUpdating}>
+              {isUpdating ? "Aguarde..." : "Aprovar"}
+            </BtnModalPrimary>
+         </div>
+      )}
+    </div>
+  ) : (
+    // Visual de Gerenciamento Padrão (Select de Status e Editar)
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", paddingTop: "16px", borderTop: "1px solid #e5e7eb" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#4b5563" }}>Status:</span>
+        <StatusSelect value={currentStatus} onChange={handleStatusChange} disabled={isUpdating || !canChangeStatus}>
+          <option value="ACTIVE">Ativo (Aprovado)</option>
+          {isPending && <option value="PENDING">Pendente</option>}
+          <option value="PAUSED">Pausado</option>
+          <option value="PLACED">Alugado</option>
+          <option value="REJECTED" disabled>Rejeitado</option>
+        </StatusSelect>
+        {isUpdating && <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>Salvando...</span>}
+        
+        {/* Aviso caso o corretor tente alterar um status bloqueado */}
+        {!canChangeStatus && (
+          <span style={{ fontSize: "0.75rem", color: "#ea580c", maxWidth: "150px", lineHeight: 1.2 }}>
+            Apenas a Agência pode alterar este status.
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: "12px" }}>
+        <BtnModalOutline onClick={onClose}>Fechar</BtnModalOutline>
+        <BtnModalPrimary onClick={() => { onClose(); router.push(`/ads/edit/${property.propertyId}`); }}>
+          Editar Imóvel
+        </BtnModalPrimary>
+      </div>
+    </div>
+  );
+
+  return (
+    <BaseModal 
+      isOpen={isOpen} 
+      onRequestClose={onClose} 
+      title={isModerating ? `Moderação: ${property.title}` : ""} // Título apenas na moderação igual a imagem
+      footer={footerContent}
+    >
+      <ModalBody>
+        <PropertyTabsHeader style={{ marginTop: 0 }}>
+          <PropertyTabBtn $active={activeTab === "details"} onClick={() => setActiveTab("details")}>Detalhes</PropertyTabBtn>
+          <PropertyTabBtn $active={activeTab === "location"} onClick={() => setActiveTab("location")}>Localização</PropertyTabBtn>
+          <PropertyTabBtn $active={activeTab === "owner"} onClick={() => setActiveTab("owner")}>
+            {ownerTabLabel}
+          </PropertyTabBtn>
+        </PropertyTabsHeader>
+
+        {activeTab === "details" && renderDetailsTab()}
+        {activeTab === "location" && renderLocationTab()}
+        {activeTab === "owner" && renderOwnerTab()}
+      </ModalBody>
+    </BaseModal>
+  );
 }

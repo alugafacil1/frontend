@@ -26,7 +26,7 @@ useEffect(() => {
           return;
         }
 
-        const data = await propertyService.getByUserId(user.id);
+        const data = await propertyService.getPropertiesByUserId(user.id);
         
         setProperties(data?.content || []);
 

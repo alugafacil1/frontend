@@ -5,22 +5,43 @@ import { useRouter } from "next/navigation";
 import { notificationService } from "@/services/notification/notificationService";
 import { useAuth } from "@/lib/auth/useAuth";
 
-// Utilitário isolado para não poluir o componente
+// Formatação de data
 function getRelativeTime(dateString: string) {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Agora mesmo';
+if (diffInSeconds < 60) return 'Agora mesmo';
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} min atrás`;
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours}h atrás`;
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `${diffInDays} dias atrás`;
   
-  return date.toLocaleDateString('pt-BR');
+  if (diffInDays < 7) {
+    return `${diffInDays} ${diffInDays === 1 ? 'dia' : 'dias'} atrás`;
+  }
+  
+  if (diffInDays < 30) {
+    const semanas = Math.floor(diffInDays / 7);
+    return `${semanas} ${semanas === 1 ? 'semana' : 'semanas'} atrás`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths} ${diffInMonths === 1 ? 'mês' : 'meses'} atrás`;
+  }
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Pega as iniciais do nome (ex: Meg Griffin -> MG)
+function getInitials(name: string) {
+  if (!name) return 'AF';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
 }
 
 export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean }) {
@@ -32,12 +53,10 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
 
   useEffect(() => {
     async function fetchNotifications() {
-      // Só busca se estiver autenticado e tiver o ID do usuário
       if (!isAuthenticated || !user?.id) return; 
       
       try {
-        // 4. Usa o novo método passando o user.id
-        const data = await notificationService.getByUser(user.id, 0, 10);
+        const data = await notificationService.getByUser(user.id, 0, 20);
         const notifs = data.content || [];
         setNotifications(notifs);
         setUnreadCount(notifs.filter((n: any) => !n.read && !n.isRead).length);
@@ -67,7 +86,71 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
 
     if (notif.propertyId) router.push(`/ads/${notif.propertyId}`);
     else if (notif.conversationId) router.push(`/chat/${notif.conversationId}`);
-    else router.push(`/home`);
+    else router.push(`/dashboard`);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await notificationService.delete(id);
+      setNotifications(prev => {
+        const item = prev.find(n => n.id === id);
+        if (item && !(item.read || item.isRead)) {
+          setUnreadCount(count => Math.max(0, count - 1));
+        }
+        return prev.filter(n => n.id !== id);
+      });
+    } catch (error) {
+      console.error("Erro ao deletar notificação:", error);
+    }
+  };
+
+ const handleClearAll = async () => {
+    if (!user?.id) return;
+    try {
+      await notificationService.deleteAllByUser(user.id); // Chama o backend
+      setNotifications([]); 
+      setUnreadCount(0); 
+    } catch (error) {
+      console.error("Erro ao limpar notificações:", error);
+    }
+  };
+
+  const unreadNotifs = notifications.filter(n => !n.read && !n.isRead);
+  const readNotifs = notifications.filter(n => n.read || n.isRead);
+
+  const renderItem = (notif: any) => {
+    const isRead = notif.read || notif.isRead;
+    const isListing = notif.notificationType === 'LISTING' || notif.type === 'LISTING';
+    const sender = notif.senderName || (isListing ? 'Sistema AlugaFácil' : 'Usuário');
+
+    return (
+      <div 
+        key={notif.id} 
+        className={`modern-notif-item ${!isRead ? 'unread-bg' : 'read-bg'}`}
+        onClick={() => handleNotificationClick(notif)}
+      >
+        {!isRead && <span className="modern-unread-dot"></span>}
+        
+        <div className="modern-avatar">
+          {notif.imageUrl || notif.senderPhotoUrl ? (
+            <img src={notif.imageUrl || notif.senderPhotoUrl} alt={sender} />
+          ) : (
+            <div className="modern-initials">{getInitials(sender)}</div>
+          )}
+        </div>
+
+        <div className="modern-notif-content">
+          <p className="modern-notif-title">{notif.title}</p>
+          {notif.message && <p className="modern-notif-subtitle">{notif.message}</p>}
+          <span className="modern-notif-time">{getRelativeTime(notif.createdAt)}</span>
+        </div>
+
+        <button className="modern-delete-btn" onClick={(e) => handleDelete(e, notif.id)}>
+          ✕
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -82,74 +165,32 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
 
       {isModalOpen && (
         <div className="notif-modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="notif-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="notif-modal-header">
+          <div className="modern-notif-modal" onClick={(e) => e.stopPropagation()}>
+            
+            <div className="modern-notif-header">
               <h2>Notificações</h2>
-              <button className="close-notif-btn" onClick={() => setIsModalOpen(false)}>✕</button>
+              <button className="modern-clear-btn" onClick={handleClearAll}>Limpar</button>
             </div>
             
-            <div className="notif-modal-body">
+            <div className="modern-notif-body">
               {notifications.length === 0 ? (
                 <p className="notif-empty-state">Nenhuma notificação por enquanto.</p>
               ) : (
-                notifications.map((notif: any) => {
-                  const isListing = notif.notificationType === 'LISTING' || notif.type === 'LISTING'; 
-                  const isRead = notif.read || notif.isRead;
-
-                  if (isListing) {
-                    return (
-                      <div 
-                        key={notif.id} 
-                        className={`notif-highlight ${isRead ? 'is-read' : ''}`} 
-                        onClick={() => handleNotificationClick(notif)}
-                      >
-                        <div className="notif-highlight-icon">🏠</div>
-                        <div className="notif-highlight-content">
-                          <p className="notif-highlight-title">{notif.title}</p>
-                          <p className="notif-highlight-msg">
-                            {notif.message || notif.body || notif.text || "Verifique os detalhes deste anúncio."}
-                          </p>
-                          <button className="notif-action-text highlight-link">Ver anúncio</button>
-                        </div>
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <div 
-                      key={notif.id} 
-                      className={`notif-item ${isRead ? 'is-read' : ''}`} 
-                      onClick={() => handleNotificationClick(notif)}
-                    >
-                      {notif.imageUrl || notif.senderPhotoUrl ? (
-                        <img src={notif.imageUrl || notif.senderPhotoUrl} alt="Avatar" className="notif-avatar" />
-                      ) : (
-                        <div className="notif-icon-box">💬</div>
-                      )}
-                      <div className="notif-content">
-                        
-                        {/* Linha 1: Nome e Título (ex: Maria Oliveira • Nova Mensagem) */}
-                        <p className="notif-text-header">
-                          {notif.senderName && <strong className="notif-sender-name">{notif.senderName}</strong>}
-                          {notif.senderName && notif.title && <span className="notif-separator">•</span>}
-                          <span className="notif-item-title">{notif.title}</span>
-                        </p>
-                        
-                        {/* Linha 2: Corpo da mensagem */}
-                        <p className="notif-msg-body">
-                          {notif.message || notif.body || notif.text || "Nova atividade registrada. Clique para ver."}
-                        </p>
-                        
-                        {/* Linha 3: Data e Link de ação */}
-                        <div className="notif-meta">
-                          <span className="notif-time">{getRelativeTime(notif.createdAt)}</span>
-                          <button className="notif-action-text list-link">Ver mensagem</button>
-                        </div>
-                        
-                      </div>
+                <>
+                  {unreadNotifs.length > 0 && (
+                    <div className="modern-notif-section">
+                      <h3>Não lidas</h3>
+                      {unreadNotifs.map(renderItem)}
                     </div>
-                  )
-                })
+                  )}
+
+                  {readNotifs.length > 0 && (
+                    <div className="modern-notif-section">
+                      <h3>Recente</h3>
+                      {readNotifs.map(renderItem)}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
