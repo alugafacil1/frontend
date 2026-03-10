@@ -555,7 +555,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
             </div>
           </div>
 
-          {/* <div className="card">
+          <div className="card">
             <p className="card-title" style={{ marginBottom: '0.75rem' }}>Os mais visualizados</p>
             <div style={{ height: 225 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -587,7 +587,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
               </BarChart>
               </ResponsiveContainer>
             </div>
-          </div> */}
+          </div>
 
         </div>
 
