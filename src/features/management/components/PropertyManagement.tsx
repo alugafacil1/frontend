@@ -43,18 +43,7 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
     queryFn: async () => {
       if (!userId) return [];
       
-      // Se for Agência (AGENCY ou AGENCY_ADMIN), busca os imóveis da agência
-      if (isAgency) {
-        return await propertyService.getByAgency(userId);
-      }
-      
-      // Se for Corretor ou Proprietário, busca apenas os imóveis do próprio usuário
-      if (isRealtor || isOwner) {
-        return await propertyService.getByUser(userId);
-      }
-      
-      // Fallback
-      return await propertyService.getByUser(userId); 
+      return await propertyService.getPropertiesByUserId(userId); 
     },
     enabled: !!userId,
   });

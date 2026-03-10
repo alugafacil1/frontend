@@ -45,23 +45,17 @@ export default function MyPropertiesPage() {
         }
 
         let propertiesPromise;
-        // Ajustado para validar estritamente AGENCY_ADMIN
-        if (role === 'AGENCY_ADMIN') {
-          propertiesPromise = propertyService.getByAgency(user.id); 
-        } else if (role !== 'TENANT') {
-          propertiesPromise = propertyService.getByUser(user.id);
-        } else {
-          propertiesPromise = Promise.resolve([]);
-        }
+
+        propertiesPromise = propertyService.getPropertiesByUserId(user.id); 
 
         const [propsData, favsData] = await Promise.all([
           propertiesPromise,
           propertyService.getFavorites(user.id)
         ]);
-
-        setProperties(Array.isArray(propsData) ? propsData : []);
+        console.log(favsData)
+        setProperties(Array.isArray(propsData) ? propsData : (propsData.content || []));
         setFavorites(Array.isArray(favsData) ? favsData : []);
-        console.log("Propriedades carregadas:", propsData);
+
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       } finally {
@@ -95,7 +89,7 @@ export default function MyPropertiesPage() {
   const tabs = getTabsForRole();
 
   const listToRender = currentFilter === 'FAVORITES' 
-    ? favorites.map(fav => fav.property) 
+    ? favorites.map(fav => fav) 
     : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
 
   const getStatusConfig = (status: PropertyStatus) => {

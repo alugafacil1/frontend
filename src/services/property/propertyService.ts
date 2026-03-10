@@ -54,9 +54,9 @@ export const propertyService = {
     }
   },
 
-  getByAgency: async (userId: string) => {
-    const url = `/api/properties/agency/${userId}`;
-    console.log("DEBUG: Chamando URL:", url); // <--- ADICIONE ISSO
+  getPropertiesByUserId: async (userId: string) => {
+    const url = `/api/properties/user/${userId}`;
+    console.log("DEBUG: Chamando URL:", url);
     const response = await api.get(url);
     return response.data;
 },

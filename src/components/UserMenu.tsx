@@ -28,7 +28,6 @@ export function UserMenu({ user, logout }: UserMenuProps) {
     logout();
     setIsOpen(false);
   };
-  console.log("user: ", user);
   return (
     <div className="user-menu" ref={dropdownRef}>
       <button className="avatar-btn" onClick={() => setIsOpen(!isOpen)}>
