@@ -45,6 +45,7 @@ export default function MyPropertiesPage() {
         }
 
         let propertiesPromise;
+        // Ajustado para validar estritamente AGENCY_ADMIN
         if (role === 'AGENCY_ADMIN') {
           propertiesPromise = propertyService.getByAgency(user.id); 
         } else if (role !== 'TENANT') {
@@ -53,7 +54,6 @@ export default function MyPropertiesPage() {
           propertiesPromise = Promise.resolve([]);
         }
 
-        // Busca simultânea das propriedades e dos favoritos
         const [propsData, favsData] = await Promise.all([
           propertiesPromise,
           propertyService.getFavorites(user.id)
@@ -61,7 +61,7 @@ export default function MyPropertiesPage() {
 
         setProperties(Array.isArray(propsData) ? propsData : []);
         setFavorites(Array.isArray(favsData) ? favsData : []);
-        console.log(propsData)
+        console.log("Propriedades carregadas:", propsData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       } finally {
@@ -84,19 +84,20 @@ export default function MyPropertiesPage() {
   const getTabsForRole = (): PropertyStatus[] => {
     const role = user?.role as string;
     if (role === 'TENANT') return ['FAVORITES'];
-    if (role === 'AGENCY_ADMIN') return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
+    // Ajustado para AGENCY_ADMIN
+    if (role === 'AGENCY_ADMIN') {
+        return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
+    }
     if (role === 'REALTOR') return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
     return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'FAVORITES'];
   };
 
   const tabs = getTabsForRole();
 
-  // Define qual lista será renderizada dependendo da aba
   const listToRender = currentFilter === 'FAVORITES' 
     ? favorites.map(fav => fav.property) 
     : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
 
-  // Auxiliares de UI
   const getStatusConfig = (status: PropertyStatus) => {
     switch (status) {
       case 'ALL': return { title: 'Todos', icon: FunnelIcon, color: 'text-gray-600', bannerTitle: 'Todos os Imóveis', bannerDesc: 'Visão geral de todos os seus anúncios.' };
@@ -110,13 +111,13 @@ export default function MyPropertiesPage() {
     }
   };
 
-  const isAgencyAdmin = (user?.role as string) === 'AGENCY_ADMIN';
-  const isTenant = (user?.role as string) === 'TENANT';
+  const roleStr = user?.role as string;
+  const isAgencyAdmin = roleStr === 'AGENCY_ADMIN'; // Ajuste estrito para AGENCY_ADMIN
+  const isTenant = roleStr === 'TENANT';
 
   return (
     <main className="my-properties-page">
       
-      {/* Cabeçalho */}
       <div className="page-header">
         <div className="header-text">
           <h1 className="page-title">
@@ -129,14 +130,8 @@ export default function MyPropertiesPage() {
           </p>
         </div>
         
-        {!isTenant && (
-          <button onClick={() => router.push('/ads/create')} className="btn-add-property">
-            Adicionar Imóvel <PlusIcon className="w-5 h-5 ml-1" />
-          </button>
-        )}
       </div>
 
-      {/* Abas de Filtro (Pills) */}
       <div className="tabs-container">
         {tabs.map((tab) => {
           const config = getStatusConfig(tab);
@@ -163,21 +158,17 @@ export default function MyPropertiesPage() {
         })}
       </div>
 
-      {/* Container Principal Branco */}
       <div className="main-content-wrapper">
-        
-        {/* Banner Azul de Status */}
         <div className="status-banner">
           <div className="banner-icon-wrapper">
             {React.createElement(getStatusConfig(currentFilter).icon, { className: "w-7 h-7" })}
           </div>
           <div className="banner-text">
-            <h2>{getStatusConfig(currentFilter).title}: {listToRender.length} {listToRender.length === 1 ? 'Anúncio' : 'Anúncios'}</h2>
+            <h2>{getStatusConfig(currentFilter).bannerTitle}: {listToRender.length} {listToRender.length === 1 ? 'Anúncio' : 'Anúncios'}</h2>
             <p>{getStatusConfig(currentFilter).bannerDesc}</p>
           </div>
         </div>
 
-        {/* Grid de Imóveis ou Empty State */}
         {listToRender.length > 0 ? (
           <div className="properties-grid">
             {listToRender.map((property, index) => {

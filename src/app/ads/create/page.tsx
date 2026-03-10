@@ -161,7 +161,6 @@ export default function CreateAdPage() {
         
         address: {
           street: formData.address,
-          // Se o usuário digitou algo válido, salva. Senão, salva "S/N" no banco (mas não mandamos isso pro OSM)
           number: formData.number && formData.number.trim() !== "" ? formData.number : "S/N",
           city: formData.city,
           state: stateStr, 
@@ -200,7 +199,9 @@ export default function CreateAdPage() {
         status: initialStatus, 
         type: formData.propertyType ? formData.propertyType.toUpperCase() : "APARTMENT",
         
-        userId: user.id 
+        userId: user.id,
+
+        agencyId: user.agencyId 
       };
 
       const response = await propertyService.create(payload);

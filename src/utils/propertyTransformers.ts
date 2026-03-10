@@ -46,11 +46,10 @@ function buildLocation(address: PropertyResponse["address"]): string {
  * Transforma PropertyResponse da API para Property do componente FeaturedAds
  */
 export function transformPropertyResponseToProperty(
-  property: PropertyResponse,
-  index: number
+  property: PropertyResponse
 ): Property {
   return {
-    id: index + 1, // Usa índice + 1 como ID numérico temporário
+    id: property.propertyId,
     title: property.title,
     location: buildLocation(property.address),
     type: convertPropertyType(property.type),
@@ -68,8 +67,8 @@ export function transformPropertyResponseToProperty(
 export function transformPropertyResponsesToProperties(
   properties: PropertyResponse[]
 ): Property[] {
-  return properties.map((property, index) =>
-    transformPropertyResponseToProperty(property, index)
+  return properties.map((property) =>
+    transformPropertyResponseToProperty(property)
   );
 }
 

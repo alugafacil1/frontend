@@ -10,8 +10,6 @@ import type { PropertyResponse } from "@/types/property";
 import { PropertyDetailsModal } from "./PropertyDetailsModal";
 import {
   PageContainer,
-  TabsContainer,
-  TabButton,
   FilterContainer,
   FilterLabel,
   FilterPill,
@@ -124,8 +122,6 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
     return filteredData.slice(startIndex, endIndex);
   }, [filteredData, pagination]);
 
-  const mainTabs = ["Imóveis"];
-
   const columns = useMemo<ColumnDef<PropertyResponse>[]>(
     () => [
       {
@@ -203,14 +199,7 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
   );
 
   return (
-    <PageContainer>
-      <TabsContainer>
-        {mainTabs.map((tab) => (
-          <TabButton key={tab} $active={true}>
-            {tab}
-          </TabButton>
-        ))}
-      </TabsContainer>
+    <PageContainer style={{ paddingTop: '0' }}> {/* Removido o espaço vazio do topo */}
 
       <FilterContainer>
         <FilterLabel>Filtrar por:</FilterLabel>
