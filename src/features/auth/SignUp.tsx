@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,13 +10,15 @@ import Link from "next/link";
 import { useRegisterAgencyWithAdmin } from "@/services/queries/Agencies";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { useCep } from "../../../hooks/useCep";
+import api from "@/services/api";
 
 // ============================================================================
 // 1. SCHEMAS DE VALIDAÇÃO (ZOD)
 // ============================================================================
 const personalSchema = z.object({
   name: z.string().min(3, "Nome muito curto"),
-  email: z.string().email("E-mail inválido"),
+  email: z.email("E-mail inválido"),
   phone: z.string().min(14, "Telefone incompleto"),
   cpf: z.string().length(14, "CPF incompleto"),
   type: z.enum(["TENANT", "OWNER"], { message: "Selecione um perfil" }),
@@ -43,14 +45,14 @@ const agencySchema = z.object({
   state: z.string().length(2, "UF inválida"),
 
   // Passo 3: Contato e Midia
-  agencyEmail: z.string().email("E-mail inválido"),
+  agencyEmail: z.email("E-mail inválido").min(10, "E-mail de login obrigatório"),
   agencyPhone: z.string().min(14, "Telefone incompleto"),
   website: z.string().url("URL inválida (ex: https://site.com)").optional().or(z.literal("")),
   photo: z.any().optional(),
 
   // Passo 4: Admin
   adminName: z.string().min(3, "Nome do administrador obrigatório"),
-  adminEmail: z.string().email("E-mail de login inválido"),
+  adminEmail: z.email("E-mail de login inválido").min(10, "E-mail de login obrigatório"),
   adminPassword: z.string().min(6, "Mínimo de 6 caracteres"),
   adminPasswordConfirm: z.string()
 }).refine((data) => data.adminPassword === data.adminPasswordConfirm, {
@@ -254,11 +256,17 @@ function PersonalForm({ onBack }: { onBack: () => void }) {
 // ============================================================================
 // 5. SUBCOMPONENTE: FORMULÁRIO PJ (MULTI-STEP)
 // ============================================================================
+const ESTADOS_BRASIL = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
+  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+];
+
 function AgencyForm({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync: registerAgency, isPending } = useRegisterAgencyWithAdmin();
 
@@ -267,19 +275,22 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
     mode: "onTouched",
   });
 
+  // 1. Integrando o seu Hook de CEP
+  const { maskCep, fetchAddress } = useCep();
+
   const fetchCep = async (cepValue: string) => {
     const cleanCep = cepValue.replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
 
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-      const data = await res.json();
+      const addressData = await fetchAddress(cleanCep);
 
-      if (!data.erro) {
-        setValue("street", data.logradouro, { shouldValidate: true });
-        setValue("neighborhood", data.bairro, { shouldValidate: true });
-        setValue("city", data.localidade, { shouldValidate: true });
-        setValue("state", data.uf, { shouldValidate: true });
+      if (addressData) {
+        // Usando as chaves exatas que o seu hook (addressData) possui
+        setValue("street", addressData.address || "", { shouldValidate: true });
+        setValue("neighborhood", addressData.neighborhood || "", { shouldValidate: true });
+        setValue("city", addressData.city || "", { shouldValidate: true });
+        setValue("state", addressData.uf || "", { shouldValidate: true });
 
         document.getElementById("number")?.focus();
         toast.success("Endereço preenchido!");
@@ -297,7 +308,6 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
         name: data.agencyName,
         corporateName: data.corporateName,
         cnpj: data.cnpj.replace(/\D/g, ""),
-
         address: {
           postalCode: data.postalCode,
           street: data.street,
@@ -307,19 +317,26 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
           city: data.city,
           state: data.state
         },
-
         email: data.agencyEmail,
         phoneNumber: data.agencyPhone.replace(/\D/g, ""),
         website: data.website || null,
-        photoUrl: null,
-
         adminName: data.adminName,
         adminEmail: data.adminEmail,
         adminPassword: data.adminPassword
       };
 
-      await registerAgency(payload);
+      const response = await registerAgency(payload);
+      const idAgency = response.agencyId;
+      if (data.photo && idAgency) {
+        const formData = new FormData();
+        formData.append("file", data.photo);
 
+        await api.post(`/api/realStateAgencies/${idAgency}/photo`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
       toast.success("Imobiliária cadastrada com sucesso! Faça login.");
       router.push("/login");
 
@@ -332,7 +349,6 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
   const handleNextStep = async () => {
     let fieldsToValidate: (keyof AgencyFormData)[] = [];
 
-    // Atualização dos Arrays de Validação por Passo
     if (step === 1) fieldsToValidate = ["agencyName", "cnpj", "corporateName"];
     else if (step === 2) fieldsToValidate = ["postalCode", "street", "number", "neighborhood", "city", "state"];
     else if (step === 3) fieldsToValidate = ["agencyEmail", "agencyPhone", "website", "photo"];
@@ -347,7 +363,7 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <>
+    <div className="w-full max-w-2xl mx-auto">
       <button onClick={handlePrevStep} className="text-sm text-gray-500 mb-6 hover:text-[#515DEF] flex items-center gap-2">
         <span>←</span> Voltar
       </button>
@@ -357,27 +373,29 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
           Cadastro de Imobiliária
         </h1>
         <span className="text-sm font-bold text-[#515DEF] bg-blue-50 px-4 py-1.5 rounded-full whitespace-nowrap">
-          Passo {step} de 4
+          Passo {step} de 3
         </span>
       </div>
 
       <div className="w-full bg-gray-200 h-2 rounded-full mb-8">
         <div
           className="bg-[#515DEF] h-2 rounded-full transition-all duration-300"
-          style={{ width: `${(step / 4) * 100}%` }}
+          style={{ width: `${(step / 3) * 100}%` }}
         ></div>
       </div>
 
-      <div className="overflow-y-auto pr-2 pb-4" style={{ maxHeight: '60vh' }}>
-        <form onSubmit={handleSubmit(onSubmit)} className="signUp-form">
+      {/* Adicionado overflow-x-hidden e w-full para evitar o scroll lateral indesejado */}
+      <div className="overflow-y-auto overflow-x-hidden pr-2 pb-4 w-full" style={{ maxHeight: '60vh' }}>
+        <form onSubmit={handleSubmit(onSubmit)} className="signUp-form w-full">
 
           {/* ===================================================================
-                PASSO 1: IDENTIFICAÇÃO DA EMPRESA
+                PASSO 1: DADOS DA EMPRESA E CONTATO
                 =================================================================== */}
           {step === 1 && (
-            <div className="animate-fadeIn flex flex-col gap-6">
-              <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider">Informações Legais</h3>
+            <div className="animate-fadeIn flex flex-col gap-6 w-full">
+              <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider">Informações da Empresa</h3>
 
+              {/* Nome da Empresa --- CNPJ */}
               <div className="signUp-grid">
                 <div className="form-group">
                   <input type="text" id="agencyName" {...register("agencyName")} required placeholder=" " />
@@ -391,10 +409,63 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
                 </div>
               </div>
 
-              <div className="form-group">
-                <input type="text" id="corporateName" {...register("corporateName")} required placeholder=" " />
-                <label htmlFor="corporateName">Razão Social</label>
-                {errors.corporateName && <span className="text-red-500 text-xs mt-1 block">{errors.corporateName.message}</span>}
+              {/* Razão Social --- E-mail da Empresa */}
+              <div className="signUp-grid">
+                <div className="form-group">
+                  <input type="text" id="corporateName" {...register("corporateName")} required placeholder=" " />
+                  <label htmlFor="corporateName">Razão Social</label>
+                  {errors.corporateName && <span className="text-red-500 text-xs mt-1 block">{errors.corporateName.message}</span>}
+                </div>
+                <div className="form-group">
+                  <input type="email" id="agencyEmail" {...register("agencyEmail")} required placeholder=" " />
+                  <label htmlFor="agencyEmail">E-mail da Empresa</label>
+                  {errors.agencyEmail && <span className="text-red-500 text-xs mt-1 block">{errors.agencyEmail.message}</span>}
+                </div>
+              </div>
+
+              {/* Telefone --- Website */}
+              <div className="signUp-grid">
+                <div className="form-group">
+                  <input type="text" id="agencyPhone" {...register("agencyPhone", { onChange: (e) => e.target.value = maskPhone(e.target.value) })} required placeholder=" " />
+                  <label htmlFor="agencyPhone">Telefone</label>
+                  {errors.agencyPhone && <span className="text-red-500 text-xs mt-1 block">{errors.agencyPhone.message}</span>}
+                </div>
+                <div className="form-group">
+                  <input type="text" id="website" {...register("website")} placeholder=" " />
+                  <label htmlFor="website">Website (Opcional)</label>
+                  {errors.website && <span className="text-red-500 text-xs mt-1 block">{errors.website.message}</span>}
+                </div>
+              </div>
+
+              {/* Logomarca */}
+              <div className="relative border border-gray-300 rounded-md p-2 mt-2 flex items-center gap-4 h-[56px] focus-within:border-[#515DEF]">
+                <label className="absolute -top-2.5 left-2 bg-white px-1 text-xs text-gray-500">Logomarca (Opcional)</label>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-[#515DEF] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors shrink-0"
+                >
+                  Escolher Arquivo
+                </button>
+
+                <span className="text-sm text-gray-500 truncate">
+                  {logoPreview ? 'Arquivo selecionado' : 'Nenhum arquivo escolhido'}
+                </span>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setLogoPreview(URL.createObjectURL(file));
+                      setValue("photo", file);
+                    }
+                  }}
+                />
               </div>
 
               <Button type="button" onClick={handleNextStep} className="w-full signUp-button mt-4">
@@ -404,21 +475,21 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
           )}
 
           {/* ===================================================================
-                PASSO 2: ENDEREÇO FÍSICO (Novo Passo)
+                PASSO 2: ENDEREÇO
                 =================================================================== */}
           {step === 2 && (
-            <div className="animate-fadeIn flex flex-col gap-6">
-              <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider">Sede da Imobiliária</h3>
+            <div className="animate-fadeIn flex flex-col gap-6 w-full">
+              <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider">Endereço da Sede</h3>
 
+              {/* CEP --- Endereço */}
               <div className="signUp-grid">
                 <div className="form-group">
                   <input
                     type="text"
                     id="postalCode"
-                    {...register("postalCode", {
-                      onChange: (e) => e.target.value = e.target.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9),
-                      onBlur: (e) => fetchCep(e.target.value)
-                    })}
+                    {...register("postalCode")}
+                    onChange={(e) => fetchCep(e.target.value)}
+                    maxLength={9}
                     required placeholder=" "
                   />
                   <label htmlFor="postalCode">CEP</label>
@@ -426,105 +497,54 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
                 </div>
 
                 <div className="form-group">
-                  <input type="text" id="state" {...register("state")} required placeholder=" " maxLength={2} />
-                  <label htmlFor="state">Estado (UF)</label>
-                  {errors.state && <span className="text-red-500 text-xs mt-1 block">{errors.state.message}</span>}
-                </div>
-              </div>
-
-              <div className="signUp-grid">
-                <div className="form-group" style={{ gridColumn: "span 2" }}>
                   <input type="text" id="street" {...register("street")} required placeholder=" " />
-                  <label htmlFor="street">Logradouro (Rua, Av.)</label>
+                  <label htmlFor="street">Endereço (Rua, Av.)</label>
                   {errors.street && <span className="text-red-500 text-xs mt-1 block">{errors.street.message}</span>}
                 </div>
               </div>
 
-              <div className="signUp-grid">
-                <div className="form-group">
-                  <input type="text" id="number" {...register("number")} required placeholder=" " />
-                  <label htmlFor="number">Número</label>
-                  {errors.number && <span className="text-red-500 text-xs mt-1 block">{errors.number.message}</span>}
-                </div>
-                <div className="form-group">
-                  <input type="text" id="complement" {...register("complement")} placeholder=" " />
-                  <label htmlFor="complement">Complemento</label>
-                </div>
-              </div>
-
+              {/* Bairro --- Número */}
               <div className="signUp-grid">
                 <div className="form-group">
                   <input type="text" id="neighborhood" {...register("neighborhood")} required placeholder=" " />
                   <label htmlFor="neighborhood">Bairro</label>
                   {errors.neighborhood && <span className="text-red-500 text-xs mt-1 block">{errors.neighborhood.message}</span>}
                 </div>
+
+                <div className="form-group">
+                  <input type="text" id="number" {...register("number")} required placeholder=" " />
+                  <label htmlFor="number">Número</label>
+                  {errors.number && <span className="text-red-500 text-xs mt-1 block">{errors.number.message}</span>}
+                </div>
+              </div>
+
+              {/* Cidade --- Estado */}
+              <div className="signUp-grid">
                 <div className="form-group">
                   <input type="text" id="city" {...register("city")} required placeholder=" " />
                   <label htmlFor="city">Cidade</label>
                   {errors.city && <span className="text-red-500 text-xs mt-1 block">{errors.city.message}</span>}
                 </div>
-              </div>
 
-              <Button type="button" onClick={handleNextStep} className="w-full signUp-button mt-4">
-                Avançar
-              </Button>
-            </div>
-          )}
-
-          {/* ===================================================================
-                PASSO 3: CONTATO E PRESENÇA DIGITAL
-                =================================================================== */}
-          {step === 3 && (
-            <div className="animate-fadeIn flex flex-col gap-6">
-              <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider">Como os clientes te encontram</h3>
-
-              <div className="signUp-grid">
                 <div className="form-group">
-                  <input type="email" id="agencyEmail" {...register("agencyEmail")} required placeholder=" " />
-                  <label htmlFor="agencyEmail">E-mail da Empresa</label>
-                  {errors.agencyEmail && <span className="text-red-500 text-xs mt-1 block">{errors.agencyEmail.message}</span>}
-                </div>
-                <div className="form-group">
-                  <input type="text" id="agencyPhone" {...register("agencyPhone", { onChange: (e) => e.target.value = maskPhone(e.target.value) })} required placeholder=" " />
-                  <label htmlFor="agencyPhone">Telefone</label>
-                  {errors.agencyPhone && <span className="text-red-500 text-xs mt-1 block">{errors.agencyPhone.message}</span>}
+                  <select id="state" {...register("state")} required className="bg-transparent appearance-none w-full">
+                    <option value="" disabled hidden></option>
+                    {ESTADOS_BRASIL.map((uf) => (
+                      <option key={uf} value={uf}>{uf}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="state">Estado</label>
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                  </div>
+                  {errors.state && <span className="text-red-500 text-xs mt-1 block">{errors.state.message}</span>}
                 </div>
               </div>
 
+              {/* Complemento isolado */}
               <div className="form-group">
-                <input type="text" id="website" {...register("website")} placeholder=" " />
-                <label htmlFor="website">Website (Opcional)</label>
-                {errors.website && <span className="text-red-500 text-xs mt-1 block">{errors.website.message}</span>}
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Logomarca da Empresa (Opcional)</label>
-                <div className="flex items-center gap-4">
-
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="Preview" className="h-16 w-16 rounded-lg object-cover border border-gray-300 shadow-sm" />
-                  ) : (
-                    <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center text-3xl border border-gray-300 shadow-inner">
-                      🏢
-                    </div>
-                  )}
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    {...register("photo", {
-                      onChange: (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setLogoPreview(URL.createObjectURL(file));
-                        } else {
-                          setLogoPreview(null);
-                        }
-                      }
-                    })}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[#515DEF] file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer transition-colors"
-                  />
-                </div>
+                <input type="text" id="complement" {...register("complement")} placeholder=" " />
+                <label htmlFor="complement">Complemento</label>
               </div>
 
               <Button type="button" onClick={handleNextStep} className="w-full signUp-button mt-4">
@@ -534,24 +554,27 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
           )}
 
           {/* ===================================================================
-                PASSO 4: DADOS DO ADMINISTRADOR (USER)
+                PASSO 3: DADOS DE ACESSO
                 =================================================================== */}
-          {step === 4 && (
-            <div className="animate-fadeIn flex flex-col gap-6">
+          {step === 3 && (
+            <div className="animate-fadeIn flex flex-col gap-6 w-full">
               <h3 className="text-[#515DEF] font-bold text-sm uppercase tracking-wider mb-8">Crie o acesso do Dono/Admin</h3>
 
+              {/* Nome Completo */}
               <div className="form-group">
                 <input type="text" id="adminName" {...register("adminName")} required placeholder=" " />
                 <label htmlFor="adminName">Seu Nome Completo</label>
                 {errors.adminName && <span className="text-red-500 text-xs mt-1 block">{errors.adminName.message}</span>}
               </div>
 
+              {/* E-mail de Acesso */}
               <div className="form-group">
                 <input type="email" id="adminEmail" {...register("adminEmail")} required placeholder=" " />
                 <label htmlFor="adminEmail">E-mail de Acesso (Login)</label>
                 {errors.adminEmail && <span className="text-red-500 text-xs mt-1 block">{errors.adminEmail.message}</span>}
               </div>
 
+              {/* Senha --- Confirmar Senha */}
               <div className="signUp-grid">
                 <div className="form-group password">
                   <input type={showPassword ? "text" : "password"} id="adminPassword" {...register("adminPassword")} required placeholder=" " />
@@ -569,6 +592,17 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
                 <span className="text-red-500 text-xs -mt-4 block">Verifique as senhas digitadas.</span>
               )}
 
+              {/* Checkbox de Termos e Políticas */}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  className="w-4 h-4 text-[#515DEF] border-gray-300 rounded focus:ring-[#515DEF] shrink-0"
+                />
+                <label htmlFor="terms" className="text-sm text-gray-700">
+                  Eu concordo com os termos e políticas de privacidade
+                </label>
+              </div>
               <Button
                 type="submit"
                 loading={isPending}
@@ -582,6 +616,6 @@ function AgencyForm({ onBack }: { onBack: () => void }) {
 
         </form>
       </div>
-    </>
+    </div>
   );
 }

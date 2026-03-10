@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { translateRole } from "@/utils/translateRoles";
 
 interface UserMenuProps {
   user: any;
@@ -11,6 +12,7 @@ interface UserMenuProps {
 export function UserMenu({ user, logout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -26,12 +28,12 @@ export function UserMenu({ user, logout }: UserMenuProps) {
     logout();
     setIsOpen(false);
   };
-
+  console.log("user: ", user);
   return (
     <div className="user-menu" ref={dropdownRef}>
       <button className="avatar-btn" onClick={() => setIsOpen(!isOpen)}>
         {user?.photoUrl ? (
-          <img src={user.photoUrl} alt="Perfil" />
+          <img src={`${apiBaseUrl}${user.photoUrl}`} alt="Perfil" />
         ) : (
           <div className="avatar-placeholder">
             {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -45,7 +47,7 @@ export function UserMenu({ user, logout }: UserMenuProps) {
             <strong>{user?.name}</strong>
             <span>{user?.email}</span>
             <small style={{ color: 'var(--primary-blue)', display: 'block', marginTop: '4px' }}>
-              {user?.role}
+              {translateRole(user?.role)}
             </small>
           </div>
           <Link href="/profile" className="dropdown-item" onClick={() => setIsOpen(false)}>Visualizar Perfil</Link>

@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import "@/assets/styles/profile/index.css";
 import { useToast } from "@/components/ToastContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { translateRole } from "@/utils/translateRoles";
 
 interface UserProfileData {
   id?: string;
@@ -51,12 +52,6 @@ function formatPhone(value: string | undefined | null) {
       return safeValue.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
   }
   return safeValue; 
-}
-
-function translateRole(role?: string) {
-  if (!role) return "Usuário";
-  const roles: Record<string, string> = { ADMIN: "Administrador", TENANT: "Inquilino", OWNER: "Proprietário", REALTOR: "Corretor" };
-  return roles[role] || role;
 }
 
 const formGroupStyle: React.CSSProperties = {
@@ -114,6 +109,8 @@ function ProfileFormContent({
   const { updateUser: updateAuthContext } = useAuth();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+
   
   const [isEditing, setIsEditing] = useState(false);
   
@@ -230,7 +227,7 @@ function ProfileFormContent({
           <div className="profile-card-avatar-container" onClick={() => isEditing && fileInputRef.current?.click()}>
             {displayImage ? (
               <img 
-                src={displayImage} 
+                src={`${apiBaseUrl}${displayImage}`} 
                 alt="Perfil" 
                 className="profile-avatar"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} 
