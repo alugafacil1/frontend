@@ -50,26 +50,27 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
     async function fetchProperties() {
       if (!user?.id) return;
       try {
-        const data = await propertyService.getByUser(user.id);
-        setProperties(Array.isArray(data) ? data.slice(0, 3) : []);
+        const data = await propertyService.getByUserId(user.id);
+        console.log(data)
+        setProperties(Array.isArray(data.content) ? data.content.slice(0, 3) : []);
         
-        const disponiveis: any = data.filter((im : any) => im.status == "ACTIVE");
-        const indisponiveis: any = data.filter((im : any) => im.status == "PLACED" || im.status == "PAUSED" || im.status == "PENDING");
+        const disponiveis: any = data.content.filter((im : any) => im.status == "ACTIVE");
+        const indisponiveis: any = data.content.filter((im : any) => im.status == "PLACED" || im.status == "PAUSED" || im.status == "PENDING");
         setImoveisDisponiveis( disponiveis.length);
         setImoveisIndisponiveis(indisponiveis.length);
 
         setCustomerChartData([
           {
             name: 'Disponíveis',
-            value: data.length > 0 ? Math.round((disponiveis.length / data.length) * 100) : 0,
+            value: data.content.length > 0 ? Math.round((disponiveis.length / data.content.length) * 100) : 0,
           },
           {
             name: 'Indisponíveis',
-            value: data.length > 0 ? Math.round((indisponiveis.length / data.length) * 100) : 0,
+            value: data.content.length > 0 ? Math.round((indisponiveis.length / data.content.length) * 100) : 0,
           },
         ]);
 
-        const top6 = [...data]
+        const top6 = [...data.content]
           .sort((a: any, b: any) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
           .slice(0, 6)
           .map((p: any) => ({
@@ -612,7 +613,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
                   <PropertyCard
                     key={p.id ?? p.propertyId}
                     property={p}
-                    onUpdateSuccess={() => propertyService.getByUser(String(user?.id)).then(data => setProperties(Array.isArray(data) ? data.slice(0, 3) : []))}
+                    onUpdateSuccess={() => propertyService.getByUserId(String(user?.id)).then(data => setProperties(Array.isArray(data) ? data.slice(0, 3) : []))}
                   />
                 ))}
               </div>

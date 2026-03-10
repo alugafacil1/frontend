@@ -13,33 +13,24 @@ export function useProperties(page: number, size: number, userId?: string, role?
   return useQuery({
     queryKey: ["properties", page, size, userId, role, status],
     queryFn: async () => {
-      if (role === "OWNER" && userId) {
-        const { data } = await api.get<PropertyResponse[]>(
-          `/api/properties/owner/${userId}`
-        );
-        
-        return {
-          content: data,
-          totalElements: data.length,
-          totalPages: 1,
-          number: 0
-        } as SpringPageResponse<PropertyResponse>;
-      }
-
-      const params: Record<string, any> = { 
-        page, 
-        size, 
-        sort: "createdAt,desc" 
-      };
-
+      
+      const params: Record<string, any> = { page, size, sort: "createdAt,desc" };
       if (status && status !== 'ALL') {
           params.status = status;
       }
 
+      if (userId && role !== "ADMIN") {
+        const { data } = await api.get<SpringPageResponse<PropertyResponse>>(
+          `/api/properties/user/${userId}`,
+          { params }
+        );
+        return data;
+      }
       const { data } = await api.get<SpringPageResponse<PropertyResponse>>(
         "/api/properties",
         { params }
       );
+      
       return data;
     },
     placeholderData: (previousData) => previousData,

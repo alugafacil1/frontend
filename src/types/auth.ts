@@ -6,6 +6,7 @@ export interface User {
   photoUrl?: string;      
   phoneNumber?: string;   
   cpf?: string;
+  agencyId?: string;
 }
 
 export interface LoginResponse {

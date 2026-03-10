@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import "@/assets/styles/global.css"
+import "@/assets/styles/global.css";
+import 'react-toastify/dist/ReactToastify.css';
 import Providers from "./providers";
 import QueryProvider from "@/lib/providers/QueryProvider";
-import Header from "@/components/Header";
-
+import { ToastContainer } from "react-toastify";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,6 +29,11 @@ export default function RootLayout({
       >
       <Providers>
         <QueryProvider>
+          <ToastContainer 
+             position="top-right" 
+             autoClose={3000} 
+             theme="light" 
+          />
           <main style={{ minHeight: '100vh' }}>
               {children}
             </main>

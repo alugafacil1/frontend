@@ -8,20 +8,29 @@ export function useCep() {
   };
 
   const fetchAddress = async (cep: string) => {
-    const cleanCep = cep.replace("-", "");
+    const cleanCep = cep.replace(/\D/g, "");
+    
     if (cleanCep.length !== 8) return null;
 
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      // 1. Trocamos para o BrasilAPI (Zero problemas de CORS em localhost)
+      const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cleanCep}`);
+
+      if (!response.ok) {
+        console.warn('CEP não encontrado na base de dados');
+        return null;
+      }
+
       const data = await response.json();
-      if (data.erro) return null;
       
+      // 2. Mapeamos os campos do BrasilAPI para o formato que você já usava
       return {
-        address: data.logradouro,
-        city: data.localidade,
-        neighborhood: data.bairro,
-        uf: data.uf
+        address: data.street,            // No BrasilAPI é street (ViaCEP era logradouro)
+        city: data.city,                 // No BrasilAPI é city (ViaCEP era localidade)
+        neighborhood: data.neighborhood, // No BrasilAPI é neighborhood (ViaCEP era bairro)
+        uf: data.state                   // No BrasilAPI é state (ViaCEP era uf)
       };
+      
     } catch (error) {
       console.error("Erro ao buscar CEP", error);
       return null;

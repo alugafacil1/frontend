@@ -14,20 +14,22 @@ export default function DashboardProperties() {
   const [loading, setLoading] = useState(true);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  useEffect(() => {
+useEffect(() => {
     async function fetchProperties() {
       if (!user?.id) return;
       try {
         const role = user.role as string;
-        let data;
-        if (role === 'AGENCY_ADMIN') {
-          data = await propertyService.getByAgency(user.id);
-        } else if (role !== 'TENANT') {
-          data = await propertyService.getByUser(user.id);
-        } else {
-          data = [];
+        
+        if (role === 'TENANT') {
+          setProperties([]);
+          setLoading(false);
+          return;
         }
-        setProperties(Array.isArray(data) ? data : []);
+
+        const data = await propertyService.getByUserId(user.id);
+        
+        setProperties(data?.content || []);
+
       } catch (error) {
         console.error("Erro ao buscar imóveis:", error);
       } finally {

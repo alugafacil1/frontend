@@ -96,15 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: fullUserData.userType,
         photoUrl: fullUserData.photoUrl,
         phoneNumber: fullUserData.phoneNumber,
-        cpf: fullUserData.cpf
+        cpf: fullUserData.cpf,
+        agencyId: fullUserData.agency?.agencyId || fullUserData.agencyId || undefined,
       };
 
-      
-
-      
       setUser(userData);
       setIsAuthenticated(true);
-
       
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
