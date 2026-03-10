@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   HeartIcon, 
-  MapPinIcon, 
   ChevronLeftIcon, 
   ChevronRightIcon,
   PhotoIcon 
@@ -30,14 +29,11 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
   const propertyId = property.id || property.propertyId;
-  const images = property.photoUrls && property.photoUrls.length > 0 
-    ? property.photoUrls 
-    : [];
+  const images = property.photoUrls && property.photoUrls.length > 0 ? property.photoUrls : [];
 
   useEffect(() => {
     async function checkFavoriteStatus() {
       if (!user || !user.id) return; 
-      
       try {
         const isFav = await propertyService.checkIfFavorited(user.id, propertyId);
         setIsFavorited(isFav);
@@ -45,11 +41,9 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
         console.error("Erro ao verificar status de favorito", error);
       }
     }
-
     checkFavoriteStatus();
   }, [user, propertyId]);
 
-  
   const isAgencyAdmin = user?.role === 'AGENCY_ADMIN';
   const canManageProperty = user?.role === 'OWNER' || user?.role === 'REALTOR' || isAgencyAdmin;
 
@@ -90,7 +84,6 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
     const newStatus = e.target.value;
 
     if (!window.confirm("Deseja realmente alterar o status deste anúncio?")) {
@@ -99,15 +92,10 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     }
 
     setIsUpdatingStatus(true);
-
     try {
       await propertyService.updateStatus(propertyId, newStatus);
-      
-      if (onUpdateSuccess) {
-        onUpdateSuccess();
-      } else {
-        window.location.reload();
-      }
+      if (onUpdateSuccess) onUpdateSuccess();
+      else window.location.reload();
     } catch (error) {
       console.error("Erro ao alterar status:", error);
       alert("Não foi possível alterar o status do anúncio.");
@@ -137,121 +125,75 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     return types[type] || type || 'Imóvel';
   };
 
-  const getStatusColorClass = (status: string) => {
-    switch(status) {
-      case 'ACTIVE': return 'status-active';
-      case 'PAUSED': return 'status-paused';
-      case 'PLACED': return 'status-placed';
-      case 'PENDING': return 'status-pending';
-      case 'REJECTED': return 'status-rejected'; 
-      default: return '';
-    }
-  };
+  // Define o título baseado nos dados da API (fallback para o Tipo se não tiver título)
+  const displayTitle = property.title || property.name || `${translateType(property.type)} ${propertyId ? propertyId.toString().substring(0,3) : ''}`;
 
   return (
     <div 
-      className={`property-card ${isUpdatingStatus ? 'is-updating' : ''}`} 
+      className={`property-card-minimal ${isUpdatingStatus ? 'is-updating' : ''}`} 
       onClick={handleCardClick}
     >
-      <div className="card-image-container">
+      <div className="card-img-wrapper">
         {images.length > 0 && !imgError ? (
           <img 
             src={images[currentImageIndex]} 
-            alt={`Foto do imóvel ${currentImageIndex + 1}`} 
-            className="card-img"
+            alt={displayTitle} 
+            className="card-img-minimal"
             onError={() => setImgError(true)} 
           />
         ) : (
-          <div className="no-image-placeholder">
-            <PhotoIcon className="placeholder-icon" />
+          <div className="no-img-minimal">
+            <PhotoIcon className="w-10 h-10 opacity-40 mb-2" />
             <span>Sem foto</span>
           </div>
         )}
 
-        <button onClick={toggleFavorite} className="fav-btn">
-          {isFavorited ? <HeartSolid className="icon-solid" /> : <HeartIcon className="icon-outline" />}
+        <button onClick={toggleFavorite} className="btn-fav-minimal">
+          {isFavorited ? <HeartSolid className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5 text-gray-600" />}
         </button>
 
         {images.length > 1 && (
           <>
-            <button onClick={handlePrevImage} className="nav-btn prev">
-              <ChevronLeftIcon className="nav-icon" />
+            <button onClick={handlePrevImage} className="btn-nav-minimal prev">
+              <ChevronLeftIcon className="w-4 h-4 text-gray-700" />
             </button>
-            <button onClick={handleNextImage} className="nav-btn next">
-              <ChevronRightIcon className="nav-icon" />
+            <button onClick={handleNextImage} className="btn-nav-minimal next">
+              <ChevronRightIcon className="w-4 h-4 text-gray-700" />
             </button>
-            
-            <div className="carousel-dots">
-              {images.map((_: any, idx: number) => (
-                <div 
-                  key={idx} 
-                  className={`dot ${idx === currentImageIndex ? 'active' : ''}`}
-                />
-              ))}
-            </div>
           </>
         )}
       </div>
 
-      <div className="card-content">
-        
-        <div className="card-header-info">
-          <span className="property-type-badge">
-            {translateType(property.type)}
-          </span>
-          <div className="card-price">
-            {formattedPrice} <span className="price-period">/mês</span>
-          </div>
-        </div>
-
-        <p className="card-location" title={`${property.address?.city}, ${property.address?.neighborhood}`}>
-          <MapPinIcon className="location-icon" />
-          {property.address?.city || "N/A"}, {property.address?.neighborhood || "Centro"}
-        </p>
-
-        <div className="card-features">
-          <div className="feature-item">
-            <span className="feature-value">{property.numberOfBedrooms || 0}</span> 
-            <span className="feature-label">qtos</span>
-          </div>
-          <div className="feature-item">
-            <span className="feature-value">{property.numberOfBathrooms || 0}</span> 
-            <span className="feature-label">banh</span>
-          </div>
-          {property.garage && (
-            <div className="feature-item">
-              <span className="feature-value">1+</span> 
-              <span className="feature-label">vaga</span>
-            </div>
-          )}
+      <div className="card-body-minimal">
+        <div className="card-info-left">
+          <h3 className="card-title-minimal">{displayTitle}</h3>
+          <span className="card-price-minimal">{formattedPrice}</span>
         </div>
 
         {canManageProperty && (
-          <div className="card-actions-grid">
-            <button onClick={handleEdit} className="btn-action edit"> 
-              Editar
+          <div className="card-actions-right">
+            <button onClick={handleEdit} className="btn-edit-minimal"> 
+              Editar Imóvel
             </button>
             
+            {/* O Select de Status foi mantido para não quebrar a funcionalidade, mas estilizado de forma discreta */}
             <select 
-              className={`btn-action status-select ${getStatusColorClass(property.status)}`}
+              className="select-status-minimal"
               value={property.status || 'ACTIVE'}
               onChange={handleStatusChange}
               onClick={(e) => e.stopPropagation()} 
-              
               disabled={isUpdatingStatus || (property.status === 'PENDING' && !isAgencyAdmin)}
             >
               <option value="ACTIVE">Ativo</option>
               <option value="PAUSED">Pausado</option>
               <option value="PLACED">Alugado</option>
               <option value="PENDING" disabled={property.status !== 'PENDING'}>Pendente</option>
-              
               {(isAgencyAdmin || property.status === 'REJECTED') && (
                 <option value="REJECTED">Rejeitado</option>
               )}
             </select>
           </div>
         )}
-
       </div>
     </div>
   );

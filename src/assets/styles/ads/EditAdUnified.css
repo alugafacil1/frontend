@@ -1,0 +1,402 @@
+/* ==========================================================================
+   TELA ÚNICA DE EDIÇÃO (Design Fiel à Imagem)
+   ========================================================================== */
+
+.unified-edit-page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.unified-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* --- Títulos --- */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.btn-add-img {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-add-img:hover { opacity: 0.8; }
+
+/* --- Galeria de Imagens --- */
+.image-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.gallery-img-box {
+  position: relative;
+  height: 160px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.gallery-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.gallery-nav.left { left: 8px; }
+.gallery-nav.right { right: 8px; }
+
+.no-images-placeholder {
+  grid-column: span 4;
+  text-align: center;
+  padding: 40px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* --- Inputs com Label Flutuante / Outlined --- */
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.outlined-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.outlined-label {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  background-color: #ffffff;
+  padding: 0 4px;
+  font-size: 0.75rem;
+  color: #4b5563;
+  font-weight: 500;
+  z-index: 1;
+}
+
+.outlined-field {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  background-color: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.outlined-field:focus {
+  border-color: #3b82f6;
+}
+
+.outlined-field::placeholder {
+  color: #9ca3af;
+}
+
+.input-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.select-with-flag {
+  appearance: none;
+}
+
+.section-divider {
+  border: 0;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 32px 0;
+}
+
+/* --- Toggles Section --- */
+.toggles-section {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 24px 0;
+}
+
+.toggles-card {
+  padding: 0 24px;
+}
+
+.toggles-card.border-left {
+  border-left: 1px solid #e5e7eb;
+}
+
+.toggles-subtitle {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.toggles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggles-list-2-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+
+.toggles-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Estilo do Item do Toggle (O fundo cinza/azul clarinho) */
+.toggle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* O Switch (Bolinha animada) */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #94a3b8;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #eff6ff; /* Fundo azul quando ativo */
+  border-color: #bfdbfe;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+  background-color: #3b82f6; /* Bolinha azul quando ativo */
+}
+
+/* --- Seção Inferior (Visita / Descrição) --- */
+.media-desc-section {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 48px;
+  margin-top: 16px;
+}
+
+.textarea-field {
+  height: 140px;
+  resize: none;
+}
+
+.h-full {
+  height: 100%;
+}
+
+/* --- Botão Salvar --- */
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.btn-save-unified {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 14px 0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  max-width: 400px;
+  transition: background-color 0.2s;
+}
+
+.btn-save-unified:hover {
+  background-color: #2563eb;
+}
+
+.btn-save-unified:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   MODAL DE SUCESSO
+   ========================================================================== */
+
+/* Fundo Escuro Desfocado */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); 
+  backdrop-filter: blur(4px); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999; 
+}
+
+/* Card Branco Centralizado */
+.modal-content {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  animation: modalPopIn 0.3s ease-out forwards;
+}
+
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* O Círculo e Ícone Verde */
+.success-icon-circle {
+  width: 64px;
+  height: 64px;
+  background-color: #dcfce7; /* Verde clarinho */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px auto;
+}
+
+.success-check-icon {
+  width: 32px;
+  height: 32px;
+  color: #16a34a; /* Verde escuro */
+}
+
+/* Textos do Modal */
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+
+.modal-desc {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* Botão Azul do Modal */
+.btn-publish {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-publish:hover {
+  background-color: #1d4ed8;
+}

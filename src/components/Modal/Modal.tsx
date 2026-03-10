@@ -13,15 +13,14 @@ const StyledReactModal = styled(ReactModal)`
     width: 90%;
     max-width: 800px;
     max-height: 90vh;
-    overflow-y: auto;
+    
+    /* 1. ESCONDE A ROLAGEM GERAL DO MODAL */
+    overflow: hidden; 
+    
     z-index: 1001;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-
-    &::-webkit-scrollbar { width: 8px; }
-    &::-webkit-scrollbar-track { background-color: #f3f4f6; border-radius: 8px; }
-    &::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 8px; }
 
     &:focus { outline: none; } /* Remove borda azul padrão do react-modal */
 `;
@@ -32,6 +31,10 @@ const ModalHeader = styled.div`
     align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid #e5e7eb;
+    
+    /* 2. TRAVA O CABEÇALHO PARA NÃO ENCOLHER */
+    flex-shrink: 0;
+    background-color: #ffffff;
 
     h2 {
         margin: 0;
@@ -55,21 +58,36 @@ const CloseBtn = styled.button`
 `;
 
 export const ModalBody = styled.div`
-    padding: 2rem;
+    padding: 1.5rem 2rem; /* Ajustado levemente para equilibrar o visual */
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    
+    /* 3. A MÁGICA ACONTECE AQUI: A rolagem fica APENAS no corpo */
+    flex: 1;
+    overflow-y: auto;
+
+    /* Movemos o estilo da barra de rolagem apenas para o corpo */
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-track { background-color: #f3f4f6; border-radius: 8px; }
+    &::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 8px; }
 `;
 
 export const ModalFooter = styled.div`
-    padding: 1.5rem 2rem;
+    padding: 1.25rem 2rem;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    background-color: #f9fafb;
+    
+    /* Fundo branco para combinar perfeitamente com a imagem de referência */
+    background-color: #ffffff; 
+    
     border-bottom-left-radius: 1rem;
     border-bottom-right-radius: 1rem;
+    
+    /* 4. TRAVA O RODAPÉ PARA NÃO ENCOLHER E FICAR FIXO */
+    flex-shrink: 0;
 `;
 
 // --- COMPONENTE BASE ---
@@ -95,17 +113,31 @@ export function BaseModal({ isOpen, onRequestClose, title, children, footer }: B
                 },
             }}
         >
-            <ModalHeader>
-                <h2>{title}</h2>
-                <CloseBtn onClick={onRequestClose}>
-                    <RiCloseLine size={28} />
-                </CloseBtn>
-            </ModalHeader>
+            {/* Cabeçalho Fixo (Renderiza apenas se tiver título para não ocupar espaço à toa) */}
+            {title && (
+                <ModalHeader>
+                    <h2>{title}</h2>
+                    <CloseBtn onClick={onRequestClose}>
+                        <RiCloseLine size={28} />
+                    </CloseBtn>
+                </ModalHeader>
+            )}
 
+            {/* Se não tiver título, renderizamos apenas o X flutuando (útil para o seu modal de Imóveis) */}
+            {!title && (
+                <ModalHeader style={{ padding: '1rem', borderBottom: 'none', justifyContent: 'flex-end', position: 'absolute', right: 0, top: 0, zIndex: 10, background: 'transparent' }}>
+                    <CloseBtn onClick={onRequestClose}>
+                        <RiCloseLine size={28} />
+                    </CloseBtn>
+                </ModalHeader>
+            )}
+
+            {/* Corpo com Rolagem */}
             <ModalBody>
                 {children}
             </ModalBody>
 
+            {/* Rodapé Fixo */}
             {footer && <ModalFooter>{footer}</ModalFooter>}
         </StyledReactModal>
     );
