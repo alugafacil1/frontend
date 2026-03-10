@@ -1,20 +1,52 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { UserCircleIcon, DocumentTextIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/lib/auth/useAuth";
 import { propertyService } from "@/services/property/propertyService";
-import "@/assets/styles/ads/CreateAd.css"; 
-
-import { DetailsStep } from "@/components/steps/DetailsStep";
-import { RentStep } from "@/components/steps/RentStep"; 
-import { AmenitiesStep } from "@/components/steps/AmenitiesStep"; 
-import { HouseRulesStep } from "@/components/steps/HouseRulesStep"; 
-import { DescriptionStep } from "@/components/steps/DescriptionStep"; 
-import { MediaStep } from "@/components/steps/MediaStep"; 
-import { PreviewStep } from "@/components/steps/PreviewStep"; 
 import { SuccessModal } from "@/components/SuccessModal";
+import "@/assets/styles/ads/EditAdUnified.css"; 
+
+// --- SEUS HOOKS ---
+import { useCep } from "../../../../../hooks/useCep"; 
+import { useLocation } from "../../../../../hooks/useLocation"; 
+import { useMasks } from "../../../../../hooks/useMasks";
+import { useGeolocation } from "../../../../../hooks/useGeolocation";
+
+// ============================================================================
+// 1. COMPONENTES DE INTERFACE
+// ============================================================================
+
+const OutlinedInput = ({ label, name, value, onChange, onBlur, type = "text", icon: Icon, ...props }: any) => (
+  <div className="outlined-input-wrapper">
+    <label className="outlined-label">{label}</label>
+    <input 
+      type={type} 
+      name={name} 
+      value={value || ''} 
+      onChange={onChange} 
+      onBlur={onBlur}
+      className="outlined-field" 
+      {...props} 
+    />
+    {Icon && <Icon className="input-icon" />}
+  </div>
+);
+
+const CustomToggle = ({ label, name, checked, onChange }: { label: string, name: string, checked: boolean, onChange: any }) => (
+  <div className="toggle-item">
+    <span className="toggle-label">{label}</span>
+    <label className="toggle-switch">
+      <input type="checkbox" name={name} checked={!!checked} onChange={onChange} />
+      <span className="toggle-slider"></span>
+    </label>
+  </div>
+);
+
+// ============================================================================
+// 2. PÁGINA PRINCIPAL
+// ============================================================================
 
 export default function EditAdPage() {
   const router = useRouter();
@@ -22,74 +54,93 @@ export default function EditAdPage() {
   const { user } = useAuth(); 
   
   const rawId = params?.id || params?.propertyId;
-  const propertyId = Array.isArray(rawId) ? rawId[0] : rawId; 
+  const propertyId = (Array.isArray(rawId) ? rawId[0] : rawId) as string; 
 
-  const [step, setStep] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  // --- ESTADO UNIFICADO ---
   const [formData, setFormData] = useState<any>({
-    country: '', city: '', postalCode: '', propertyType: '',
-    number: '', address: '', rooms: '', bathrooms: '',
-    contactPhone: '', 
-    monthlyRent: '', weeklyRent: '', minTenancy: '',
-    deposit: '', moveInDate: '', maxAttendants: '',
-    amenities: [], houseRules: [],
-    title: '', description: '', images: [], videoLink: ''
+    country: 'Brazil', 
+    cep: '', number: '', rooms: '', city: '', propertyType: '', address: '', bathrooms: '',
+    monthlyRent: '', weeklyRent: '', availableFrom: '', minTenancy: '', deposit: '', maxOccupants: '',
+    hasAgua: false, hasLuz: false, hasIPTU: false, hasGas: false, hasInternet: false, hasCondominio: false,
+    hasGaragem: false, hasAnimais: false, hasFumantes: false, hasSacada: false, hasMobiliado: false, hasArCondicionado: false,
+    hasChurrasqueira: false, hasElevador: false, hasPortaria: false,
+    hasVisitaVirtual: false, youtubeLink: '', description: '', images: [],
+    agencyId: null // Mantém o vínculo com a agência
   });
 
-  // Carregamento dos dados iniciais do imóvel
+  // --- INICIANDO HOOKS ---
+  const { fetchAddress, maskCep: cepMasker } = useCep(); 
+  const { countries, cities, loadingCities } = useLocation(formData.country); 
+  const { maskCurrency, maskNumber, unmaskCurrency } = useMasks();
+  const { fetchCoordinates } = useGeolocation();
+
+  // --- CARREGAMENTO DO IMÓVEL ---
   useEffect(() => {
     async function loadProperty() {
       if (!propertyId || propertyId === 'undefined') return;
 
       try {
-        console.log(`🔍 DEBUG: Buscando imóvel ID: ${propertyId}`);
         const data = await propertyService.getById(propertyId);
-        console.log("✅ DEBUG: Dados recebidos do backend:", data);
+        
+        // Verificação de Permissão: Dono, Corretor da Agência ou Admin da Agência
+        const isOwner = user?.id === data.userId;
+        const isRealtorOfAgency = user?.role === 'REALTOR' && data.agencyId === user.agencyId;
+        const isAgencyAdmin = user?.role === 'AGENCY_ADMIN' && data.agencyId === user.agencyId;
 
-        if (user && data.userId && user.id !== data.userId) {
+        if (user && !isOwner && !isRealtorOfAgency && !isAgencyAdmin) {
           alert("Sem permissão para editar este anúncio.");
           router.push("/ads/my-properties"); 
           return;
         }
 
-        const formatCurrency = (cents: number) => {
-          if (!cents && cents !== 0) return "";
-          return (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-        };
+        const formatCurrencyFromBackend = (cents: number) => cents ? (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "";
+        const checkAmenity = (term: string) => data.amenities?.some((a: string) => a.toLowerCase().includes(term.toLowerCase()));
+        const checkRule = (term: string) => data.houseRules?.some((r: string) => r.toLowerCase().includes(term.toLowerCase()));
 
-        // MAPEAMENTO DE ENTRADA (BACKEND -> FORM)
-        setFormData({
-          country: (data.address?.state === 'Brasil' || !data.address?.state) ? 'br' : data.address.state, 
+        setFormData((prev: any) => ({
+          ...prev,
+          country: (data.address?.state === 'Brasil' || !data.address?.state) ? 'Brazil' : data.address.state, 
           city: data.address?.city || "",
-          postalCode: data.address?.zipCode || data.address?.postalCode || "",
+          cep: cepMasker(data.address?.zipCode || data.address?.postalCode || ""),
           propertyType: data.type || "APARTMENT",
           number: data.address?.number || "",
           address: data.address?.street || "",
-          rooms: String(data.numberOfBedrooms || "0"),
-          bathrooms: String(data.numberOfBathrooms || "0"),
-          contactPhone: data.phoneNumber || "",
-          monthlyRent: formatCurrency(data.priceInCents),
-          
-          // --- NOVOS CAMPOS MAPEADOS (BACKEND -> FORM) ---
-          weeklyRent: formatCurrency(data.weeklyRentInCents),
-          deposit: formatCurrency(data.securityDepositInCents),
+          rooms: String(data.numberOfBedrooms || ""),
+          bathrooms: String(data.numberOfBathrooms || ""),
+          monthlyRent: formatCurrencyFromBackend(data.priceInCents),
+          weeklyRent: formatCurrencyFromBackend(data.weeklyRentInCents),
+          deposit: formatCurrencyFromBackend(data.securityDepositInCents),
           minTenancy: data.minimumLeaseMonths ? String(data.minimumLeaseMonths) : "",
-          maxAttendants: data.maxOccupants ? String(data.maxOccupants) : "",
-          moveInDate: data.availableFrom || "",
-          // -----------------------------------------------
-
-          amenities: data.amenities || [],
-          houseRules: data.houseRules || [],
-          title: data.title || "",
+          maxOccupants: data.maxOccupants ? String(data.maxOccupants) : "",
+          availableFrom: data.availableFrom || "",
+          hasAgua: checkAmenity('Água') || checkAmenity('Agua'),
+          hasLuz: checkAmenity('Luz') || checkAmenity('Energia'),
+          hasIPTU: checkAmenity('IPTU'),
+          hasGas: checkAmenity('Gás') || checkAmenity('Gas'),
+          hasInternet: checkAmenity('Internet') || checkAmenity('Wi-fi'),
+          hasCondominio: checkAmenity('Condomínio'),
+          hasGaragem: data.garage || checkAmenity('Garagem'),
+          hasAnimais: data.petFriendly || checkRule('Animais'),
+          hasFumantes: checkRule('Fumantes'),
+          hasSacada: checkAmenity('Sacada') || checkAmenity('Varanda'),
+          hasMobiliado: data.furnished || checkAmenity('Mobiliado'),
+          hasArCondicionado: checkAmenity('Ar-condicionado'),
+          hasChurrasqueira: checkAmenity('Churrasqueira'),
+          hasElevador: checkAmenity('Elevador'),
+          hasPortaria: checkAmenity('Portaria') || checkAmenity('Segurança'),
+          hasVisitaVirtual: !!data.videoUrl,
+          youtubeLink: data.videoUrl || "",
           description: data.description || "",
           images: data.photoUrls || [],
-          videoLink: data.videoUrl || ""
-        });
+          agencyId: data.agencyId || null // Preserva o vínculo
+        }));
+
       } catch (error) {
-        console.error("❌ DEBUG: Erro no loadProperty:", error);
+        console.error("Erro ao carregar:", error);
       } finally {
         setFetching(false);
       }
@@ -97,148 +148,255 @@ export default function EditAdPage() {
     if (user && propertyId) loadProperty();
   }, [propertyId, user, router]);
 
-  const updateData = (newData: any) => setFormData((prev: any) => ({ ...prev, ...newData }));
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  // --- HANDLERS ---
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      setFormData((prev: any) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+    } else if (['monthlyRent', 'weeklyRent', 'deposit'].includes(name)) {
+      setFormData((prev: any) => ({ ...prev, [name]: maskCurrency(value) }));
+    } else if (['rooms', 'bathrooms', 'minTenancy', 'maxOccupants'].includes(name)) {
+      setFormData((prev: any) => ({ ...prev, [name]: maskNumber(value) }));
+    } else {
+      setFormData((prev: any) => ({ ...prev, [name]: value }));
+    }
+  };
 
-  const handleUpdate = async () => {
-    if (!propertyId || propertyId === 'undefined') return;
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev: any) => ({ ...prev, cep: cepMasker(e.target.value) }));
+  };
 
+  const handleCepBlur = async () => {
+    const cleanCep = formData.cep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      const addressData = await fetchAddress(cleanCep);
+      if (addressData) {
+        setFormData((prev: any) => ({
+          ...prev,
+          address: addressData.address || prev.address,
+          city: addressData.city || prev.city,
+        }));
+      }
+    }
+  };
+
+  // --- SUBMIT ---
+  const handleUpdate = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Helper para converter valores monetários em string para centavos (inteiro)
-      const parseCurrencyToCents = (val: string) => {
-        if (!val) return undefined;
-        const cleanStr = val.replace(/[^\d,]/g, '').replace(',', '.');
-        const floatVal = parseFloat(cleanStr);
-        return isNaN(floatVal) ? undefined : Math.round(floatVal * 100);
-      };
+      const amenities = [];
+      if (formData.hasAgua) amenities.push("Água inclusa");
+      if (formData.hasLuz) amenities.push("Luz inclusa");
+      if (formData.hasIPTU) amenities.push("IPTU incluso");
+      if (formData.hasGas) amenities.push("Gás incluso");
+      if (formData.hasInternet) amenities.push("Internet");
+      if (formData.hasCondominio) amenities.push("Condomínio incluso");
+      if (formData.hasGaragem) amenities.push("Vaga de Garagem");
+      if (formData.hasSacada) amenities.push("Sacada / Varanda");
+      if (formData.hasMobiliado) amenities.push("Mobiliado");
+      if (formData.hasArCondicionado) amenities.push("Ar-condicionado");
+      if (formData.hasChurrasqueira) amenities.push("Churrasqueira");
+      if (formData.hasElevador) amenities.push("Elevador");
+      if (formData.hasPortaria) amenities.push("Portaria / Segurança");
 
-      const priceInCents = parseCurrencyToCents(formData.monthlyRent) || 0;
+      const rules = [];
+      if (formData.hasAnimais) rules.push("Aceita Animais");
+      if (formData.hasFumantes) rules.push("Aceita Fumantes");
 
-      const hasAmenity = (keyword: string) => 
-        formData.amenities.some((a: string) => a.toLowerCase().includes(keyword.toLowerCase()));
-      
-      const hasRule = (keyword: string) => 
-        formData.houseRules.some((r: string) => r.toLowerCase().includes(keyword.toLowerCase()));
+      const stateForBackend = formData.country === 'Brazil' ? 'Brasil' : formData.country;
+      const fullAddressQuery = `${formData.address}, ${formData.number}, ${formData.city}, ${stateForBackend}`;
+      const coords = await fetchCoordinates(fullAddressQuery);
 
-      // MAPEAMENTO DE SAÍDA (FORM -> BACKEND)
+      // Regra de Status: Corretores voltam para PENDING para revisão da agência
+      const isRealtor = user?.role === 'REALTOR';
+      const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
+
       const payload = {
-        title: formData.title || "Imóvel atualizado",
+        title: formData.title || "Imóvel atualizado", 
         description: formData.description,
         address: {
           street: formData.address,
-          number: formData.number && formData.number.trim() !== "" ? formData.number : "S/N",
+          number: formData.number || "S/N",
           city: formData.city,
-          state: formData.country === 'br' ? 'Brasil' : (formData.country || "Brasil"), 
-          postalCode: formData.postalCode, 
-          neighborhood: formData.neighborhood || "Centro" 
+          state: stateForBackend, 
+          postalCode: formData.cep, 
+          neighborhood: "Centro" 
         },
+        userId: user?.id,
+        agencyId: formData.agencyId || user?.agencyId || null,
+        status: initialStatus, 
+        isOwner: user?.role === 'OWNER', 
+        phoneNumber: user?.phoneNumber || "00000000000", 
         geolocation: {
-          latitude: formData.lat || 0.0,
-          longitude: formData.lon || 0.0
+          latitude: coords.latitude,
+          longitude: coords.longitude
         },
-        priceInCents,
-
-        
-        weeklyRentInCents: parseCurrencyToCents(formData.weeklyRent),
-        securityDepositInCents: parseCurrencyToCents(formData.deposit),
-        minimumLeaseMonths: formData.minTenancy ? parseInt(formData.minTenancy, 10) : undefined,
-        maxOccupants: formData.maxAttendants ? parseInt(formData.maxAttendants, 10) : undefined,
-        availableFrom: formData.moveInDate ? formData.moveInDate : undefined,
-        
-
-        numberOfRooms: parseInt(formData.rooms) || 0,
+        priceInCents: unmaskCurrency(formData.monthlyRent) * 100,
+        weeklyRentInCents: unmaskCurrency(formData.weeklyRent) * 100,
+        securityDepositInCents: unmaskCurrency(formData.deposit) * 100,
+        minimumLeaseMonths: formData.minTenancy ? parseInt(formData.minTenancy) : undefined,
+        maxOccupants: formData.maxOccupants ? parseInt(formData.maxOccupants) : undefined,
+        availableFrom: formData.availableFrom || undefined,
         numberOfBedrooms: parseInt(formData.rooms) || 0, 
         numberOfBathrooms: parseInt(formData.bathrooms) || 0,
-        furnished: !!hasAmenity('Mobiliado') || !!hasAmenity('Furnished'),
-        petFriendly: !!hasRule('Animais permitidos') || !!hasRule('Pets Allowed'),
-        garage: !!hasAmenity('Garagem') || !!hasAmenity('Estacionamento') || !!hasAmenity('Garage'),
-        isOwner: true,
-        videoUrl: formData.videoLink || "",
-        phoneNumber: formData.contactPhone || "0000000000",
+        furnished: formData.hasMobiliado,
+        petFriendly: formData.hasAnimais,
+        garage: formData.hasGaragem,
+        videoUrl: formData.hasVisitaVirtual ? formData.youtubeLink : "",
         photoUrls: formData.images.filter((img: any) => typeof img === 'string'), 
         type: formData.propertyType?.toUpperCase() || "APARTMENT",
-        userId: user?.id,
-        amenities: formData.amenities || [],
-        houseRules: formData.houseRules || []
+        amenities: amenities,
+        houseRules: rules
       };
 
-      console.log("🚀 DEBUG: Enviando payload corrigido:", payload);
-
       await propertyService.update(propertyId, payload);
-      
+
       const newImages = formData.images.filter((img: any) => img instanceof File);
       if (newImages.length > 0) {
         await propertyService.uploadPhotos(propertyId, newImages);
       }
 
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       setIsModalOpen(true);
 
-    } catch (error: any) {
-      console.error("❌ DEBUG: Erro no envio:", error);
-      if (error.response?.data) {
-        console.log("📝 DETALHES DO ERRO DO BACKEND:", error.response.data);
-      }
-      alert("Erro ao atualizar anúncio. Verifique o console.");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao atualizar anúncio.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (fetching) return <div className="loading-screen">Carregando...</div>;
+  if (fetching) return <div className="loading-container"><div className="loading-spinner"></div></div>;
 
   return (
-    <main className="create-ad-page">
-      <header className="header-wrapper">
-        <div className="header-container">
-          <h1 className="page-title">Editar Anúncio</h1>
-          <div className="stepper">
-            <div className={`step-group ${step >= 1 ? 'active' : ''}`}>
-              <div className="step-icon"><UserCircleIcon style={{ width: '28px' }} /></div>
-              <span className="step-text">Detalhes</span>
+    <main className="unified-edit-page">
+      <div className="unified-container">
+        
+        {/* SEÇÃO 1: IMAGENS */}
+        <section className="unified-section">
+          <div className="section-header">
+            <h2 className="section-title">Imagens</h2>
+            <button className="btn-add-img"><PlusIcon className="w-5 h-5" /></button>
+          </div>
+          <div className="image-gallery-grid">
+            {formData.images.slice(0,4).map((img: string, i: number) => (
+              <div key={i} className="gallery-img-box">
+                <img src={img} alt={`Foto ${i}`} />
+                {i === 0 && <button className="gallery-nav left"><ChevronLeftIcon className="w-4 h-4"/></button>}
+                {i === 3 && <button className="gallery-nav right"><ChevronRightIcon className="w-4 h-4"/></button>}
+              </div>
+            ))}
+            {formData.images.length === 0 && <div className="no-images-placeholder">Nenhuma imagem carregada</div>}
+          </div>
+        </section>
+
+        {/* SEÇÃO 2: DETALHES DO IMÓVEL */}
+        <section className="unified-section">
+          <h2 className="section-title">Detalhes do Imóvel</h2>
+          
+          <div className="form-grid-3">
+            <div className="outlined-input-wrapper">
+              <label className="outlined-label">Selecione o País</label>
+              <select name="country" value={formData.country} onChange={handleChange} className="outlined-field">
+                {countries.length > 0 ? countries.map((c: any) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                )) : <option value="Brazil">Brasil 🇧🇷</option>}
+              </select>
             </div>
-            <div className="step-line"></div>
-            <div className={`step-group ${step >= 7 ? 'active' : ''}`}>
-              <div className="step-icon"><DocumentTextIcon style={{ width: '24px' }} /></div>
-              <span className="step-text">Revisão</span>
+
+            <OutlinedInput label="CEP" name="cep" value={formData.cep} onChange={handleCepChange} onBlur={handleCepBlur} placeholder="00000-000" maxLength={9} />
+            <OutlinedInput label="Número" name="number" value={formData.number} onChange={handleChange} />
+            <OutlinedInput label="Número de Quartos" name="rooms" value={formData.rooms} onChange={handleChange} />
+            
+            <div className="outlined-input-wrapper">
+              <label className="outlined-label">Cidade</label>
+              <select name="city" value={formData.city} onChange={handleChange} className="outlined-field" disabled={loadingCities}>
+                <option value="" disabled>{loadingCities ? 'Carregando...' : 'Selecione'}</option>
+                {cities?.map((city: any, idx: number) => (
+                  <option key={idx} value={city.value}>{city.label}</option>
+                ))}
+              </select>
             </div>
-            <div className="step-line"></div>
-            <div className={`step-group ${isModalOpen ? 'active' : ''}`}>
-              <div className="step-icon"><CheckCircleIcon style={{ width: '24px' }} /></div>
-              <span className="step-text">Sucesso</span>
+            
+            <div className="outlined-input-wrapper">
+              <label className="outlined-label">Tipo</label>
+              <select name="propertyType" value={formData.propertyType} onChange={handleChange} className="outlined-field">
+                <option value="APARTMENT">Apartamento</option>
+                <option value="HOUSE">Casa</option>
+                <option value="ROOM">Quarto</option>
+              </select>
+            </div>
+
+            <div style={{ gridColumn: 'span 2' }}><OutlinedInput label="Endereço" name="address" value={formData.address} onChange={handleChange} /></div>
+            <OutlinedInput label="Banheiros" name="bathrooms" value={formData.bathrooms} onChange={handleChange} />
+          </div>
+
+          <hr className="section-divider" />
+
+          <div className="form-grid-3">
+            <OutlinedInput label="Mensal" name="monthlyRent" value={formData.monthlyRent} onChange={handleChange} />
+            <OutlinedInput label="Semanal" name="weeklyRent" value={formData.weeklyRent} onChange={handleChange} />
+            <OutlinedInput label="Disponível em" name="availableFrom" value={formData.availableFrom} onChange={handleChange} type="date" icon={CalendarIcon} />
+            <OutlinedInput label="Contrato Mínimo" name="minTenancy" value={formData.minTenancy} onChange={handleChange} />
+            <OutlinedInput label="Caução" name="deposit" value={formData.deposit} onChange={handleChange} />
+            <OutlinedInput label="Máx. Ocupantes" name="maxOccupants" value={formData.maxOccupants} onChange={handleChange} />
+          </div>
+        </section>
+
+        {/* SEÇÃO 3: TOGGLES */}
+        <section className="toggles-section">
+          <div className="toggles-card">
+            <h3 className="toggles-subtitle">O que o imóvel oferece</h3>
+            <div className="toggles-list">
+              <CustomToggle label="Água" name="hasAgua" checked={formData.hasAgua} onChange={handleChange} />
+              <CustomToggle label="Luz" name="hasLuz" checked={formData.hasLuz} onChange={handleChange} />
+              <CustomToggle label="IPTU" name="hasIPTU" checked={formData.hasIPTU} onChange={handleChange} />
+              <CustomToggle label="Gás" name="hasGas" checked={formData.hasGas} onChange={handleChange} />
+              <CustomToggle label="Internet" name="hasInternet" checked={formData.hasInternet} onChange={handleChange} />
+              <CustomToggle label="Condomínio" name="hasCondominio" checked={formData.hasCondominio} onChange={handleChange} />
             </div>
           </div>
-        </div>
-      </header>
+          <div className="toggles-card border-left">
+            <h3 className="toggles-subtitle">Infraestrutura e Regras</h3>
+            <div className="toggles-list-2-cols">
+              <div className="toggles-col">
+                <CustomToggle label="Garagem" name="hasGaragem" checked={formData.hasGaragem} onChange={handleChange} />
+                <CustomToggle label="Animais" name="hasAnimais" checked={formData.hasAnimais} onChange={handleChange} />
+                <CustomToggle label="Fumantes" name="hasFumantes" checked={formData.hasFumantes} onChange={handleChange} />
+                <CustomToggle label="Mobiliado" name="hasMobiliado" checked={formData.hasMobiliado} onChange={handleChange} />
+              </div>
+              <div className="toggles-col">
+                <CustomToggle label="Churrasqueira" name="hasChurrasqueira" checked={formData.hasChurrasqueira} onChange={handleChange} />
+                <CustomToggle label="Elevador" name="hasElevador" checked={formData.hasElevador} onChange={handleChange} />
+                <CustomToggle label="Segurança" name="hasPortaria" checked={formData.hasPortaria} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <section className="content-wrapper">
-        <div className="step-container">
-          {step === 1 && <DetailsStep data={formData} updateData={updateData} onNext={nextStep} />}
-          {step === 2 && <RentStep data={formData} updateData={updateData} onNext={nextStep} onBack={prevStep} />}
-          {step === 3 && <AmenitiesStep data={formData} updateData={updateData} onNext={nextStep} onBack={prevStep} />}
-          {step === 4 && <HouseRulesStep data={formData} updateData={updateData} onNext={nextStep} onBack={prevStep} />}
-          {step === 5 && <DescriptionStep data={formData} updateData={updateData} onNext={nextStep} onBack={prevStep} />}
-          {step === 6 && <MediaStep data={formData} updateData={updateData} onNext={nextStep} onBack={prevStep} />}
-          {step === 7 && (
-            <PreviewStep 
-              data={formData} 
-              onBack={prevStep}
-              onNext={handleUpdate} 
-              isLoading={isSubmitting}
-            />
-          )}
-        </div>
-      </section>
+        <section className="media-desc-section">
+          <div className="media-col">
+            <CustomToggle label="Visita Virtual" name="hasVisitaVirtual" checked={formData.hasVisitaVirtual} onChange={handleChange} />
+            <div className="mt-4"><OutlinedInput label="YouTube Link" name="youtubeLink" value={formData.youtubeLink} onChange={handleChange} /></div>
+          </div>
+          <div className="desc-col">
+            <label className="outlined-label">Descrição</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} className="outlined-field textarea-field" />
+          </div>
+        </section>
 
-      {isModalOpen && (
-        <SuccessModal 
-          isOpen={isModalOpen}
-          isEditing={true}
-          onClose={() => router.push('/ads/my-properties')} 
-        />
-      )}
+        <div className="footer-actions">
+          <button className="btn-save-unified" onClick={handleUpdate} disabled={isSubmitting}>
+            {isSubmitting ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
+
+      </div>
+
+      <SuccessModal isOpen={isModalOpen} isEditing={true} onClose={() => router.push('/ads/my-properties')} />
     </main>
   );
 }

@@ -6,7 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from "@/lib/auth/useAuth";
 import { propertyService } from "@/services/property/propertyService";
 import { PropertyCard } from "@/components/PropertyCard";
-import { PlusIcon, FunnelIcon, ClipboardDocumentCheckIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { 
+  FunnelIcon, 
+  CheckCircleIcon, 
+  PauseCircleIcon, 
+  CurrencyDollarIcon, 
+  ClipboardDocumentCheckIcon, 
+  XCircleIcon, 
+  HeartIcon,
+  PlusIcon
+} from "@heroicons/react/24/outline";
 
 import "@/assets/styles/property/MyProperties.css";
 
@@ -22,8 +31,6 @@ export default function MyPropertiesPage() {
   const [loading, setLoading] = useState(true);
   
   const [currentFilter, setCurrentFilter] = useState<PropertyStatus>('ALL');
-
-  
   const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
@@ -33,13 +40,12 @@ export default function MyPropertiesPage() {
       try {
         const role = user.role as string;
 
-        
         if (role === 'TENANT') {
           setCurrentFilter('FAVORITES');
         }
 
-        
         let propertiesPromise;
+        // Ajustado para validar estritamente AGENCY_ADMIN
         if (role === 'AGENCY_ADMIN') {
           propertiesPromise = propertyService.getByAgency(user.id); 
         } else if (role !== 'TENANT') {
@@ -48,7 +54,6 @@ export default function MyPropertiesPage() {
           propertiesPromise = Promise.resolve([]);
         }
 
-        // Busca simultânea das propriedades e dos favoritos
         const [propsData, favsData] = await Promise.all([
           propertiesPromise,
           propertyService.getFavorites(user.id)
@@ -56,7 +61,7 @@ export default function MyPropertiesPage() {
 
         setProperties(Array.isArray(propsData) ? propsData : []);
         setFavorites(Array.isArray(favsData) ? favsData : []);
-
+        console.log("Propriedades carregadas:", propsData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       } finally {
@@ -78,51 +83,43 @@ export default function MyPropertiesPage() {
   // --- Lógica de Filtros e Abas por Role ---
   const getTabsForRole = (): PropertyStatus[] => {
     const role = user?.role as string;
-
-    if (role === 'TENANT') {
-      return ['FAVORITES'];
-    }
-    
+    if (role === 'TENANT') return ['FAVORITES'];
+    // Ajustado para AGENCY_ADMIN
     if (role === 'AGENCY_ADMIN') {
-      return ['PENDING', 'ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'REJECTED', 'FAVORITES'];
+        return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
     }
-
-    if (role === 'REALTOR') {
-      return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
-    }
-    
+    if (role === 'REALTOR') return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
     return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'FAVORITES'];
   };
 
   const tabs = getTabsForRole();
 
-  // Define qual lista será renderizada dependendo da aba
   const listToRender = currentFilter === 'FAVORITES' 
     ? favorites.map(fav => fav.property) 
     : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
 
-  const translateStatus = (status: string) => {
-    const map: Record<string, string> = {
-      ALL: 'Todos',
-      ACTIVE: 'Ativos',
-      PAUSED: 'Pausados',
-      PLACED: 'Alugados',
-      PENDING: 'Para Revisão',
-      REJECTED: 'Rejeitados',
-      FAVORITES: 'Meus Favoritos'
-    };
-    return map[status] || status;
+  const getStatusConfig = (status: PropertyStatus) => {
+    switch (status) {
+      case 'ALL': return { title: 'Todos', icon: FunnelIcon, color: 'text-gray-600', bannerTitle: 'Todos os Imóveis', bannerDesc: 'Visão geral de todos os seus anúncios.' };
+      case 'ACTIVE': return { title: 'Ativos', icon: CheckCircleIcon, color: 'text-blue-600', bannerTitle: 'Anúncios Ativos', bannerDesc: 'Estes anúncios estão visíveis para locatários.' };
+      case 'PAUSED': return { title: 'Pausados', icon: PauseCircleIcon, color: 'text-amber-600', bannerTitle: 'Anúncios Pausados', bannerDesc: 'Estes anúncios estão ocultos temporariamente.' };
+      case 'PLACED': return { title: 'Alugados', icon: CurrencyDollarIcon, color: 'text-emerald-600', bannerTitle: 'Imóveis Alugados', bannerDesc: 'Anúncios marcados como já locados.' };
+      case 'PENDING': return { title: 'Revisão', icon: ClipboardDocumentCheckIcon, color: 'text-orange-500', bannerTitle: 'Aguardando Revisão', bannerDesc: 'Anúncios pendentes de aprovação.' };
+      case 'REJECTED': return { title: 'Rejeitados', icon: XCircleIcon, color: 'text-red-500', bannerTitle: 'Anúncios Rejeitados', bannerDesc: 'Verifique os motivos da rejeição e corrija-os.' };
+      case 'FAVORITES': return { title: 'Favoritos', icon: HeartIcon, color: 'text-rose-500', bannerTitle: 'Meus Favoritos', bannerDesc: 'Imóveis que você salvou para ver depois.' };
+      default: return { title: status, icon: FunnelIcon, color: 'text-gray-600', bannerTitle: 'Imóveis', bannerDesc: '' };
+    }
   };
 
-  const isAgencyAdmin = (user?.role as string) === 'AGENCY_ADMIN';
-  const isTenant = (user?.role as string) === 'TENANT';
+  const roleStr = user?.role as string;
+  const isAgencyAdmin = roleStr === 'AGENCY_ADMIN'; // Ajuste estrito para AGENCY_ADMIN
+  const isTenant = roleStr === 'TENANT';
 
   return (
     <main className="my-properties-page">
       
-      {/* Cabeçalho */}
       <div className="page-header">
-        <div>
+        <div className="header-text">
           <h1 className="page-title">
             {isAgencyAdmin ? 'Gestão da Agência' : isTenant ? 'Minha Conta' : 'Meus Imóveis'}
           </h1>
@@ -132,68 +129,87 @@ export default function MyPropertiesPage() {
               : isTenant ? 'Veja os imóveis que você curtiu.' : 'Gerencie seus anúncios e acompanhe o status.'}
           </p>
         </div>
+        
       </div>
 
-      {/* Abas de Filtro */}
       <div className="tabs-container">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setCurrentFilter(tab)}
-            className={`tab-btn ${currentFilter === tab ? 'active' : ''} ${tab === 'PENDING' ? 'tab-alert' : ''}`}
-          >
-             {tab === 'PENDING' && <ClipboardDocumentCheckIcon className="w-4 h-4 mr-1"/>}
-             {tab === 'FAVORITES' && <HeartIcon className="w-4 h-4 mr-1"/>}
-             
-             {translateStatus(tab)}
-             
-             <span className="tab-count">
-               {tab === 'FAVORITES' 
-                 ? favorites.length 
-                 : (tab === 'ALL' ? properties.length : properties.filter(p => p.status === tab).length)
-               }
-             </span>
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const config = getStatusConfig(tab);
+          const Icon = config.icon;
+          const count = tab === 'FAVORITES' 
+            ? favorites.length 
+            : (tab === 'ALL' ? properties.length : properties.filter(p => p.status === tab).length);
+
+          return (
+            <button
+              key={tab}
+              onClick={() => setCurrentFilter(tab)}
+              className={`tab-pill ${currentFilter === tab ? 'active' : ''}`}
+            >
+              <div className="tab-pill-icon">
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="tab-pill-info">
+                <span className="tab-pill-title">{config.title}</span>
+                <span className="tab-pill-count">{count}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Grid de Imóveis */}
-      {listToRender.length > 0 ? (
-        <div className="properties-grid">
-          {listToRender.map((property, index) => {
-            if (!property) return null;
-            const uniqueKey = property.id || property.propertyId || `prop-${index}`;
-            
-            return (
-              <PropertyCard 
-                key={uniqueKey} 
-                property={property} 
-                
-                onUpdateSuccess={() => setRefreshCounter(prev => prev + 1)}
-              />
-            );
-          })}
+      <div className="main-content-wrapper">
+        <div className="status-banner">
+          <div className="banner-icon-wrapper">
+            {React.createElement(getStatusConfig(currentFilter).icon, { className: "w-7 h-7" })}
+          </div>
+          <div className="banner-text">
+            <h2>{getStatusConfig(currentFilter).bannerTitle}: {listToRender.length} {listToRender.length === 1 ? 'Anúncio' : 'Anúncios'}</h2>
+            <p>{getStatusConfig(currentFilter).bannerDesc}</p>
+          </div>
         </div>
-      ) : (
-        <div className="empty-state-container">
-          {currentFilter === 'FAVORITES' ? <HeartIcon className="empty-icon" /> : <FunnelIcon className="empty-icon" />}
-          
-          <p className="empty-state-title">
-            {currentFilter === 'FAVORITES' ? 'Nenhum favorito ainda' : 'Nenhum imóvel encontrado'}
-          </p>
-          <p className="empty-state-text">
-            {currentFilter === 'FAVORITES' 
-              ? 'Você ainda não salvou nenhum imóvel nos favoritos.' 
-              : `Não há imóveis nesta categoria (${translateStatus(currentFilter)}).`}
-          </p>
-          
-          {currentFilter !== 'ALL' && currentFilter !== 'FAVORITES' && (
-             <button onClick={() => setCurrentFilter('ALL')} className="btn-secondary">
-               Ver todos os imóveis
-             </button>
-          )}
-        </div>
-      )}
+
+        {listToRender.length > 0 ? (
+          <div className="properties-grid">
+            {listToRender.map((property, index) => {
+              if (!property) return null;
+              const uniqueKey = property.id || property.propertyId || `prop-${index}`;
+              
+              return (
+                <PropertyCard 
+                  key={uniqueKey} 
+                  property={property} 
+                  onUpdateSuccess={() => setRefreshCounter(prev => prev + 1)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state-modern">
+            <div className="empty-state-icon-bg">
+              {React.createElement(getStatusConfig(currentFilter).icon, { className: "w-8 h-8 text-gray-400" })}
+            </div>
+            <h3>
+              {currentFilter === 'FAVORITES' ? 'Nenhum favorito ainda' : 'Nenhum anúncio encontrado'}
+            </h3>
+            <p>
+              {currentFilter === 'FAVORITES' 
+                ? 'Você ainda não salvou nenhum imóvel nos favoritos.' 
+                : `Não há imóveis na categoria ${getStatusConfig(currentFilter).title.toLowerCase()} no momento.`}
+            </p>
+            {currentFilter !== 'ALL' && currentFilter !== 'FAVORITES' && (
+               <button onClick={() => setCurrentFilter('ALL')} className="btn-explore">
+                 Ver Todos
+               </button>
+            )}
+            {currentFilter === 'FAVORITES' && (
+               <button onClick={() => router.push('/search')} className="btn-explore">
+                 Explorar
+               </button>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
