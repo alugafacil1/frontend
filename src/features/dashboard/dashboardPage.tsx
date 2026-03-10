@@ -50,9 +50,8 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
     async function fetchProperties() {
       if (!user?.id) return;
       try {
-        const data = await propertyService.getByUserId(user.id);
-        console.log(data)
-        setProperties(Array.isArray(data.content) ? data.content.slice(0, 3) : []);
+        const data = await propertyService.getPropertiesByUserId(user.id);
+        setProperties(data.content ? data.content.slice(0, 3) : []);
         
         const disponiveis: any = data.content.filter((im : any) => im.status == "ACTIVE");
         const indisponiveis: any = data.content.filter((im : any) => im.status == "PLACED" || im.status == "PAUSED" || im.status == "PENDING");

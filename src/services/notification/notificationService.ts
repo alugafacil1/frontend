@@ -16,6 +16,10 @@ export const notificationService = {
     await api.delete(`/api/notifications/${id}`);
   },
 
+  deleteAllByUser: async (userId: string) => {
+    await api.delete(`/api/notifications/user/${userId}`);
+  },
+
   getByUser: async (userId: string, page = 0, size = 10) => {
     const response = await api.get(`/api/notifications/user/${userId}?page=${page}&size=${size}`);
     return response.data;

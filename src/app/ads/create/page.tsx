@@ -8,6 +8,9 @@ import { UserCircleIcon, DocumentTextIcon, CheckCircleIcon } from "@heroicons/re
 import { useAuth } from "@/lib/auth/useAuth";
 import { propertyService } from "@/services/property/propertyService";
 
+// IMPORT DO SEU HOOK EXATO DE GEOLOCALIZAÇÃO
+import { useGeolocation } from "../../../../hooks/useGeolocation"; 
+
 import "@/assets/styles/ads/CreateAd.css"; 
 
 import { DetailsStep } from "@/components/steps/DetailsStep";
@@ -20,7 +23,6 @@ import { PreviewStep } from "@/components/steps/PreviewStep";
 import { SuccessModal } from "@/components/SuccessModal";
 
 interface FormData {
-  // Step 1 - Details
   country: string; 
   city: string; 
   postalCode: string; 
@@ -34,7 +36,6 @@ interface FormData {
   lat?: number; 
   lon?: number; 
   
-  // Step 2 - Rent
   monthlyRent: string; 
   weeklyRent: string; 
   minTenancy: string;
@@ -42,15 +43,12 @@ interface FormData {
   moveInDate: string; 
   maxAttendants: string;
   
-  // Step 3 & 4 - Amenities & Rules
   amenities: string[]; 
   houseRules: string[];
   
-  // Step 5 - Description
   title: string; 
   description: string; 
   
-  // Step 6 - Media
   images: (File | string)[]; 
   videoLink: string;
 }
@@ -58,6 +56,8 @@ interface FormData {
 export default function CreateAdPage() {
   const router = useRouter();
   const { user } = useAuth(); 
+  
+  const { fetchCoordinates } = useGeolocation(); 
   
   const [step, setStep] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,13 +73,9 @@ export default function CreateAdPage() {
     title: '', description: '', images: [], videoLink: ''
   });
 
-  // =================================================================
-  // PROTEÇÃO DE ROTA: Apenas OWNER e REALTOR podem ver essa tela
-  // =================================================================
   useEffect(() => {
     if (user) {
       const role = user.role as string;
-      // Se for inquilino (TENANT) ou agência (AGENCY_ADMIN), joga pra fora
       if (role !== 'OWNER' && role !== 'REALTOR') {
         router.push('/ads/my-properties'); 
       }
@@ -102,7 +98,6 @@ export default function CreateAdPage() {
     setIsSubmitting(true);
     
     try {
-      // Helper para converter valores monetários em string para centavos (inteiro)
       const parseCurrencyToCents = (val: string) => {
         if (!val) return undefined;
         const cleanStr = val.replace(/[^\d,]/g, '').replace(',', '.');
@@ -112,20 +107,54 @@ export default function CreateAdPage() {
 
       const priceInCents = parseCurrencyToCents(formData.monthlyRent) || 0;
 
-      // Helpers para converter tags de amenities/rules em booleanos
       const hasAmenity = (keyword: string) => 
         formData.amenities.some((a: any) => a.toLowerCase().includes(keyword.toLowerCase()));
       
       const hasRule = (keyword: string) => 
         formData.houseRules.some((r: any) => r.toLowerCase().includes(keyword.toLowerCase()));
 
-      // =================================================================
-      // LÓGICA DE STATUS: Agente -> PENDING | Proprietário -> ACTIVE
-      // =================================================================
       const isRealtor = (user.role as string) === 'REALTOR';
       const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
       
+      // =================================================================
+      // TRATAMENTO INTELIGENTE DE ENDEREÇO PARA O OPENSTREETMAP
+      // =================================================================
+      const street = formData.address?.trim() || "";
+      const city = formData.city?.trim() || "";
+      const stateStr = formData.country === 'br' ? 'Brasil' : (formData.country || "Brasil");
       
+      // Valida se o número existe e NÃO É "S/N"
+      const rawNum = formData.number?.trim() || "";
+      const validNumber = (rawNum !== "" && rawNum.toUpperCase() !== "S/N" && rawNum.toUpperCase() !== "SN") ? rawNum : null;
+
+      // String Exata: Tenta buscar com o número (se existir)
+      const exactAddress = validNumber 
+        ? `${street}, ${validNumber}, ${city}, ${stateStr}` 
+        : `${street}, ${city}, ${stateStr}`;
+
+      // String Fallback: Se falhar com o número ou CEP, busca só pela rua e cidade
+      const fallbackAddress = `${street}, ${city}, ${stateStr}`;
+
+      let finalLat = formData.lat || 0.0;
+      let finalLon = formData.lon || 0.0;
+
+      if (fetchCoordinates && typeof fetchCoordinates === 'function') {
+        try {
+           // Passa as duas strings. O Hook vai tentar a exata, se falhar, tenta a fallback
+           const coords = await fetchCoordinates(exactAddress, fallbackAddress);
+           
+           if (coords && coords.latitude !== 0 && coords.longitude !== 0) {
+             finalLat = coords.latitude;
+             finalLon = coords.longitude; 
+           }
+        } catch (geocodeError) {
+           console.error("Aviso: Falha ao buscar coordenadas geográficas pelo hook.", geocodeError);
+        }
+      }
+
+      // =================================================================
+      // MONTANDO O PAYLOAD
+      // =================================================================
       const payload = {
         title: formData.title || "Imóvel sem título",
         description: formData.description || "Sem descrição",
@@ -134,14 +163,14 @@ export default function CreateAdPage() {
           street: formData.address,
           number: formData.number && formData.number.trim() !== "" ? formData.number : "S/N",
           city: formData.city,
-          state: formData.country === 'br' ? 'Brasil' : (formData.country || "Brasil"), 
+          state: stateStr, 
           postalCode: formData.postalCode,
           neighborhood: formData.neighborhood || "Centro" 
         },
         
         geolocation: {
-          latitude: formData.lat || 0.0, 
-          longitude: formData.lon || 0.0
+          latitude: finalLat, 
+          longitude: finalLon
         },
 
         priceInCents: priceInCents,
@@ -162,19 +191,20 @@ export default function CreateAdPage() {
         petFriendly: !!(hasRule('Pets Allowed') || hasRule('Animais permitidos')),
         garage: !!(hasAmenity('Garage') || hasAmenity('Parking') || hasAmenity('Estacionamento')),
         
-        isOwner: true,
+        isOwner: user.role === 'OWNER',
         videoUrl: formData.videoLink || "",
-        phoneNumber: formData.contactPhone || "0000000000",
+        phoneNumber: formData.contactPhone || user.phoneNumber || "0000000000",
         
         photoUrls: [], 
         status: initialStatus, 
         type: formData.propertyType ? formData.propertyType.toUpperCase() : "APARTMENT",
         
-        userId: user.id 
+        userId: user.id,
+
+        agencyId: user.agencyId 
       };
 
       const response = await propertyService.create(payload);
-      console.log(response)
       const createdId = response.id || response.propertyId;
       
       if (!createdId) {
@@ -202,7 +232,6 @@ export default function CreateAdPage() {
     }
   };
 
-  // Previne renderização da tela enquanto redireciona um usuário sem permissão
   if (user && user.role !== 'OWNER' && user.role !== 'REALTOR') {
     return null; 
   }

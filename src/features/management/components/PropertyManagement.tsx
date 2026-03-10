@@ -1,174 +1,240 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Table } from "@/components/table/Table";
-import { useProperties, useUpdatePropertyStatus } from "@/services/queries/Properties";
-import { StatusBadge } from "../styles";
+import { propertyService } from "@/services/property/propertyService";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { PropertyResponse, PropertyStatus } from "@/types/property";
+import type { PropertyResponse } from "@/types/property";
 
-import { PropertyDetailsModal } from "./PropertyDetailsModal"; 
+import { PropertyDetailsModal } from "./PropertyDetailsModal";
+import {
+  PageContainer,
+  FilterContainer,
+  FilterLabel,
+  FilterPill,
+  ContentSection,
+  PropertyCell,
+  ActionButton,
+  StatusBadge,
+} from "../styles";
 
 interface PropertyManagementProps {
-    userId?: string;
-    userRole?: string;
+  userId?: string;
+  userRole?: string;
 }
 
 export function PropertyManagement({ userId, userRole }: PropertyManagementProps) {
-    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-    
-    const [activeFilter, setActiveFilter] = useState<PropertyStatus | 'ALL'>('ALL');
-    
-    const [selectedProperty, setSelectedProperty] = useState<PropertyResponse | null>(null);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [selectedProperty, setSelectedProperty] = useState<PropertyResponse | null>(null);
 
-    const { data, isLoading, isError } = useProperties(
-        pagination.pageIndex,
-        pagination.pageSize,
-        userId,
-        userRole,
-        activeFilter
-    );
+  // Variáveis booleanas para facilitar e não errarmos mais o nome da Role
+  const isAgency = userRole === "AGENCY" || userRole === "AGENCY_ADMIN" || userRole?.includes("AGENCY");
+  const isAdmin = userRole === "ADMIN";
+  const isRealtor = userRole === "REALTOR";
+  const isOwner = userRole === "OWNER";
 
-    const { mutate: updateStatus, isPending } = useUpdatePropertyStatus();
+  // =========================================================================
+  // 1. BUSCA DE DADOS CORRETA BASEADA NO CARGO (ROLE)
+  // =========================================================================
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["properties-management", userId, userRole],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      return await propertyService.getPropertiesByUserId(userId); 
+    },
+    enabled: !!userId,
+  });
 
-    const handleApprove = (id: string) => {
-        updateStatus({ id, status: "ACTIVE" });
-        setSelectedProperty(null);
-    };  
+  // =========================================================================
+  // REGRAS DE NEGÓCIO: FILTROS BASEADOS NO CARGO
+  // =========================================================================
+  const getFilterTabs = () => {
+    if (isAdmin || isAgency) {
+      return [
+        { key: "ALL", label: "Todos" },
+        { key: "PENDING", label: "Fila de Avaliação" },
+        { key: "ACTIVE", label: "Ativos" },
+        { key: "REJECTED", label: "Rejeitados" },
+        { key: "PAUSED", label: "Pausados" },
+        { key: "PLACED", label: "Alugados/Vendidos" },
+      ];
+    }
+    if (isRealtor) {
+      return [
+        { key: "ALL", label: "Todos" },
+        { key: "PENDING", label: "Pendentes" },
+        { key: "ACTIVE", label: "Ativos" },
+        { key: "REJECTED", label: "Rejeitados" },
+        { key: "PAUSED", label: "Pausados" },
+        { key: "PLACED", label: "Alugados/Vendidos" },
+      ];
+    }
+    return [
+      { key: "ALL", label: "Todos" },
+      { key: "ACTIVE", label: "Ativos" },
+      { key: "PAUSED", label: "Pausados" },
+      { key: "PLACED", label: "Alugados/Vendidos" },
+    ];
+  };
 
-    const handleReject = (id: string) => {
-        updateStatus({ id, status: "REJECTED", reason: "Não atende aos critérios da plataforma." });
-        setSelectedProperty(null);
-    };
+  const filterTabs = getFilterTabs();
+  
+  const rawData = useMemo(() => {
+    if (!data) return [];
+    return Array.isArray(data) ? data : (data.content || []);
+  }, [data]);
 
-    const columns = useMemo<ColumnDef<PropertyResponse>[]>(() => [
-        {
-            header: "Imóvel",
-            accessorKey: "title",
-            cell: ({ row }) => {
-                const coverPhoto = row.original.photoUrls?.[0]; 
-                return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {coverPhoto ? (
-                            <img 
-                                src={coverPhoto} 
-                                alt={row.original.title} 
-                                style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
-                            />
-                        ) : (
-                            <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#6b7280' }}>
-                                S/ Foto
-                            </div>
-                        )}
-                        <span style={{ fontWeight: 500 }}>{row.original.title}</span>
-                    </div>
-                );
-            }
+  // =========================================================================
+  // 2. FILTRAGEM LOCAL
+  // =========================================================================
+  const filteredData = useMemo(() => {
+    if (activeFilter === "ALL") return rawData;
+
+    return rawData.filter((item: PropertyResponse) => {
+      const statusStr = item.status?.toUpperCase() || "";
+      if (activeFilter === "PLACED") {
+        return statusStr === "PLACED" || statusStr === "RENTED";
+      }
+      return statusStr === activeFilter;
+    });
+  }, [rawData, activeFilter]);
+
+  // =========================================================================
+  // 3. PAGINAÇÃO LOCAL
+  // =========================================================================
+  const paginatedData = useMemo(() => {
+    const startIndex = pagination.pageIndex * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, pagination]);
+
+  const columns = useMemo<ColumnDef<PropertyResponse>[]>(
+    () => [
+      {
+        header: "IMÓVEL",
+        id: "photo",
+        cell: ({ row }) => {
+          const coverPhoto = row.original.photoUrls?.[0];
+          return (
+            <PropertyCell>
+              {coverPhoto ? (
+                <img src={coverPhoto} alt="Capa do imóvel" />
+              ) : (
+                <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#f8fafc", border: "1px dashed #cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#9ca3af" }}>
+                  S/ Foto
+                </div>
+              )}
+            </PropertyCell>
+          );
         },
-        {
-            header: "Tipo",
-            accessorKey: "type",
-            cell: ({ row }) => {
-                const types: Record<string, string> = {
-                    HOUSE: "Casa", APARTMENT: "Apartamento", STUDIO: "Studio"
-                };
-                return types[row.original.type] || row.original.type;
-            }
+      },
+      {
+        header: "TIPO",
+        accessorKey: "type",
+        cell: ({ row }) => {
+          const types: Record<string, string> = {
+            HOUSE: "Casa", APARTMENT: "Apartamento", STUDIO: "Studio", ROOM: "Quarto", KITNET: "Kitnet"
+          };
+          return types[row.original.type] || row.original.type;
         },
-        {
-            header: "Preço",
-            accessorKey: "priceInCents",
-            cell: ({ row }) => (row.original.priceInCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+      },
+      {
+        header: "PREÇO",
+        accessorKey: "priceInCents",
+        cell: ({ row }) => {
+          const price = row.original.priceInCents || 0;
+          return (price / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
         },
-        {
-            header: "Status",
-            accessorKey: "status",
-            cell: ({ row }) => <StatusBadge $status={row.original.status}>{row.original.status}</StatusBadge>
-        },
-        {
-            header: "Ação",
-            id: "actions",
-            cell: ({ row }) => {
-                const needsModeration = userRole === "ADMIN" && row.original.status === 'PENDING';
-                
-                return (
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button 
-                            onClick={() => setSelectedProperty(row.original)}
-                            style={{ 
-                                color: needsModeration ? '#ea580c' : '#059669',
-                                background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 
-                            }}
-                        >
-                            {needsModeration ? 'Avaliar Imóvel' : 'Visualizar'}
-                        </button>
-                    </div>
-                );
-            }
-        }
-    ], [userRole]);
+      },
+      {
+        header: "AÇÕES",
+        id: "actions",
+        cell: ({ row }) => {
+          const isModerator = isAdmin || isAgency;
+          const needsModeration = isModerator && row.original.status === "PENDING";
 
-    // 3. Função para renderizar os Pills (Filtros Rápidos)
-    const renderFilterPill = (status: PropertyStatus | 'ALL', label: string) => {
-        const isActive = activeFilter === status;
-        return (
-            <button
-                onClick={() => {
-                    setActiveFilter(status);
-                    setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reseta a paginação ao filtrar
-                }}
-                style={{
-                    padding: '6px 16px', borderRadius: '20px',
-                    border: isActive ? 'none' : '1px solid #d1d5db',
-                    backgroundColor: isActive ? '#2563eb' : '#fff',
-                    color: isActive ? '#fff' : '#4b5563',
-                    fontWeight: 600, fontSize: '13px', cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    boxShadow: isActive ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none'
-                }}
-            >
-                {label}
-            </button>
-        );
-    };
-
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingBottom: '10px' }}>
-                {renderFilterPill('ALL', 'Todos')}
-                {renderFilterPill('PENDING', userRole === "ADMIN" ? 'Fila de Avaliação' : 'Em Análise')}
-                {renderFilterPill('ACTIVE', 'Ativos')}
-                {renderFilterPill('REJECTED', 'Rejeitados')}
-                {renderFilterPill('PAUSED', 'Pausados')}
-                {renderFilterPill('PLACED', 'Alugados/Vendidos')}
+          return (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <ActionButton onClick={() => setSelectedProperty(row.original)}>
+                {needsModeration ? "Avaliar Imóvel" : "Visualizar"}
+              </ActionButton>
             </div>
+          );
+        },
+      },
+      {
+        header: "STATUS",
+        accessorKey: "status",
+        cell: ({ row }) => {
+          const rawStatus = row.original.status;
+          if (!rawStatus) return <StatusBadge $status="UNKNOWN">Indefinido</StatusBadge>;
 
-            {isLoading ? (
-                <div style={{ padding: '3rem', textAlign: 'center' }}>Carregando imóveis...</div>
-            ) : isError ? (
-                <div style={{ padding: '3rem', textAlign: 'center', color: 'red' }}>Erro ao carregar imóveis.</div>
-            ) : (
-                <Table 
-                    columns={columns} 
-                    data={data?.content || []} 
-                    pagination={pagination}
-                    setPagination={setPagination}
-                    totalItems={data?.totalElements || 0}
-                />
-            )}
+          const statusMap: Record<string, string> = {
+            ACTIVE: "Ativos", PAUSED: "Pausados", PENDING: "Pendente",
+            PLACED: "Alugados", RENTED: "Alugados", REJECTED: "Rejeitados",
+          };
 
-            {/* O SEU MODAL ORIGINAL */}
-            {selectedProperty && (
-                <PropertyDetailsModal
-                    property={selectedProperty}
-                    isOpen={!!selectedProperty}
-                    onClose={() => setSelectedProperty(null)}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                    isAdmin={userRole === "ADMIN"}
-                />
-            )}
-        </div>
-    );
+          const upperStatus = rawStatus.toUpperCase();
+          const label = statusMap[upperStatus] || rawStatus;
+
+          return <StatusBadge $status={upperStatus}>{label}</StatusBadge>;
+        },
+      },
+    ],
+    [isAdmin, isAgency]
+  );
+
+  return (
+    <PageContainer style={{ paddingTop: '0' }}> {/* Removido o espaço vazio do topo */}
+
+      <FilterContainer>
+        <FilterLabel>Filtrar por:</FilterLabel>
+        {filterTabs.map((tab) => {
+          return (
+            <FilterPill
+              key={tab.key}
+              $active={activeFilter === tab.key}
+              onClick={() => {
+                setActiveFilter(tab.key);
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              }}
+            >
+              {tab.label}
+            </FilterPill>
+          );
+        })}
+      </FilterContainer>
+
+      <ContentSection>
+        {isLoading ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "#6b7280" }}>Carregando imóveis...</div>
+        ) : isError ? (
+          <div style={{ padding: "3rem", textAlign: 'center', color: '#ef4444' }}>Erro ao carregar imóveis.</div>
+        ) : (
+          <Table
+            columns={columns}
+            data={paginatedData}
+            pagination={pagination}
+            setPagination={setPagination}
+            totalItems={filteredData.length}
+          />
+        )}
+      </ContentSection>
+
+      {selectedProperty && (
+        <PropertyDetailsModal
+          property={selectedProperty}
+          isOpen={!!selectedProperty}
+          onClose={() => {
+            setSelectedProperty(null);
+            refetch(); // Recarrega os dados caso o status tenha sido alterado no Modal
+          }}
+          userRole={userRole}
+        />
+      )}
+    </PageContainer>
+  );
 }
