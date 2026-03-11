@@ -8,6 +8,7 @@ import { userService } from "@/services/userService/userService";
 import { db } from '../../../src/firebaseConfig.js';
 import { ref, push, onValue, serverTimestamp, query, orderByChild } from "firebase/database";
 import { useAuth } from "@/lib/auth/useAuth";
+import { translateRole } from "@/utils/translateRoles";
 
 function getInitials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
@@ -481,7 +482,7 @@ export default function ChatLayout() {
                       <div className="contact-info">
                         <div className="contact-name">{c.name}</div>
                         <div className="contact-preview">
-                          <span className="role-badge">{c.userType}</span>
+                          <span className="role-badge">{translateRole(c.userType)}</span>
                         </div>
                       </div>
                     </div>

@@ -11,6 +11,7 @@ interface HeaderProps {
 }
 
 const ROLES_ADMINISTRATIVAS = ["REALTOR", "OWNER", "ADMIN", "AGENCY_ADMIN"];
+const ROLES = ["REALTOR", "OWNER", "ADMIN", "AGENCY_ADMIN", "TENANT"];
 const ROLES_DASHBOARD = ["OWNER", "ADMIN", "AGENCY_ADMIN"];
 
 export default function Header({ transparent = false }: HeaderProps) {
@@ -20,7 +21,7 @@ export default function Header({ transparent = false }: HeaderProps) {
 
   const canAccessDashboard = user?.role && ROLES_DASHBOARD.includes(user.role);
   const canPostAd = user?.role === 'OWNER' || user?.role === 'REALTOR';
-
+  const seeChats = user?.role && ROLES.includes(user.role);
   return (
     <header className={`landing-header ${transparent ? "transparent" : ""}`}>
       <div className="landing-container">
@@ -39,6 +40,9 @@ export default function Header({ transparent = false }: HeaderProps) {
                 )}
                 {canAccessDashboard && (
                   <Link href="/dashboard" className="nav-link">Dashboard</Link>
+                )}
+                {seeChats && (
+                  <Link href="/chat" className="nav-link">Chats</Link>
                 )}
               </nav>
 
