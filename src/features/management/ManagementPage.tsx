@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import { AgencyManagement } from "./components/AgencyManagement";
 import { RealtorManagement } from "./components/RealtorManagement"; 
 import { RegisterRealtorModal } from "./components/RegisterRealtorModal";
+import { translateRole } from "@/utils/translateRoles";
 
 export default function GerenciamentoPage() {
     const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function GerenciamentoPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <div>
                         <h1>Painel de Gerenciamento</h1>
-                        <p>Perfil atual: <strong>{user?.role}</strong></p>
+                        <p>Perfil atual: <strong>{translateRole(user?.role)}</strong></p>
                     </div>
 
                     {activeTab === "corretores" && (
