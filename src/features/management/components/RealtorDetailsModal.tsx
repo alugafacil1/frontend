@@ -9,6 +9,7 @@ import { useUpdateUserStatus } from '@/services/queries/Users';
 import { useAgencyMembers, useTransferAllProperties } from '@/services/queries/Realtors';
 import { toast } from 'react-toastify'
 import { useAuth } from '@/lib/auth/useAuth';
+import { translateRole } from '@/utils/translateRoles';
 
 interface RealtorDetailsModalProps {
     realtor: RealtorResponse;
@@ -17,12 +18,6 @@ interface RealtorDetailsModalProps {
 }
 
 export function RealtorDetailsModal({ realtor, isOpen, onClose }: RealtorDetailsModalProps) {
-    const roleLabels: Record<string, string> = {
-        ADMIN: "Administrador do Sistema",
-        AGENCY_ADMIN: "Administrador da Agência",
-        REALTOR: "Corretor",
-    };
-
     const { user } = useAuth();
     const agencyId = user?.agencyId;
 
@@ -176,7 +171,7 @@ export function RealtorDetailsModal({ realtor, isOpen, onClose }: RealtorDetails
                                 )}
                             </div>
                             <span style={{ fontSize: '0.85rem', color: '#065f46', background: '#d1fae5', padding: '4px 10px', borderRadius: '12px', marginTop: '6px', display: 'inline-block', fontWeight: 600 }}>
-                                {roleLabels[realtor.userType] || realtor.userType}
+                                {translateRole(realtor.userType)}
                             </span>
                         </div>
                     </div>

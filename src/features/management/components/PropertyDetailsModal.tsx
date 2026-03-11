@@ -19,6 +19,7 @@ import {
   BtnModalOutline,
   BtnModalPrimary
 } from "../styles";
+import { translateRole } from "@/utils/translateRoles";
 
 interface PropertyDetailsProps {
   property: PropertyResponse;
@@ -58,7 +59,6 @@ export function PropertyDetailsModal({ property, isOpen, onClose, userRole }: Pr
   const formatCurrency = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const formatBoolean = (val: boolean) => (val ? "Sim" : "Não");
 
-  // Nome da terceira aba muda dinamicamente com base na correção da Role
   const ownerTabLabel = isAgency ? "Agente Responsável" : "Proprietário";
 
   const propertyTypeLabels: Record<string, string> = {
@@ -180,7 +180,7 @@ export function PropertyDetailsModal({ property, isOpen, onClose, userRole }: Pr
           )}
           <div>
             <span style={{ fontSize: "1.1rem", color: "#111827", fontWeight: 600, display: "block" }}>{owner.name}</span>
-            <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600 }}>{owner.userType}</span>
+            <span style={{ fontSize: "0.8rem", color: "#3b82f6", fontWeight: 600 }}>{translateRole(owner.userType)}</span>
           </div>
         </div>
 

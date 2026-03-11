@@ -230,7 +230,7 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
           isOpen={!!selectedProperty}
           onClose={() => {
             setSelectedProperty(null);
-            refetch(); // Recarrega os dados caso o status tenha sido alterado no Modal
+            refetch();
           }}
           userRole={userRole}
         />

@@ -6,6 +6,7 @@ import type { UserResponse } from "@/types/user";
 import { BaseModal, ModalBody } from '@/components/Modal/Modal';
 import { formatCPF } from '@/utils/masks';
 import { useUpdateUserStatus } from '@/services/queries/Users';
+import { translateRole } from '@/utils/translateRoles';
 
 interface UserDetailsModalProps {
     user: UserResponse;
@@ -14,12 +15,6 @@ interface UserDetailsModalProps {
 }
 
 export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProps) {
-    const roleLabels: Record<string, string> = {
-        ADMIN: "Administrador",
-        REALTOR: "Corretor",
-        OWNER: "Proprietário",
-        TENANT: "Locatário"
-    };
 
     const { mutateAsync: updateStatus, isPending } = useUpdateUserStatus();
     
@@ -142,7 +137,7 @@ export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProp
                                 )}
                             </div>
                             <span style={{ fontSize: '0.85rem', color: '#4b5563', background: '#f3f4f6', padding: '4px 10px', borderRadius: '12px', marginTop: '6px', display: 'inline-block', fontWeight: 500 }}>
-                                {roleLabels[user.userType] || user.userType}
+                                {translateRole(user.userType)}
                             </span>
                         </div>
                     </div>

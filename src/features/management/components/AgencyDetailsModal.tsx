@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as S from '../styles';
 import type { AgencyResponse } from "@/types/agency";
 import { BaseModal, ModalBody } from '@/components/Modal/Modal';
+import { translateRole } from '@/utils/translateRoles';
 
 interface AgencyDetailsModalProps {
     agency: AgencyResponse;
@@ -23,13 +24,6 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
     const formatCNPJ = (cnpj: string) => {
         if (!cnpj) return "Não informado";
         return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-    };
-
-    const roleLabels: Record<string, string> = {
-        ADMIN: "Admin",
-        REALTOR: "Corretor",
-        OWNER: "Proprietário",
-        TENANT: "Locatário"
     };
 
     const handleActionClick = () => {
@@ -210,7 +204,7 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
                                             borderRadius: '12px',
                                             textTransform: 'uppercase'
                                         }}>
-                                            {roleLabels[member.userType] || member.userType}
+                                            {translateRole(member.userType)}
                                         </span>
                                     </div>
                                 ))}
