@@ -32,10 +32,7 @@ export function AgencyDetailsModal({ agency, isOpen, onClose }: AgencyDetailsMod
 
     const handleConfirmAction = async () => {
         setIsPending(true);
-        try {
-            // Aqui chamaremos a mutação real no futuro: await updateAgencyStatus({ id: agency.agencyId, status: isBlocked ? 'ACTIVE' : 'BLOCKED' })
-            console.log(`Simulando ${actionText} da agência...`);
-            
+        try {            
             setTimeout(() => {
                 alert(`Imobiliária ${isBlocked ? 'desbloqueada' : 'bloqueada'} com sucesso! (Simulação)`);
                 setIsPending(false);

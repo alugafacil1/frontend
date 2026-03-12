@@ -122,9 +122,7 @@ export default function PreferencesPage() {
       if (!token) {
         throw new Error("No token");
       }
-      
-      console.log("Buscando detalhes da preferência:", selectedPreferenceId);
-      
+            
       const res = await fetch(`http://localhost:8081/api/preferences/${selectedPreferenceId}`, {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -145,15 +143,13 @@ export default function PreferencesPage() {
       }
       
       const data = await res.json();
-      console.log("Detalhes recebidos:", data);
       return data;
     },
     enabled: !!selectedPreferenceId && typeof window !== 'undefined' && !isCreatingNew,
     retry: false,
-    staleTime: 0, // Sempre busca dados frescos
+    staleTime: 0, 
   });
 
-  // Helper para obter o ID da preferência (pode ser id ou preferenceId)
   const getPreferenceId = (pref: UserPreferences): string | undefined => {
     return pref.preferenceId || pref.id;
   };
@@ -234,9 +230,7 @@ export default function PreferencesPage() {
     setIsCreatingNew(false);
   };
 
-  const handleEditPreference = (preferenceId: string, e?: React.MouseEvent) => {
-    console.log("handleEditPreference chamado com:", preferenceId);
-    
+  const handleEditPreference = (preferenceId: string, e?: React.MouseEvent) => {    
     if (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -246,25 +240,15 @@ export default function PreferencesPage() {
       console.error("preferenceId é inválido:", preferenceId);
       return;
     }
-    
-    console.log("Editando preferência:", preferenceId);
-    console.log("Estado atual - selectedPreferenceId:", selectedPreferenceId, "isCreatingNew:", isCreatingNew);
-    
-    // Limpa o estado de criação e define o ID para edição
+        
     setIsCreatingNew(false);
     setSelectedPreferenceId(preferenceId);
-    
-    console.log("Estado atualizado - selectedPreferenceId será:", preferenceId);
-    
-    // Scroll para o formulário após um pequeno delay para garantir que foi renderizado
+        
     setTimeout(() => {
-      console.log("Verificando se formulário foi renderizado...");
       const formElement = document.querySelector('.preferences-form');
       if (formElement) {
-        console.log("Formulário encontrado, fazendo scroll");
         formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
-        console.log("Formulário não encontrado ainda, fazendo scroll para o topo");
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }, 100);
@@ -513,11 +497,9 @@ export default function PreferencesPage() {
                           <button
                             className="preference-card-edit"
                             onClick={(e) => {
-                              console.log("Botão de editar clicado!", prefId);
                               e.stopPropagation();
                               e.preventDefault();
                               if (prefId) {
-                                console.log("Chamando handleEditPreference com ID:", prefId);
                                 handleEditPreference(prefId, e);
                               } else {
                                 console.error("prefId não existe:", pref);

@@ -218,7 +218,6 @@ function ProfileFormContent({
     return null;
   };
   const displayImage = getDisplayImage();
-  console.log("Display Image URL:", displayImage);
   return (
     <div className="profile-container">
       <div className="profile-card">

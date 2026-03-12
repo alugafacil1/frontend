@@ -40,6 +40,28 @@ export function useAgencyMembers(agencyId: string | undefined, pageIndex: number
   });
 }
 
+export function useMembers(agencyId: string | undefined, pageIndex: number, pageSize: number, role: string | undefined) {
+  const isAdmin = role === "ADMIN";
+
+  return useQuery({
+    queryKey: ["members", isAdmin ? "all" : agencyId, pageIndex, pageSize],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: pageIndex.toString(),
+        size: pageSize.toString(),
+      });
+
+      const url = isAdmin 
+        ? `/api/realStateAgencies/realtors/all` 
+        : `/api/realStateAgencies/${agencyId}/members`;
+
+      const response = await api.get<PaginatedResponse<RealtorResponse>>(`${url}?${params}`);
+      return response.data;
+    },
+    enabled: isAdmin || !!agencyId,
+  });
+}
+
 export function useTransferAllProperties() {
   const queryClient = useQueryClient();
 
