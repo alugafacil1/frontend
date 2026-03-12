@@ -34,14 +34,14 @@ interface SearchFormProps {
 export default function SearchForm({ properties = [], onSearch, resetKey }: SearchFormProps) {
   const { addToast } = useToast();
   const [location, setLocation] = useState("");
-  const [date, setDate] = useState("");
+  // const [date, setDate] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [rentRange, setRentRange] = useState("");
 
   useEffect(() => {
     if (resetKey === undefined) return;
     setLocation("");
-    setDate("");
+    // setDate("");
     setPropertyType("");
     setRentRange("");
   }, [resetKey]);
@@ -66,7 +66,7 @@ export default function SearchForm({ properties = [], onSearch, resetKey }: Sear
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch?.({ location, date, propertyType, rentRange });
+    onSearch?.({ location, date: "", propertyType, rentRange });
     addToast('Clique em "Todas Propriedades" para limpar os filtros aplicados', "info");
   };
 
@@ -87,7 +87,7 @@ export default function SearchForm({ properties = [], onSearch, resetKey }: Sear
             </select>
           </div>
 
-          <div className="search-field">
+          {/* <div className="search-field">
             <input
               className="custom-input"
               type="date"
@@ -95,7 +95,7 @@ export default function SearchForm({ properties = [], onSearch, resetKey }: Sear
               onChange={(e) => setDate(e.target.value)}
               placeholder="Data"
             />
-          </div>
+          </div> */}
 
           <div className="search-field">
             <select
