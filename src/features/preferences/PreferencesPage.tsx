@@ -55,7 +55,7 @@ export default function PreferencesPage() {
       
       try {
         // Busca preferências do usuário usando query parameter
-        const res = await fetch(`http://localhost:8081/api/preferences?idUser=${authUser?.id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/preferences?idUser=${authUser?.id}`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -123,7 +123,7 @@ export default function PreferencesPage() {
         throw new Error("No token");
       }
             
-      const res = await fetch(`http://localhost:8081/api/preferences/${selectedPreferenceId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/preferences/${selectedPreferenceId}`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -308,8 +308,8 @@ export default function PreferencesPage() {
 
       const selectedId = selectedPreference ? getPreferenceId(selectedPreference) : null;
       const url = selectedId 
-        ? `http://localhost:8081/api/preferences/${selectedId}`
-        : `http://localhost:8081/api/preferences`;
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/preferences/${selectedId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/preferences`;
 
       const method = selectedId ? "PUT" : "POST";
 
@@ -358,7 +358,7 @@ export default function PreferencesPage() {
         throw new Error("Sessão inválida");
       }
 
-      const res = await fetch(`http://localhost:8081/api/preferences/${preferenceId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/preferences/${preferenceId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`,
