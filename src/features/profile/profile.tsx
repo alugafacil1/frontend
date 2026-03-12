@@ -218,7 +218,7 @@ function ProfileFormContent({
     return null;
   };
   const displayImage = getDisplayImage();
-
+  console.log("Display Image URL:", displayImage);
   return (
     <div className="profile-container">
       <div className="profile-card">
@@ -227,7 +227,7 @@ function ProfileFormContent({
           <div className="profile-card-avatar-container" onClick={() => isEditing && fileInputRef.current?.click()}>
             {displayImage ? (
               <img 
-                src={`${apiBaseUrl}${displayImage}`} 
+                src={`${displayImage}`} 
                 alt="Perfil" 
                 className="profile-avatar"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} 

@@ -6,6 +6,7 @@ import { useUsers } from "@/services/queries/Users";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { UserResponse } from "@/types/user";
 import { UserDetailsModal } from "./UserDetailsModal";
+import { getImageUrl } from "@/utils/formatUrl";
 
 export function UserManagement() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -21,7 +22,7 @@ export function UserManagement() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {row.original.photoUrl ? (
             <img
-              src={row.original.photoUrl}
+              src={getImageUrl(row.original.photoUrl)}
               alt={row.original.name}
               style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
             />
@@ -64,7 +65,8 @@ export function UserManagement() {
           ADMIN: { label: "Admin", color: "#1e40af", bg: "#dbeafe" },
           REALTOR: { label: "Corretor", color: "#065f46", bg: "#d1fae5" },
           OWNER: { label: "Proprietário", color: "#92400e", bg: "#fef3c7" },
-          TENANT: { label: "Locatário", color: "#374151", bg: "#f3f4f6" }
+          TENANT: { label: "Locatário", color: "#374151", bg: "#f3f4f6" },
+          AGENCY_ADMIN: { label: "Admin da Imobiliária", color: "#1e40af", bg: "#dbeafe" }
         };
         const type = types[row.original.userType] || { label: row.original.userType, color: "#374151", bg: "#f3f4f6" };
 

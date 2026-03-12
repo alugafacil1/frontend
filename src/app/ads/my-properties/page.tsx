@@ -198,11 +198,11 @@ export default function MyPropertiesPage() {
                  Ver Todos
                </button>
             )}
-            {currentFilter === 'FAVORITES' && (
+            {/* {currentFilter === 'FAVORITES' && (
                <button onClick={() => router.push('/search')} className="btn-explore">
                  Explorar
                </button>
-            )}
+            )} */}
           </div>
         )}
       </div>
