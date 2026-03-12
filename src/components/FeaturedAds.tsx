@@ -82,8 +82,11 @@ export default function FeaturedAds({
           {filteredProperties.map((property) => (
             <Link key={property.id} href={`/ads/${property.id}`} className="property-card" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div className="property-image">
-                {/* Placeholder for image */}
-                <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
+                {property.image ? (
+                  <img src={property.image} alt={property.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
+                )}
               </div>
               <div className="property-info">
                 <h3 className="property-title">{property.title}</h3>
