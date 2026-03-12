@@ -646,7 +646,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
         </div>
       </div>
 
-      <Footer />
+      
     </div>
   );
 }

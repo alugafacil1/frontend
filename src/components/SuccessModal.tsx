@@ -30,7 +30,7 @@ export const SuccessModal = ({ isOpen, onClose, isEditing = false }: SuccessModa
         </p>
 
         <button onClick={onClose} className="btn-publish">
-          {isEditing ? "Voltar aos Meus Imóveis" : "Ir para o Dashboard"}
+          {isEditing ? "Voltar aos Meus Imóveis" : "Ir para os Meus Imóveis"}
         </button>
       </div>
     </div>

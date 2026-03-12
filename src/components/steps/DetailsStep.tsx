@@ -115,7 +115,7 @@ export const DetailsStep = ({ data, updateData, onNext }: DetailsStepProps) => {
         />
       </div>
 
-      <button onClick={onNext} className="btn-primary-full">
+      <button onClick={onNext} className="btn-next">
         Próximo
       </button>
     </div>

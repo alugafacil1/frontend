@@ -21,6 +21,7 @@ import { DescriptionStep } from "@/components/steps/DescriptionStep";
 import { MediaStep } from "@/components/steps/MediaStep"; 
 import { PreviewStep } from "@/components/steps/PreviewStep"; 
 import { SuccessModal } from "@/components/SuccessModal";
+import Footer from '@/components/Footer';
 
 interface FormData {
   country: string; 
@@ -237,6 +238,7 @@ export default function CreateAdPage() {
   }
 
   return (
+    <>
     <main className="create-ad-page">
       <header className="header-wrapper">
         <div className="header-container">
@@ -277,8 +279,11 @@ export default function CreateAdPage() {
           {step === 7 && <PreviewStep data={formData} onBack={prevStep} onNext={handleFinish} isLoading={isSubmitting} />}
         </div>
       </section>
-
+      
       <SuccessModal isOpen={isModalOpen} onClose={() => router.push('/ads/my-properties')} />
+      
     </main>
+    
+    </>
   );
 }

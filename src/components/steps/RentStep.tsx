@@ -74,14 +74,10 @@ export const RentStep = ({ data, updateData, onNext, onBack }: RentStepProps) =>
             value={data.moveInDate}
             onChange={(e) => updateData({ moveInDate: e.target.value })}
           />
-          {/* Ícone posicionado via CSS */}
-          <CalendarDaysIcon 
-            className="w-6 h-6 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" 
-          />
         </div>
 
         <FloatingInput 
-          label="Nº Máximo de Ocupantes" 
+          label="Nº Máximo de Ocupantes (Opcional)" 
           placeholder="Ex: 2"
           type="tel"
           value={data.maxAttendants}

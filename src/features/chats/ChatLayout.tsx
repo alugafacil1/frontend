@@ -568,7 +568,7 @@ export default function ChatLayout() {
         </div>
       </div>
 
-      <Footer />
+      
     </>
   );
 }

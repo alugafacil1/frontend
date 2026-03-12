@@ -6,7 +6,7 @@ export interface AddressResponse {
     city: string;
     state: string;
     number: string;
-    PostalCode?: string;
+    postalCode?: string;
     neighborhood?: string;
 }
 

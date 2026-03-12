@@ -81,7 +81,7 @@ export default function LandingPage() {
       <CallToAction />
 
       {/* Footer */}
-      <Footer />
+      
     </div>
   );
 }
