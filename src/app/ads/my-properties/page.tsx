@@ -53,7 +53,6 @@ export default function MyPropertiesPage() {
           propertiesPromise,
           propertyService.getFavorites(user.id)
         ]);
-        console.log(favsData)
         setProperties(Array.isArray(propsData) ? propsData : (propsData.content || []));
         setFavorites(Array.isArray(favsData) ? favsData : []);
 

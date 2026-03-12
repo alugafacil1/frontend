@@ -43,10 +43,8 @@ export interface PropertyPayload {
 export const propertyService = {
   
   create: async (data: PropertyPayload | any) => {
-    console.log("DEBUG [propertyService.create]: Enviando payload:", data);
     try {
       const response = await api.post('/api/properties', data);
-      console.log("DEBUG [propertyService.create]: Resposta do servidor:", response.data);
       return response.data;
     } catch (error) {
       console.error("DEBUG [propertyService.create]: Erro na criação:", error);
@@ -56,7 +54,6 @@ export const propertyService = {
 
   getPropertiesByUserId: async (userId: string) => {
     const url = `/api/properties/user/${userId}`;
-    console.log("DEBUG: Chamando URL:", url);
     const response = await api.get(url);
     return response.data;
 },
@@ -72,13 +69,11 @@ export const propertyService = {
   },
 
   update: async (id: string, data: PropertyPayload | any) => {
-    console.log(`DEBUG [propertyService.update]: Atualizando ID ${id} com:`, data);
     const response = await api.put(`/api/properties/${id}`, data);
     return response.data;
   },
 
   updateStatus: async (id: string, status: string) => {
-    console.log(`DEBUG [propertyService.updateStatus]: Alterando ID ${id} para:`, status);
     const response = await api.patch(`/api/properties/${id}/status`, { status });
     return response.data;
   },
@@ -89,7 +84,6 @@ export const propertyService = {
   },
 
   uploadPhotos: async (propertyId: string, files: File[]) => {
-    console.log(`DEBUG [propertyService.uploadPhotos]: Enviando ${files.length} fotos para ID ${propertyId}`);
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
 
@@ -110,14 +104,12 @@ export const propertyService = {
   },
 
   getByUser: async (userId: string) => {
-    console.log("DEBUG [propertyService.getByUser]: Iniciando busca para User ID:", userId);
     if (!userId || userId === "undefined") {
         console.error("DEBUG [propertyService.getByUser]: ID Inválido!");
         return [];
     }
     try {
       const response = await api.get(`/api/properties/owner/${userId}`);
-      console.log(`DEBUG [propertyService.getByUser]: Sucesso! Encontrados ${response.data.length} imóveis:`, response.data);
       return response.data;
     } catch (error) {
       console.error("DEBUG [propertyService.getByUser]: Erro na requisição:", error);
@@ -126,7 +118,6 @@ export const propertyService = {
   },
 
   delete: async (id: string) => {
-    console.log(`DEBUG [propertyService.delete]: Removendo ID ${id}`);
     await api.delete(`/api/properties/${id}`);
   }
 };

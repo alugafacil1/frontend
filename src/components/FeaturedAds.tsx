@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getImageUrl } from "@/utils/formatUrl";
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   house: "Casa",
@@ -89,7 +90,6 @@ export default function FeaturedAds({
                 )}
               </div>
               <div className="property-info">
-                <h3 className="property-title">{property.title}</h3>
                 <p className="property-location">
                   <span style={{ fontSize: "12px", color: "#8B8E99" }}>Tipo:</span>{" "}
                   <span style={{ color: "#8B8E99" }}>{PROPERTY_TYPE_LABELS[property.type] ?? property.type}</span>

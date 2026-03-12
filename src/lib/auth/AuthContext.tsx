@@ -13,7 +13,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const API_URL = `${API_BASE_URL}/api`;
 
   useEffect(() => {

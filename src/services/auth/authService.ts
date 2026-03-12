@@ -9,7 +9,7 @@ export const auth = {
       });
       return data;
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   },
   signUp: async (name : string, email : string, phone : string, cpf : string, type : string, password : string) => {
@@ -19,7 +19,7 @@ export const auth = {
       });
       return data;
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   },
 };
