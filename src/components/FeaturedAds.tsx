@@ -84,15 +84,9 @@ export default function FeaturedAds({
             <Link key={property.id} href={`/ads/${property.id}`} className="property-card" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div className="property-image">
                 {property.image ? (
-                  <img
-                    src={getImageUrl(property.image)}
-                    alt={property.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  <img src={property.image} alt={property.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <div style={{ width: "100%", height: "100%", background: "#e5e7eb", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '10px', color: '#9ca3af' }}>Sem foto</span>
-                  </div>
+                  <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
                 )}
               </div>
               <div className="property-info">
