@@ -38,6 +38,7 @@ export default function ChatLayout() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
+  const [lastMessages, setLastMessages] = useState<Record<string, { text: string; timestamp: number; unread: boolean }>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,6 +95,39 @@ export default function ChatLayout() {
 
 
   useEffect(() => {
+    if (!user?.id || contacts.length === 0) return;
+
+    const unsubs: (() => void)[] = [];
+
+    contacts.forEach((contact) => {
+      const roomId = [user.id, contact.userId].sort().join("_");
+      const msgsRef = query(ref(db, `chats/${roomId}/messages`), orderByChild("timestamp"));
+
+      const unsub = onValue(msgsRef, (snapshot: any) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const msgs: Message[] = Object.entries(data).map(([id, msg]: any) => ({ id, ...msg }));
+        const last = msgs[msgs.length - 1];
+
+        setLastMessages((prev) => ({
+          ...prev,
+          [contact.userId]: {
+            text: last.text,
+            timestamp: last.timestamp ?? 0,
+            unread: last.senderId !== user.id && activeContact?.userId !== contact.userId,
+          },
+        }));
+      });
+
+      unsubs.push(unsub);
+    });
+
+    return () => unsubs.forEach((u) => u());
+  }, [user?.id, contacts]);
+
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -119,9 +153,21 @@ export default function ChatLayout() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const filtered = contacts.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSelectContact = (c: UserResponse) => {
+    setActiveContact(c);
+    setLastMessages((prev) => ({
+      ...prev,
+      [c.userId]: prev[c.userId] ? { ...prev[c.userId], unread: false } : prev[c.userId],
+    }));
+  };
+
+  const filtered = contacts
+    .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const tA = lastMessages[a.userId]?.timestamp ?? 0;
+      const tB = lastMessages[b.userId]?.timestamp ?? 0;
+      return tB - tA;
+    });
 
   return (
     <>
@@ -345,7 +391,7 @@ export default function ChatLayout() {
         }
 
         .bubble {
-          max-width: 60%;
+          max-width: 80%;
           min-width: 50px;
           width: fit-content;
           padding: 10px 14px;
@@ -358,7 +404,7 @@ export default function ChatLayout() {
         }
 
         .bubble.other {
-          background: #f4f6fb;
+          background:rgb(218, 225, 245);
           color: #333;
           border-bottom-left-radius: 4px;
           border: 1px solid #ececec;
@@ -466,27 +512,41 @@ export default function ChatLayout() {
                     Nenhum contato encontrado.
                   </p>
                 ) : (
-                  filtered.map((c, idx) => (
-                    <div
-                      key={c.userId}
-                      className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
-                      onClick={() => setActiveContact(c)}
-                    >
-                      {c.photoUrl ? (
-                        <img className="avatar-img" src={getImageUrl(c.photoUrl)} />
-                      ) : (
-                        <div className="avatar-ini" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
-                          {getInitials(c.name)}
-                        </div>
-                      )}
-                      <div className="contact-info">
-                        <div className="contact-name">{c.name}</div>
-                        <div className="contact-preview">
-                          <span className="role-badge">{translateRole(c.userType)}</span>
+                  filtered.map((c, idx) => {
+                    const last = lastMessages[c.userId];
+                    return (
+                      <div
+                        key={c.userId}
+                        className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
+                        onClick={() => handleSelectContact(c)}
+                      >
+                        {c.photoUrl ? (
+                          <img className="avatar-img" src={getImageUrl(c.photoUrl)} />
+                        ) : (
+                          <div className="avatar-ini" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
+                            {getInitials(c.name)}
+                          </div>
+                        )}
+                        <div className="contact-info" style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div className="contact-name">{c.name}</div>
+                            {last?.unread && (
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2483ff", flexShrink: 0, marginLeft: 4 }} />
+                            )}
+                          </div>
+                          <div className="contact-preview">
+                            {last ? (
+                              <span style={{ fontWeight: last.unread ? 700 : 400, color: last.unread ? "#333" : "#aaa" }}>
+                                {last.text.length > 28 ? last.text.slice(0, 28) + "…" : last.text}
+                              </span>
+                            ) : (
+                              <span className="role-badge">{translateRole(c.userType)}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
