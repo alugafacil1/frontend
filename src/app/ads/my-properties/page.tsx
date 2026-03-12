@@ -18,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import "@/assets/styles/property/MyProperties.css";
+import Footer from '@/components/Footer';
 
 // Tipagem dos status
 type PropertyStatus = 'ALL' | 'ACTIVE' | 'PAUSED' | 'PLACED' | 'PENDING' | 'REJECTED' | 'FAVORITES';
@@ -110,6 +111,7 @@ export default function MyPropertiesPage() {
   const isTenant = roleStr === 'TENANT';
 
   return (
+    <>
     <main className="my-properties-page">
       
       <div className="page-header">
@@ -205,5 +207,7 @@ export default function MyPropertiesPage() {
         )}
       </div>
     </main>
+    
+    </>
   );
 }

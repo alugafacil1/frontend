@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/lib/auth/useAuth";
 import { propertyService } from "@/services/property/propertyService";
 import { SuccessModal } from "@/components/SuccessModal";
@@ -60,6 +60,9 @@ export default function EditAdPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  // Referência para o input de arquivo oculto
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // --- ESTADO UNIFICADO ---
   const [formData, setFormData] = useState<any>({
     country: 'Brazil', 
@@ -69,7 +72,7 @@ export default function EditAdPage() {
     hasGaragem: false, hasAnimais: false, hasFumantes: false, hasSacada: false, hasMobiliado: false, hasArCondicionado: false,
     hasChurrasqueira: false, hasElevador: false, hasPortaria: false,
     hasVisitaVirtual: false, youtubeLink: '', description: '', images: [],
-    agencyId: null // Mantém o vínculo com a agência
+    agencyId: null
   });
 
   // --- INICIANDO HOOKS ---
@@ -85,17 +88,6 @@ export default function EditAdPage() {
 
       try {
         const data = await propertyService.getById(propertyId);
-        
-        // Verificação de Permissão: Dono, Corretor da Agência ou Admin da Agência
-        const isOwner = user?.id === data.userId;
-        const isRealtorOfAgency = user?.role === 'REALTOR' && data.agencyId === user.agencyId;
-        const isAgencyAdmin = user?.role === 'AGENCY_ADMIN' && data.agencyId === user.agencyId;
-
-        if (user && !isOwner && !isRealtorOfAgency && !isAgencyAdmin) {
-          alert("Sem permissão para editar este anúncio.");
-          router.push("/ads/my-properties"); 
-          return;
-        }
 
         const formatCurrencyFromBackend = (cents: number) => cents ? (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "";
         const checkAmenity = (term: string) => data.amenities?.some((a: string) => a.toLowerCase().includes(term.toLowerCase()));
@@ -136,19 +128,23 @@ export default function EditAdPage() {
           youtubeLink: data.videoUrl || "",
           description: data.description || "",
           images: data.photoUrls || [],
-          agencyId: data.agencyId || null // Preserva o vínculo
+          agencyId: data.agencyId || null
         }));
-
+        
       } catch (error) {
         console.error("Erro ao carregar:", error);
       } finally {
         setFetching(false);
       }
     }
-    if (user && propertyId) loadProperty();
-  }, [propertyId, user, router]);
+    
+    
+    if (user?.id && propertyId) loadProperty();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, user?.id]); 
 
-  // --- HANDLERS ---
+  // --- HANDLERS DE FORMULÁRIO ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
@@ -180,6 +176,34 @@ export default function EditAdPage() {
     }
   };
 
+  // --- HANDLERS DE IMAGEM ---
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    
+    setFormData((prev: any) => ({
+      ...prev,
+      images: [...prev.images, ...newFiles]
+    }));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (indexToRemove: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      images: prev.images.filter((_: any, index: number) => index !== indexToRemove)
+    }));
+  };
+
   // --- SUBMIT ---
   const handleUpdate = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
@@ -209,7 +233,6 @@ export default function EditAdPage() {
       const fullAddressQuery = `${formData.address}, ${formData.number}, ${formData.city}, ${stateForBackend}`;
       const coords = await fetchCoordinates(fullAddressQuery);
 
-      // Regra de Status: Corretores voltam para PENDING para revisão da agência
       const isRealtor = user?.role === 'REALTOR';
       const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
 
@@ -279,17 +302,47 @@ export default function EditAdPage() {
         <section className="unified-section">
           <div className="section-header">
             <h2 className="section-title">Imagens</h2>
-            <button className="btn-add-img"><PlusIcon className="w-5 h-5" /></button>
+            
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+              style={{ display: 'none' }} 
+            />
+
+            <button type="button" className="btn-add-img" onClick={triggerFileInput}>
+              <PlusIcon className="w-5 h-5" />
+            </button>
           </div>
+          
           <div className="image-gallery-grid">
-            {formData.images.slice(0,4).map((img: string, i: number) => (
-              <div key={i} className="gallery-img-box">
-                <img src={img} alt={`Foto ${i}`} />
-                {i === 0 && <button className="gallery-nav left"><ChevronLeftIcon className="w-4 h-4"/></button>}
-                {i === 3 && <button className="gallery-nav right"><ChevronRightIcon className="w-4 h-4"/></button>}
-              </div>
-            ))}
-            {formData.images.length === 0 && <div className="no-images-placeholder">Nenhuma imagem carregada</div>}
+            {formData.images.length > 0 ? (
+              formData.images.map((img: any, i: number) => {
+                const imgSrc = img instanceof File ? URL.createObjectURL(img) : img;
+                
+                return (
+                  <div key={i} className="gallery-img-box" style={{ position: 'relative' }}>
+                    <img src={imgSrc} alt={`Foto ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    
+                    <button 
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      style={{
+                        position: 'absolute', top: '5px', right: '5px', background: 'rgba(0,0,0,0.6)', 
+                        color: 'white', borderRadius: '50%', padding: '4px', border: 'none', cursor: 'pointer'
+                      }}
+                      title="Remover imagem"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="no-images-placeholder">Nenhuma imagem carregada</div>
+            )}
           </div>
         </section>
 
