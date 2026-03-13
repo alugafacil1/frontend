@@ -558,7 +558,7 @@ export default function ChatLayout() {
                 {activeContact ? (
                   <>
                     {activeContact.photoUrl ? (
-                      <img className="avatar-img" src={activeContact.photoUrl} />
+                      <img className="avatar-img" src={getImageUrl(activeContact.photoUrl)} />
                     ) : (
                       <div className="avatar-ini" style={{ background: AVATAR_COLORS[0] }}>
                         {getInitials(activeContact.name)}
@@ -590,7 +590,7 @@ export default function ChatLayout() {
                       <div key={msg.id} className={`msg-row${isMe ? " me" : ""}`}>
                         {!isMe && (
                           activeContact?.photoUrl
-                            ? <img className="avatar-img" src={activeContact.photoUrl} style={{ width: 32, height: 32 }} />
+                            ? <img className="avatar-img" src={getImageUrl(activeContact.photoUrl)} style={{ width: 32, height: 32 }} />
                             : <div className="avatar-ini" style={{ background: AVATAR_COLORS[0], width: 32, height: 32, fontSize: "0.65rem" }}>
                               {activeContact ? getInitials(activeContact.name) : "?"}
                             </div>
