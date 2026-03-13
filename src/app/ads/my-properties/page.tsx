@@ -14,14 +14,14 @@ import {
   ClipboardDocumentCheckIcon, 
   XCircleIcon, 
   HeartIcon,
+  MagnifyingGlassIcon, 
   PlusIcon
 } from "@heroicons/react/24/outline";
 
 import "@/assets/styles/property/MyProperties.css";
-import Footer from '@/components/Footer';
 
-// Tipagem dos status
-type PropertyStatus = 'ALL' | 'ACTIVE' | 'PAUSED' | 'PLACED' | 'PENDING' | 'REJECTED' | 'FAVORITES';
+// Tipagem dos status adicionada a aba EXPLORE
+type PropertyStatus = 'ALL' | 'ACTIVE' | 'PAUSED' | 'PLACED' | 'PENDING' | 'REJECTED' | 'FAVORITES' | 'EXPLORE';
 
 export default function MyPropertiesPage() {
   const { user } = useAuth();
@@ -40,19 +40,22 @@ export default function MyPropertiesPage() {
 
       try {
         const role = user.role as string;
-
-        if (role === 'TENANT') {
-          setCurrentFilter('FAVORITES');
-        }
-
         let propertiesPromise;
 
-        propertiesPromise = propertyService.getPropertiesByUserId(user.id); 
+        // Se for inquilino, busca TODOS os imóveis do sistema e define a aba inicial como EXPLORE
+        if (role === 'TENANT') {
+          setCurrentFilter('EXPLORE');
+          propertiesPromise = propertyService.getAll ? propertyService.getAll() : propertyService.getPropertiesByUserId(user.id);
+        } else {
+          // Se for dono/corretor, busca os imóveis vinculados ao usuário
+          propertiesPromise = propertyService.getPropertiesByUserId(user.id); 
+        }
 
         const [propsData, favsData] = await Promise.all([
           propertiesPromise,
           propertyService.getFavorites(user.id)
         ]);
+        
         setProperties(Array.isArray(propsData) ? propsData : (propsData.content || []));
         setFavorites(Array.isArray(favsData) ? favsData : []);
 
@@ -77,8 +80,7 @@ export default function MyPropertiesPage() {
   // --- Lógica de Filtros e Abas por Role ---
   const getTabsForRole = (): PropertyStatus[] => {
     const role = user?.role as string;
-    if (role === 'TENANT') return ['FAVORITES'];
-    // Ajustado para AGENCY_ADMIN
+    if (role === 'TENANT') return ['EXPLORE', 'FAVORITES'];
     if (role === 'AGENCY_ADMIN') {
         return ['ALL', 'ACTIVE', 'PAUSED', 'PLACED', 'PENDING', 'REJECTED', 'FAVORITES'];
     }
@@ -88,13 +90,17 @@ export default function MyPropertiesPage() {
 
   const tabs = getTabsForRole();
 
+  // Filtra o que vai renderizar na tela
   const listToRender = currentFilter === 'FAVORITES' 
-    ? favorites.map(fav => fav) 
-    : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
+    ? favorites 
+    : currentFilter === 'EXPLORE'
+      ? properties.filter(p => p.status === 'ACTIVE') // Inquilino só vê imóveis ativos
+      : properties.filter(p => currentFilter === 'ALL' || p.status === currentFilter);
 
   const getStatusConfig = (status: PropertyStatus) => {
     switch (status) {
       case 'ALL': return { title: 'Todos', icon: FunnelIcon, color: 'text-gray-600', bannerTitle: 'Todos os Imóveis', bannerDesc: 'Visão geral de todos os seus anúncios.' };
+      case 'EXPLORE': return { title: 'Explorar', icon: MagnifyingGlassIcon, color: 'text-indigo-600', bannerTitle: 'Imóveis Disponíveis', bannerDesc: 'Descubra o imóvel ideal para você alugar.' };
       case 'ACTIVE': return { title: 'Ativos', icon: CheckCircleIcon, color: 'text-blue-600', bannerTitle: 'Anúncios Ativos', bannerDesc: 'Estes anúncios estão visíveis para locatários.' };
       case 'PAUSED': return { title: 'Pausados', icon: PauseCircleIcon, color: 'text-amber-600', bannerTitle: 'Anúncios Pausados', bannerDesc: 'Estes anúncios estão ocultos temporariamente.' };
       case 'PLACED': return { title: 'Alugados', icon: CurrencyDollarIcon, color: 'text-emerald-600', bannerTitle: 'Imóveis Alugados', bannerDesc: 'Anúncios marcados como já locados.' };
@@ -106,7 +112,7 @@ export default function MyPropertiesPage() {
   };
 
   const roleStr = user?.role as string;
-  const isAgencyAdmin = roleStr === 'AGENCY_ADMIN'; // Ajuste estrito para AGENCY_ADMIN
+  const isAgencyAdmin = roleStr === 'AGENCY_ADMIN'; 
   const isTenant = roleStr === 'TENANT';
 
   return (
@@ -116,27 +122,30 @@ export default function MyPropertiesPage() {
       <div className="page-header">
         <div className="header-text">
           <h1 className="page-title">
-            {isAgencyAdmin ? 'Gestão da Agência' : isTenant ? 'Minha Conta' : 'Meus Imóveis'}
+            {isAgencyAdmin ? 'Gestão da Agência' : isTenant ? 'Explorar Imóveis' : 'Meus Imóveis'}
           </h1>
           <p className="page-subtitle">
             {isAgencyAdmin 
               ? 'Gerencie e aprove os anúncios dos corretores da sua agência.' 
-              : isTenant ? 'Veja os imóveis que você curtiu.' : 'Gerencie seus anúncios e acompanhe o status.'}
+              : isTenant ? 'Encontre e favorite os melhores imóveis para alugar.' : 'Gerencie seus anúncios e acompanhe o status.'}
           </p>
         </div>
-        
       </div>
 
       <div className="tabs-container">
         {tabs.map((tab) => {
           const config = getStatusConfig(tab);
           const Icon = config.icon;
+          
+          // Lógica de contagem para as abas
           const count = tab === 'FAVORITES' 
             ? favorites.length 
-            : (tab === 'ALL' ? properties.length : properties.filter(p => p.status === tab).length);
+            : tab === 'EXPLORE'
+              ? properties.filter(p => p.status === 'ACTIVE').length
+              : (tab === 'ALL' ? properties.length : properties.filter(p => p.status === tab).length);
 
           return (
-            <button
+            <div
               key={tab}
               onClick={() => setCurrentFilter(tab)}
               className={`tab-pill ${currentFilter === tab ? 'active' : ''}`}
@@ -148,7 +157,7 @@ export default function MyPropertiesPage() {
                 <span className="tab-pill-title">{config.title}</span>
                 <span className="tab-pill-count">{count}</span>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -170,10 +179,18 @@ export default function MyPropertiesPage() {
               if (!property) return null;
               const uniqueKey = property.id || property.propertyId || `prop-${index}`;
               
+              // Verifica se o ID deste imóvel existe na lista de favoritos
+              const isFav = favorites.some(fav => {
+                const favId = fav.propertyId || fav.id;
+                const propId = property.propertyId || property.id;
+                return favId === propId;
+              });
+              
               return (
                 <PropertyCard 
                   key={uniqueKey} 
                   property={property} 
+                  isFavoriteInit={isFav} // Repassa a informação otimista para o card
                   onUpdateSuccess={() => setRefreshCounter(prev => prev + 1)}
                 />
               );
@@ -190,23 +207,19 @@ export default function MyPropertiesPage() {
             <p>
               {currentFilter === 'FAVORITES' 
                 ? 'Você ainda não salvou nenhum imóvel nos favoritos.' 
-                : `Não há imóveis na categoria ${getStatusConfig(currentFilter).title.toLowerCase()} no momento.`}
+                : currentFilter === 'EXPLORE'
+                  ? 'Nenhum imóvel ativo disponível no momento.'
+                  : `Não há imóveis na categoria ${getStatusConfig(currentFilter).title.toLowerCase()} no momento.`}
             </p>
-            {currentFilter !== 'ALL' && currentFilter !== 'FAVORITES' && (
+            {currentFilter !== 'ALL' && currentFilter !== 'FAVORITES' && currentFilter !== 'EXPLORE' && (
                <button onClick={() => setCurrentFilter('ALL')} className="btn-explore">
                  Ver Todos
                </button>
             )}
-            {/* {currentFilter === 'FAVORITES' && (
-               <button onClick={() => router.push('/search')} className="btn-explore">
-                 Explorar
-               </button>
-            )} */}
           </div>
         )}
       </div>
     </main>
-    
     </>
   );
 }
