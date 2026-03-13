@@ -40,6 +40,18 @@ export interface PropertyPayload {
   agencyId?: string; // Campo adicionado para debug de vínculo
 }
 
+export interface PropertyFilterParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  type?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  status?: string;
+  [key: string]: any;
+}
+
 export const propertyService = {
   
   create: async (data: PropertyPayload | any) => {
@@ -48,6 +60,17 @@ export const propertyService = {
       return response.data;
     } catch (error) {
       console.error("DEBUG [propertyService.create]: Erro na criação:", error);
+      throw error;
+    }
+  },
+
+ 
+  getAll: async (params: PropertyFilterParams = {}) => {
+    try {
+      const response = await api.get('/api/properties', { params });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar todos os imóveis:", error);
       throw error;
     }
   },
