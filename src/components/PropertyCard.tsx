@@ -16,33 +16,27 @@ import "@/assets/styles/property/MyProperties.css";
 
 interface PropertyCardProps {
   property: any;
-  onUpdateSuccess?: () => void; 
+  onUpdateSuccess?: () => void;
+  isFavoriteInit?: boolean; // Prop adicionada para receber o status inicial do pai
 }
 
-export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) => {
+export const PropertyCard = ({ property, onUpdateSuccess, isFavoriteInit = false }: PropertyCardProps) => {
   const router = useRouter();
   const { user } = useAuth();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(isFavoriteInit);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isTogglingFav, setIsTogglingFav] = useState(false);
   
   const propertyId = property.id || property.propertyId;
   const images = property.photoUrls && property.photoUrls.length > 0 ? property.photoUrls : [];
 
+  // Sincroniza o estado local caso a propriedade passe um novo valor por fora
   useEffect(() => {
-    async function checkFavoriteStatus() {
-      if (!user || !user.id) return; 
-      try {
-        const isFav = await propertyService.checkIfFavorited(user.id, propertyId);
-        setIsFavorited(isFav);
-      } catch (error) {
-        console.error("Erro ao verificar status de favorito", error);
-      }
-    }
-    checkFavoriteStatus();
-  }, [user, propertyId]);
+    setIsFavorited(isFavoriteInit);
+  }, [isFavoriteInit]);
 
   const isAgencyAdmin = user?.role === 'AGENCY_ADMIN';
   const canManageProperty = user?.role === 'OWNER' || user?.role === 'REALTOR' || isAgencyAdmin;
@@ -67,17 +61,26 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
       alert("Você precisa estar logado para favoritar um imóvel.");
       return; 
     }
+
+    if (isTogglingFav) return; // Evita cliques duplos rápidos
     
+    // Atualização Otimista: Muda a UI imediatamente
     const previousState = isFavorited;
     setIsFavorited(!previousState);
+    setIsTogglingFav(true);
     
     try {
-      const response = await propertyService.toggleFavorite(user.id, propertyId);
-      setIsFavorited(response.isFavorited); 
+      await propertyService.toggleFavorite(user.id, propertyId);
+      // Avisa a tela pai para atualizar as listas/contadores silenciosamente
+      if (onUpdateSuccess) {
+        onUpdateSuccess();
+      }
     } catch (error) {
       console.error("Erro ao favoritar", error);
-      setIsFavorited(previousState); 
+      setIsFavorited(previousState); // Reverte a UI se a API falhar
       alert("Erro ao favoritar o imóvel.");
+    } finally {
+      setIsTogglingFav(false);
     }
   };
 
@@ -125,7 +128,6 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
     return types[type] || type || 'Imóvel';
   };
 
-  // Define o título baseado nos dados da API (fallback para o Tipo se não tiver título)
   const displayTitle = property.title || property.name || `${translateType(property.type)} ${propertyId ? propertyId.toString().substring(0,3) : ''}`;
 
   return (
@@ -148,7 +150,8 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
           </div>
         )}
 
-        <button onClick={toggleFavorite} className="btn-fav-minimal">
+        {/* Botão de Favoritar otimizado */}
+        <button onClick={toggleFavorite} className="btn-fav-minimal" disabled={isTogglingFav}>
           {isFavorited ? <HeartSolid className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5 text-gray-600" />}
         </button>
 
@@ -176,7 +179,6 @@ export const PropertyCard = ({ property, onUpdateSuccess }: PropertyCardProps) =
               Editar Imóvel
             </button>
             
-            {/* O Select de Status foi mantido para não quebrar a funcionalidade, mas estilizado de forma discreta */}
             <select 
               className="select-status-minimal"
               value={property.status || 'ACTIVE'}
