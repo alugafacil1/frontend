@@ -40,7 +40,8 @@ export default function ChatLayout() {
   const [search, setSearch] = useState("");
   const [lastMessages, setLastMessages] = useState<Record<string, { text: string; timestamp: number; unread: boolean }>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
-
+  const messagesAreaRef = useRef<HTMLDivElement>(null); 
+  
   useEffect(() => {
     if (!user?.role) return;
     async function fetchContatos() {
@@ -131,7 +132,8 @@ export default function ChatLayout() {
 
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const area = messagesAreaRef.current;
+    if (area) area.scrollTop = area.scrollHeight;
   }, [messages]);
 
 
@@ -561,7 +563,7 @@ export default function ChatLayout() {
                 {activeContact ? (
                   <>
                     {activeContact.photoUrl ? (
-                      <img className="avatar-img" src={activeContact.photoUrl} />
+                      <img className="avatar-img" src={getImageUrl(activeContact.photoUrl)} />
                     ) : (
                       <div className="avatar-ini" style={{ background: AVATAR_COLORS[0] }}>
                         {getInitials(activeContact.name)}
@@ -583,7 +585,7 @@ export default function ChatLayout() {
                   Nenhuma mensagem ainda. Diga olá!
                 </div>
               ) : (
-                <div className="messages-area">
+                <div className="messages-area" ref={messagesAreaRef}>
                   {messages.map((msg) => {
                     const isMe = msg.senderId === user?.id;
                     const time = msg.timestamp
