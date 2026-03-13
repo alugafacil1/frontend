@@ -57,7 +57,10 @@ export default function ChatLayout() {
           listUsersChats = page.content.filter((u: any) => u.userId !== user.id && u.userType === "REALTOR");
         } else if (user?.role === 'ADMIN') {
           listUsersChats = page.content.filter((u: any) => u.userId !== user.id);
+        } else if (user?.role === 'TENANT') {
+          listUsersChats = page.content.filter((u: any) => u.userId !== user.id && (u.userType === "OWNER" || u.userType === "REALTOR"));
         }
+
         setContacts(listUsersChats);
         if (listUsersChats.length > 0) setActiveContact(listUsersChats[0]);
       } catch (err) {
@@ -391,8 +394,8 @@ export default function ChatLayout() {
         }
 
         .bubble {
-          max-width: 80%;
-          min-width: 50px;
+          max-width: 100%;
+          min-width: 100px;
           width: fit-content;
           padding: 10px 14px;
           border-radius: 18px;

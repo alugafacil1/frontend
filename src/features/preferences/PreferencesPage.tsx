@@ -423,7 +423,7 @@ export default function PreferencesPage() {
 
   const parseCurrency = (value: string) => {
     const cleaned = value.replace(/[^\d]/g, '');
-    return cleaned ? parseInt(cleaned) * 100 : 0;
+    return cleaned ? parseInt(cleaned) : 0;
   };
 
   const formatPreferenceSummary = (pref: UserPreferences) => {
