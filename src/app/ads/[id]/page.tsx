@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { propertyService } from '@/services/property/propertyService';
 import { 
   MapPinIcon, 
@@ -189,7 +188,7 @@ export default function PropertyDetailsPage() {
             </div>
 
             <button className="cta-button">
-                <Link href="/chat" className="nav-link">Entrar em Contato</Link>
+                Entrar em Contato
             </button>
           </div>
 

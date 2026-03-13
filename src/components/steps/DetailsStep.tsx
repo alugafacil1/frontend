@@ -50,14 +50,6 @@ export const DetailsStep = ({ data, updateData, onNext }: DetailsStepProps) => {
       <h2 className="step-inner-title">Detalhes do Imóvel</h2>
 
       <div className="details-grid">
-       
-        <FloatingInput 
-          label="Título do Anúncio" 
-          placeholder="Ex: Lindo apartamento com vista para o mar"
-          value={data.title || ""}
-          onChange={(e) => updateData({ title: e.target.value })}
-        />
-
         <FloatingInput 
           label="Selecione o País" 
           type="select" 
@@ -123,11 +115,9 @@ export const DetailsStep = ({ data, updateData, onNext }: DetailsStepProps) => {
         />
       </div>
 
-      <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-        <button type="button" onClick={onNext} className="btn-next">
-          Próximo
-        </button>
-      </div>
+      <button onClick={onNext} className="btn-next">
+        Próximo
+      </button>
     </div>
   );
 };
