@@ -25,7 +25,8 @@ export default function GerenciamentoPage() {
         <S.PageContainer>
             <Header />
             <S.TitleSection>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '7%'
+                 }}>
                     <div>
                         <h1>Painel de Gerenciamento</h1>
                         <p>Perfil atual: <strong>{translateRole(user?.role)}</strong></p>
@@ -46,7 +47,7 @@ export default function GerenciamentoPage() {
                                 alignItems: 'center',
                                 gap: '8px',
                                 transition: 'all 0.2s',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             }}
                         >
                             <span style={{ fontSize: '20px', lineHeight: '1' }}>+</span> 
