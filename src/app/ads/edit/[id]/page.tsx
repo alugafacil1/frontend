@@ -8,7 +8,7 @@ import { propertyService } from "@/services/property/propertyService";
 import { SuccessModal } from "@/components/SuccessModal";
 import "@/assets/styles/ads/EditAdUnified.css"; 
 
-// --- SEUS HOOKS ---
+// --- HOOKS ---
 import { useCep } from "../../../../../hooks/useCep"; 
 import { useLocation } from "../../../../../hooks/useLocation"; 
 import { useMasks } from "../../../../../hooks/useMasks";
@@ -65,6 +65,7 @@ export default function EditAdPage() {
 
   // --- ESTADO UNIFICADO ---
   const [formData, setFormData] = useState<any>({
+    title: '', // <-- ADICIONADO AQUI
     country: 'Brazil', 
     cep: '', number: '', rooms: '', city: '', propertyType: '', address: '', bathrooms: '',
     monthlyRent: '', weeklyRent: '', availableFrom: '', minTenancy: '', deposit: '', maxOccupants: '',
@@ -95,6 +96,7 @@ export default function EditAdPage() {
 
         setFormData((prev: any) => ({
           ...prev,
+          title: data.title || "", // <-- CARREGANDO DO BACKEND
           country: (data.address?.state === 'Brasil' || !data.address?.state) ? 'Brazil' : data.address.state, 
           city: data.address?.city || "",
           cep: cepMasker(data.address?.zipCode || data.address?.postalCode || ""),
@@ -130,14 +132,13 @@ export default function EditAdPage() {
           images: data.photoUrls || [],
           agencyId: data.agencyId || null
         }));
-        
+
       } catch (error) {
         console.error("Erro ao carregar:", error);
       } finally {
         setFetching(false);
       }
     }
-    
     
     if (user?.id && propertyId) loadProperty();
     
@@ -237,7 +238,7 @@ export default function EditAdPage() {
       const initialStatus = isRealtor ? 'PENDING' : 'ACTIVE';
 
       const payload = {
-        title: formData.title || "Imóvel atualizado", 
+        title: formData.title || "Imóvel atualizado", // <-- USANDO O TÍTULO AQUI
         description: formData.description,
         address: {
           street: formData.address,
@@ -351,6 +352,17 @@ export default function EditAdPage() {
           <h2 className="section-title">Detalhes do Imóvel</h2>
           
           <div className="form-grid-3">
+            
+            <div style={{ gridColumn: '1 / -1' }}>
+              <OutlinedInput 
+                label="Título do Anúncio" 
+                name="title" 
+                value={formData.title} 
+                onChange={handleChange} 
+                placeholder="Ex: Lindo apartamento com vista para o mar" 
+              />
+            </div>
+
             <div className="outlined-input-wrapper">
               <label className="outlined-label">Selecione o País</label>
               <select name="country" value={formData.country} onChange={handleChange} className="outlined-field">
@@ -383,7 +395,9 @@ export default function EditAdPage() {
               </select>
             </div>
 
-            <div style={{ gridColumn: 'span 2' }}><OutlinedInput label="Endereço" name="address" value={formData.address} onChange={handleChange} /></div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <OutlinedInput label="Endereço" name="address" value={formData.address} onChange={handleChange} />
+            </div>
             <OutlinedInput label="Banheiros" name="bathrooms" value={formData.bathrooms} onChange={handleChange} />
           </div>
 
