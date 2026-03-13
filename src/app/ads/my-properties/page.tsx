@@ -53,7 +53,6 @@ export default function MyPropertiesPage() {
           propertiesPromise,
           propertyService.getFavorites(user.id)
         ]);
-        console.log(favsData)
         setProperties(Array.isArray(propsData) ? propsData : (propsData.content || []));
         setFavorites(Array.isArray(favsData) ? favsData : []);
 
@@ -198,11 +197,11 @@ export default function MyPropertiesPage() {
                  Ver Todos
                </button>
             )}
-            {currentFilter === 'FAVORITES' && (
+            {/* {currentFilter === 'FAVORITES' && (
                <button onClick={() => router.push('/search')} className="btn-explore">
                  Explorar
                </button>
-            )}
+            )} */}
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getImageUrl } from "@/utils/formatUrl";
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   house: "Casa",
@@ -82,11 +83,13 @@ export default function FeaturedAds({
           {filteredProperties.map((property) => (
             <Link key={property.id} href={`/ads/${property.id}`} className="property-card" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div className="property-image">
-                {/* Placeholder for image */}
-                <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
+                {property.image ? (
+                  <img src={property.image} alt={property.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", background: "#e5e7eb" }}></div>
+                )}
               </div>
               <div className="property-info">
-                <h3 className="property-title">{property.title}</h3>
                 <p className="property-location">
                   <span style={{ fontSize: "12px", color: "#8B8E99" }}>Tipo:</span>{" "}
                   <span style={{ color: "#8B8E99" }}>{PROPERTY_TYPE_LABELS[property.type] ?? property.type}</span>

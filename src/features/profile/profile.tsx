@@ -147,7 +147,7 @@ function ProfileFormContent({
         userType: userProfile.userType
       };
 
-      const textRes = await fetch(`http://localhost:8081/api/users/${authUserId}`, {
+      const textRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${authUserId}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -162,7 +162,7 @@ function ProfileFormContent({
       if (selectedFile) {
         const formDataImg = new FormData();
         formDataImg.append("file", selectedFile);
-        const photoRes = await fetch(`http://localhost:8081/api/users/${authUserId}/photo`, {
+        const photoRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${authUserId}/photo`, {
             method: "PATCH",
             headers: { "Authorization": `Bearer ${token}` },
             body: formDataImg
@@ -218,7 +218,6 @@ function ProfileFormContent({
     return null;
   };
   const displayImage = getDisplayImage();
-
   return (
     <div className="profile-container">
       <div className="profile-card">
@@ -227,7 +226,7 @@ function ProfileFormContent({
           <div className="profile-card-avatar-container" onClick={() => isEditing && fileInputRef.current?.click()}>
             {displayImage ? (
               <img 
-                src={`${apiBaseUrl}${displayImage}`} 
+                src={`${displayImage}`} 
                 alt="Perfil" 
                 className="profile-avatar"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} 
@@ -379,7 +378,7 @@ export default function Profile() {
     queryFn: async () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token");
-      const res = await fetch(`http://localhost:8081/api/users/${authUser?.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${authUser?.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {

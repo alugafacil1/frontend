@@ -9,6 +9,7 @@ import { db } from '../../../src/firebaseConfig.js';
 import { ref, push, onValue, serverTimestamp, query, orderByChild } from "firebase/database";
 import { useAuth } from "@/lib/auth/useAuth";
 import { translateRole } from "@/utils/translateRoles";
+import { getImageUrl } from "@/utils/formatUrl";
 
 function getInitials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
@@ -30,21 +31,22 @@ interface Message {
 export default function ChatLayout() {
   const { user } = useAuth();
 
-  const [contacts,       setContacts]       = useState<UserResponse[]>([]);
-  const [loadingContacts, setLoading]       = useState(true);
-  const [activeContact,  setActiveContact]  = useState<UserResponse | null>(null);
-  const [messages,       setMessages]       = useState<Message[]>([]);
-  const [loadingMsgs,    setLoadingMsgs]    = useState(false);
-  const [input,          setInput]          = useState("");
-  const [search,         setSearch]         = useState("");
-  const bottomRef                           = useRef<HTMLDivElement>(null);
+  const [contacts, setContacts] = useState<UserResponse[]>([]);
+  const [loadingContacts, setLoading] = useState(true);
+  const [activeContact, setActiveContact] = useState<UserResponse | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [input, setInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [lastMessages, setLastMessages] = useState<Record<string, { text: string; timestamp: number; unread: boolean }>>({});
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user?.role) return;
     async function fetchContatos() {
       try {
         const page = await userService.getAll(0, 50);
-  
+
         let listUsersChats: any = [];
 
         if (user?.role === 'OWNER') {
@@ -67,14 +69,14 @@ export default function ChatLayout() {
     fetchContatos();
   }, [user?.role]);
 
-  
+
   useEffect(() => {
     if (!user?.id || !activeContact?.userId) return;
 
     setLoadingMsgs(true);
     setMessages([]);
 
-    const roomId  = [user.id, activeContact.userId].sort().join("_");
+    const roomId = [user.id, activeContact.userId].sort().join("_");
     const msgsRef = query(ref(db, `chats/${roomId}/messages`), orderByChild("timestamp"));
 
     const unsubscribe = onValue(msgsRef, (snapshot: any) => {
@@ -91,24 +93,57 @@ export default function ChatLayout() {
     return () => unsubscribe();
   }, [user?.id, activeContact?.userId]);
 
-  
+
+  useEffect(() => {
+    if (!user?.id || contacts.length === 0) return;
+
+    const unsubs: (() => void)[] = [];
+
+    contacts.forEach((contact) => {
+      const roomId = [user.id, contact.userId].sort().join("_");
+      const msgsRef = query(ref(db, `chats/${roomId}/messages`), orderByChild("timestamp"));
+
+      const unsub = onValue(msgsRef, (snapshot: any) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const msgs: Message[] = Object.entries(data).map(([id, msg]: any) => ({ id, ...msg }));
+        const last = msgs[msgs.length - 1];
+
+        setLastMessages((prev) => ({
+          ...prev,
+          [contact.userId]: {
+            text: last.text,
+            timestamp: last.timestamp ?? 0,
+            unread: last.senderId !== user.id && activeContact?.userId !== contact.userId,
+          },
+        }));
+      });
+
+      unsubs.push(unsub);
+    });
+
+    return () => unsubs.forEach((u) => u());
+  }, [user?.id, contacts]);
+
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
- 
+
   const send = async () => {
     const text = input.trim();
     if (!text || !user?.id || !activeContact?.userId) return;
 
-    const roomId  = [user.id, activeContact.userId].sort().join("_");
+    const roomId = [user.id, activeContact.userId].sort().join("_");
     const msgsRef = ref(db, `chats/${roomId}/messages`);
 
     await push(msgsRef, {
       text,
-      senderId:   user.id,
+      senderId: user.id,
       senderName: user.name,
-      timestamp:  serverTimestamp(),
+      timestamp: serverTimestamp(),
     });
 
     setInput("");
@@ -118,9 +153,21 @@ export default function ChatLayout() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const filtered = contacts.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSelectContact = (c: UserResponse) => {
+    setActiveContact(c);
+    setLastMessages((prev) => ({
+      ...prev,
+      [c.userId]: prev[c.userId] ? { ...prev[c.userId], unread: false } : prev[c.userId],
+    }));
+  };
+
+  const filtered = contacts
+    .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const tA = lastMessages[a.userId]?.timestamp ?? 0;
+      const tB = lastMessages[b.userId]?.timestamp ?? 0;
+      return tB - tA;
+    });
 
   return (
     <>
@@ -344,7 +391,7 @@ export default function ChatLayout() {
         }
 
         .bubble {
-          max-width: 60%;
+          max-width: 80%;
           min-width: 50px;
           width: fit-content;
           padding: 10px 14px;
@@ -357,7 +404,7 @@ export default function ChatLayout() {
         }
 
         .bubble.other {
-          background: #f4f6fb;
+          background:rgb(218, 225, 245);
           color: #333;
           border-bottom-left-radius: 4px;
           border: 1px solid #ececec;
@@ -440,13 +487,12 @@ export default function ChatLayout() {
 
           <div className="chat-shell">
 
-            
             <div className="contacts-col">
 
               <div className="contacts-search">
                 <div className="search-box">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                   </svg>
                   <input
                     placeholder="Pesquisar"
@@ -460,41 +506,54 @@ export default function ChatLayout() {
 
               <div className="contacts-list">
                 {loadingContacts ? (
-                  [1,2,3,4].map(i => <div key={i} className="skel" />)
+                  [1, 2, 3, 4].map(i => <div key={i} className="skel" />)
                 ) : filtered.length === 0 ? (
-                  <p style={{ fontSize:"0.8rem", color:"#bbb", textAlign:"center", padding:"1.5rem 0" }}>
+                  <p style={{ fontSize: "0.8rem", color: "#bbb", textAlign: "center", padding: "1.5rem 0" }}>
                     Nenhum contato encontrado.
                   </p>
                 ) : (
-                  filtered.map((c, idx) => (
-                    <div
-                      key={c.userId}
-                      className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
-                      onClick={() => setActiveContact(c)}
-                    >
-                      {c.photoUrl ? (
-                        <img className="avatar-img" src={c.photoUrl}  />
-                      ) : (
-                        <div className="avatar-ini" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
-                          {getInitials(c.name)}
-                        </div>
-                      )}
-                      <div className="contact-info">
-                        <div className="contact-name">{c.name}</div>
-                        <div className="contact-preview">
-                          <span className="role-badge">{translateRole(c.userType)}</span>
+                  filtered.map((c, idx) => {
+                    const last = lastMessages[c.userId];
+                    return (
+                      <div
+                        key={c.userId}
+                        className={`contact-item${activeContact?.userId === c.userId ? " active" : ""}`}
+                        onClick={() => handleSelectContact(c)}
+                      >
+                        {c.photoUrl ? (
+                          <img className="avatar-img" src={getImageUrl(c.photoUrl)} />
+                        ) : (
+                          <div className="avatar-ini" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
+                            {getInitials(c.name)}
+                          </div>
+                        )}
+                        <div className="contact-info" style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div className="contact-name">{c.name}</div>
+                            {last?.unread && (
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2483ff", flexShrink: 0, marginLeft: 4 }} />
+                            )}
+                          </div>
+                          <div className="contact-preview">
+                            {last ? (
+                              <span style={{ fontWeight: last.unread ? 700 : 400, color: last.unread ? "#333" : "#aaa" }}>
+                                {last.text.length > 28 ? last.text.slice(0, 28) + "…" : last.text}
+                              </span>
+                            ) : (
+                              <span className="role-badge">{translateRole(c.userType)}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
 
-            
+
             <div className="chat-col">
 
-              
               <div className="chat-header">
                 {activeContact ? (
                   <>
@@ -512,7 +571,7 @@ export default function ChatLayout() {
                 )}
               </div>
 
-              
+
               {loadingMsgs ? (
                 <div className="loading-msgs">Carregando mensagens…</div>
               ) : messages.length === 0 ? (
@@ -531,10 +590,10 @@ export default function ChatLayout() {
                       <div key={msg.id} className={`msg-row${isMe ? " me" : ""}`}>
                         {!isMe && (
                           activeContact?.photoUrl
-                            ? <img className="avatar-img" src={activeContact.photoUrl} style={{ width:32, height:32 }} />
-                            : <div className="avatar-ini" style={{ background: AVATAR_COLORS[0], width:32, height:32, fontSize:"0.65rem" }}>
-                                {activeContact ? getInitials(activeContact.name) : "?"}
-                              </div>
+                            ? <img className="avatar-img" src={activeContact.photoUrl} style={{ width: 32, height: 32 }} />
+                            : <div className="avatar-ini" style={{ background: AVATAR_COLORS[0], width: 32, height: 32, fontSize: "0.65rem" }}>
+                              {activeContact ? getInitials(activeContact.name) : "?"}
+                            </div>
                         )}
                         <div>
                           <div className={`bubble ${isMe ? "me" : "other"}`}>{msg.text}</div>
@@ -547,7 +606,7 @@ export default function ChatLayout() {
                 </div>
               )}
 
-              
+
               <div className="input-row">
                 <input
                   placeholder="Digite aqui..."
@@ -562,13 +621,10 @@ export default function ChatLayout() {
                   </svg>
                 </button>
               </div>
-
             </div>
           </div>
         </div>
       </div>
-
-      
     </>
   );
 }

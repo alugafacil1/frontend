@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Table } from "@/components/table/Table";
-import { useAgencyMembers } from "@/services/queries/Realtors";
+import { useMembers } from "@/services/queries/Realtors";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { RealtorResponse } from "@/types/realtor";
 import { RealtorDetailsModal } from "./RealtorDetailsModal";
 import { useAuth } from "@/lib/auth/useAuth";
+import { getImageUrl } from "@/utils/formatUrl";
 
 interface RealtorManagementProps {
     agencyId?: string;
@@ -16,7 +17,7 @@ export function RealtorManagement({ agencyId }: RealtorManagementProps) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     const [selectedRealtor, setSelectedRealtor] = useState<RealtorResponse | null>(null);
     const { user } = useAuth();
-    const { data, isLoading, isError } = useAgencyMembers(agencyId, pagination.pageIndex, pagination.pageSize);
+    const { data, isLoading, isError } = useMembers(agencyId, pagination.pageIndex, pagination.pageSize, user?.role);
     const columns = useMemo<ColumnDef<RealtorResponse>[]>(() => [
         {
             header: "Corretor",
@@ -25,7 +26,7 @@ export function RealtorManagement({ agencyId }: RealtorManagementProps) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {row.original.photoUrl ? (
                         <img
-                            src={row.original.photoUrl}
+                            src={getImageUrl(row.original.photoUrl)}
                             alt={row.original.name}
                             style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                         />

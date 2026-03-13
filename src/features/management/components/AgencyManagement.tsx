@@ -7,6 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { AgencyResponse } from "@/types/agency";
 
 import { AgencyDetailsModal } from "./AgencyDetailsModal"; 
+import { getImageUrl } from "@/utils/formatUrl";
 
 export function AgencyManagement() {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -28,7 +29,7 @@ export function AgencyManagement() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {row.original.photoUrl ? (
                         <img 
-                            src={row.original.photoUrl} 
+                            src={getImageUrl(row.original.photoUrl)} 
                             alt={row.original.name} 
                             style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e5e7eb' }}
                         />

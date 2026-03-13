@@ -13,8 +13,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const API_URL = "http://localhost:8081/api"; 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = `${API_BASE_URL}/api`;
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -40,6 +40,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []);
 
+  const formatImageUrl = (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    // Remove barra duplicada se o path já começar com /
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${API_BASE_URL}${cleanPath}`;
+  };
   async function login(email: string, password: string) {
     
     setLoading(true);
@@ -94,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: fullUserData.name,
         email: fullUserData.email,
         role: fullUserData.userType,
-        photoUrl: fullUserData.photoUrl,
+        photoUrl: fullUserData.photoUrl ? formatImageUrl(fullUserData.photoUrl) : null,
         phoneNumber: fullUserData.phoneNumber,
         cpf: fullUserData.cpf,
         agencyId: fullUserData.agency?.agencyId || fullUserData.agencyId || undefined,

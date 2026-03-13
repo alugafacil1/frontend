@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   role: "TENANT" | "OWNER" | "REALTOR" | "ADMIN" | 'AGENCY_ADMIN'; 
-  photoUrl?: string;      
+  photoUrl: string | null;      
   phoneNumber?: string;   
   cpf?: string;
   agencyId?: string;

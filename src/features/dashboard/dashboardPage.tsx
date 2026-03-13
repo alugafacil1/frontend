@@ -52,7 +52,6 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
       try {
 
         const data = await propertyService.getPropertiesByUserId(user.id);
-        console.log(data)
         setProperties(Array.isArray(data.content) ? data.content.slice(0, 3) : []);
         
         const disponiveis: any = data.content.filter((im : any) => im.status == "ACTIVE");
@@ -646,7 +645,7 @@ export default function Dashboard({ transparent = false }: DashboardProps) {
         </div>
       </div>
 
-      
+      <Footer/>
     </div>
   );
 }

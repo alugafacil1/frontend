@@ -57,7 +57,6 @@ export function PropertyDetailsModal({ property, isOpen, onClose, userRole }: Pr
   const isAgency = userRole === "AGENCY" || userRole === "AGENCY_ADMIN" || userRole?.includes("AGENCY");
   const isAdmin = userRole === "ADMIN";
   const isRealtor = userRole === "REALTOR";
-  console.log(owner)
   const formatCurrency = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const formatBoolean = (val: boolean) => (val ? "Sim" : "Não");
 

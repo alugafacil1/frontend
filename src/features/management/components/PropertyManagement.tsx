@@ -18,6 +18,7 @@ import {
   ActionButton,
   StatusBadge,
 } from "../styles";
+import { getImageUrl } from "@/utils/formatUrl";
 
 interface PropertyManagementProps {
   userId?: string;
@@ -29,11 +30,9 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
   const [selectedProperty, setSelectedProperty] = useState<PropertyResponse | null>(null);
 
-  // Variáveis booleanas para facilitar e não errarmos mais o nome da Role
   const isAgency = userRole === "AGENCY" || userRole === "AGENCY_ADMIN" || userRole?.includes("AGENCY");
   const isAdmin = userRole === "ADMIN";
   const isRealtor = userRole === "REALTOR";
-  const isOwner = userRole === "OWNER";
 
   // =========================================================================
   // 1. BUSCA DE DADOS CORRETA BASEADA NO CARGO (ROLE)
@@ -121,7 +120,7 @@ export function PropertyManagement({ userId, userRole }: PropertyManagementProps
           return (
             <PropertyCell>
               {coverPhoto ? (
-                <img src={coverPhoto} alt="Capa do imóvel" />
+                <img src={getImageUrl(coverPhoto)} alt="Capa do imóvel" />
               ) : (
                 <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#f8fafc", border: "1px dashed #cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#9ca3af" }}>
                   S/ Foto

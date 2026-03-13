@@ -12,7 +12,6 @@ interface UserMenuProps {
 export function UserMenu({ user, logout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -23,7 +22,6 @@ export function UserMenu({ user, logout }: UserMenuProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   const handleLogout = () => {
     logout();
     setIsOpen(false);
@@ -32,7 +30,7 @@ export function UserMenu({ user, logout }: UserMenuProps) {
     <div className="user-menu" ref={dropdownRef}>
       <button className="avatar-btn" onClick={() => setIsOpen(!isOpen)}>
         {user?.photoUrl ? (
-          <img src={`${apiBaseUrl}${user.photoUrl}`} alt="Perfil" />
+          <img src={`${user.photoUrl}`} alt="Perfil" />
         ) : (
           <div className="avatar-placeholder">
             {user?.name?.charAt(0).toUpperCase() || "U"}
