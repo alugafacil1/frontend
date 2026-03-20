@@ -1,29 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏠 Aluga Fácil
 
-## Getting Started
+O **Aluga Fácil** é uma plataforma moderna e intuitiva desenvolvida para simplificar a gestão e locação de imóveis. O sistema conecta agências imobiliárias, corretores, proprietários e inquilinos em um ecossistema unificado, digitalizando desde a captação do imóvel até a vitrine para o cliente final.
 
-First, run the development server:
+## 📋 Resumo do Sistema
 
-```bash
+A plataforma possui controle de acesso baseado em perfis (Roles) para garantir fluxos de trabalho seguros e organizados:
+
+* **Inquilinos:** Acesso à vitrine de imóveis ativos (aba "Explorar"), visualização de detalhes (mapas, fotos, regras) e sistema de favoritos.
+* **Proprietários e Corretores :** Criação de anúncios detalhados, upload de imagens e gerenciamento de status (Pausado, Alugado). Os anúncios criados por corretores entram em um fluxo de aprovação.
+* **Gestão de Agência (Agency Admins):** Painel de moderação para revisar, aprovar ou rejeitar (com feedback) os imóveis cadastrados pelos corretores vinculados, além de visão geral do portfólio da agência.
+
+## 🔗 Links Úteis
+
+- 🌐 **Deploy da Aplicação:** [Acessar Aluga Fácil (Deploy)](https://frontend-sesu.onrender.com/)
+- 📄 **Documentação:** [Acessar Docs (Google Drive)](https://drive.google.com/drive/folders/1auJ-cXFoOzSm4AAu2Qirz1wNK_vqs6i3?usp=sharing)
+- 🎥 **Pitch do Projeto:** [Assistir ao Pitch](#) *(A ser adicionado)*
+
+## 🛠️ Tecnologias Utilizadas
+
+Este projeto foi inicializado com [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app) e utiliza as seguintes tecnologias:
+
+* **Framework:** [Next.js](https://nextjs.org) (App Router)
+* **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+* **Estilização:** CSS Customizado e utilitários
+* **Ícones:** [Heroicons](https://heroicons.com/)
+* **Gerenciamento de Estado/Rotas:** React Hooks, Next Navigation
+* **Integração de Mapas/Geolocalização:** Custom Hooks (`useGeolocation`, `useCep`)
+
+## 🚀 Como rodar o projeto localmente
+
+**1. Pré-requisitos:**
+Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina e o Backend (API Spring Boot) rodando localmente.
+
+**2. Clone o repositório:**
+
+git clone [https://github.com/seu-usuario/aluga-facil-frontend.git](https://github.com/seu-usuario/aluga-facil-frontend.git)
+cd aluga-facil-frontend
+
+3. Instale as dependências:
+
+npm install
+ ou
+yarn install
+
+4. Variáveis de Ambiente:
+Crie um arquivo .env na raiz do projeto se não existir e adicione a URL base da sua API:
+
+Snippet de código
+NEXT_PUBLIC_API_URL=http://localhost:8081/api
+
+5. Inicie o servidor de desenvolvimento:
+
 npm run dev
+ ou
+yarn dev
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra http://localhost:3000 no seu navegador para ver o resultado. As páginas são atualizadas automaticamente conforme você edita os arquivos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Desenvolvido com 💙 para modernizar o mercado imobiliário.
