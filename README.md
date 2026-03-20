@@ -2,6 +2,10 @@
 
 O **Aluga Fácil** é uma plataforma moderna e intuitiva desenvolvida para simplificar a gestão e locação de imóveis. O sistema conecta agências imobiliárias, corretores, proprietários e inquilinos em um ecossistema unificado, digitalizando desde a captação do imóvel até a vitrine para o cliente final.
 
+Equipe:
+- Luann Ferreira, Inês Alessandra, Carla Daniela, Rodrigo Leandro, Lucas Messias, José Everton, Jenilson Moraes.
+---
+
 ## 📋 Resumo do Sistema
 
 A plataforma possui controle de acesso baseado em perfis (Roles) para garantir fluxos de trabalho seguros e organizados:
@@ -33,27 +37,33 @@ Este projeto foi inicializado com [`create-next-app`](https://nextjs.org/docs/ap
 Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina e o Backend (API Spring Boot) rodando localmente.
 
 **2. Clone o repositório:**
-
-git clone [https://github.com/seu-usuario/aluga-facil-frontend.git](https://github.com/seu-usuario/aluga-facil-frontend.git)
+```bash
+git clone https://github.com/alugafacil1/frontend
 cd aluga-facil-frontend
+```
 
-3. Instale as dependências:
-
+**3. Instale as dependências:**
+```bash
 npm install
  ou
 yarn install
+```
 
-4. Variáveis de Ambiente:
+**4. Variáveis de Ambiente:**
+
 Crie um arquivo .env na raiz do projeto se não existir e adicione a URL base da sua API:
 
 Snippet de código
+```bash
 NEXT_PUBLIC_API_URL=http://localhost:8081/api
+```
 
-5. Inicie o servidor de desenvolvimento:
-
+**5. Inicie o servidor de desenvolvimento:**
+```bash
 npm run dev
  ou
 yarn dev
+```
 
 Abra http://localhost:3000 no seu navegador para ver o resultado. As páginas são atualizadas automaticamente conforme você edita os arquivos.
 
